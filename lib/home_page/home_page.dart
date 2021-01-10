@@ -1,3 +1,4 @@
+import 'package:comicwrap_f/scaffold_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'library_screen.dart';
@@ -10,29 +11,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int selectedScreen = 0;
-
-  final _screenOptions = [
-    LibraryScreen(),
-    UpdatesScreen(),
-    SettingsScreen(),
-  ];
+  int selectedScreenIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    var selectedScreen = _getScreenOption(context, selectedScreenIndex);
+
     return Scaffold(
       appBar: AppBar(
         title: Text("ComicWrap"),
-        actions: [
-          IconButton(
-              icon: Icon(
-                Icons.library_add,
-                color: Theme.of(context).primaryIconTheme.color,
-              ),
-              onPressed: null)
-        ],
+        actions: selectedScreen.actions,
       ),
-      body: _screenOptions[selectedScreen],
+      body: selectedScreen,
       bottomNavigationBar: BottomNavigationBar(
         items: [
           BottomNavigationBarItem(
@@ -48,10 +38,10 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.settings),
           ),
         ],
-        currentIndex: selectedScreen,
+        currentIndex: selectedScreenIndex,
         onTap: (index) {
           setState(() {
-            selectedScreen = index;
+            selectedScreenIndex = index;
           });
         },
         showUnselectedLabels: true,
@@ -59,5 +49,21 @@ class _HomePageState extends State<HomePage> {
         unselectedItemColor: Theme.of(context).disabledColor,
       ),
     );
+  }
+
+  ScaffoldScreen _getScreenOption(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        return LibraryScreen(context);
+
+      case 1:
+        return UpdatesScreen();
+
+      case 2:
+        return SettingsScreen();
+
+      default:
+        throw RangeError.value(index);
+    }
   }
 }

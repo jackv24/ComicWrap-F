@@ -1,6 +1,7 @@
+import 'package:comicwrap_f/scaffold_screen.dart';
 import 'package:flutter/material.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ScaffoldScreen {
   @override
   Widget build(BuildContext context) {
     return Padding(
