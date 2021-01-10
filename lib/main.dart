@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ms_material_color/ms_material_color.dart';
 
 import 'home_page/home_page.dart';
 
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         title: 'ComicWrap',
         theme: ThemeData(
-          primarySwatch: Colors.teal,
+          primarySwatch: MsMaterialColor(0xffe91e63),
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: HomePage());

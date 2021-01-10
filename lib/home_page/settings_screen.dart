@@ -6,7 +6,19 @@ class SettingsScreen extends ScaffoldScreen {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-      child: Text('Settings Screen'),
+      child: ElevatedButton(
+        child: Text("Test Page"),
+        onPressed: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => Scaffold(
+                        appBar: AppBar(
+                          title: Text('Test Page'),
+                        ),
+                      )));
+        },
+      ),
     );
   }
 }
