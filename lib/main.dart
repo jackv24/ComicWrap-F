@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'home_page/home_page.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -14,48 +16,6 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.teal,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: Scaffold(
-          appBar: AppBar(
-            title: Text("ComicWrap"),
-            actions: [
-              IconButton(
-                  icon: Icon(
-                    Icons.library_add,
-                    color: Theme.of(context).primaryIconTheme.color,
-                  ),
-                  onPressed: null
-              )
-            ],
-          ),
-          body: RefreshIndicator(
-            onRefresh: _onRefresh,
-            child: ListView(
-              children: [
-                Text("Test")
-              ],
-            ),
-          ),
-          bottomNavigationBar: BottomNavigationBar(
-            items: [
-              BottomNavigationBarItem(
-                label: 'Library',
-                icon: Icon(Icons.collections_bookmark),
-              ),
-              BottomNavigationBarItem(
-                label: 'Reading',
-                icon: Icon(Icons.history),
-              ),
-              BottomNavigationBarItem(
-                label: 'Settings',
-                icon: Icon(Icons.settings),
-              ),
-            ],
-          ),
-        )
-    );
+        home: HomePage());
   }
-}
-
-Future<void> _onRefresh() async {
-  await Future.delayed(Duration(seconds: 2));
 }
