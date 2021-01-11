@@ -24,6 +24,8 @@ dependencies:
   flutter:
     sdk: flutter
   ms_material_color: ^0.1.0
+  firebase_core: "^0.5.3"
+  firebase_auth: "^0.18.4+1"
 
 
   # The following adds the Cupertino Icons font to your application.
