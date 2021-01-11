@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:ms_material_color/ms_material_color.dart';
@@ -14,26 +15,40 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Handle UI state for Firebase init Future
     return FutureBuilder(
       future: _initialization,
       builder: (context, snapshot) {
         Widget homeWidget;
-        if (snapshot.connectionState == ConnectionState.done) {
-          homeWidget = HomePage();
-        } else {
+        if (snapshot.connectionState != ConnectionState.done) {
+          // Show messages for initializing Firebase
           Widget body;
           if (snapshot.hasError) {
-            body = Text("Failed to connect to Firebase.");
+            body = Text("Failed to initialize Firebase.");
           } else {
-            body = Text("Connecting to Firebase...");
+            body = Text("Initializing Firebase...");
           }
 
+          // Display messages in a scaffold for styling
           homeWidget = Scaffold(
             appBar: AppBar(
               title: Text("ComicWrap"),
             ),
             body: body,
           );
+        } else {
+          // Init succeeded, display full page
+          homeWidget = HomePage();
+
+          // Listen for auth changes - not sure if it should go here?
+          FirebaseAuth.instance.authStateChanges().listen((User user) {
+            if (user == null) {
+              print('User is currently signed out!');
+              // TODO: Sign user in anonymously, display indicator on settings for proper sign in
+            } else {
+              print('User is signed in!');
+            }
+          });
         }
 
         return MaterialApp(
