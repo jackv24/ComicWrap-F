@@ -1,9 +1,8 @@
+import 'package:comicwrap_f/home_page/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:ms_material_color/ms_material_color.dart';
-
-import 'home_page/home_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,40 +14,49 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Handle UI state for Firebase init Future
+    // Firebase init state
     return FutureBuilder(
       future: _initialization,
       builder: (context, snapshot) {
         Widget homeWidget;
         if (snapshot.connectionState != ConnectionState.done) {
           // Show messages for initializing Firebase
-          Widget body;
           if (snapshot.hasError) {
-            body = Text("Failed to initialize Firebase.");
+            homeWidget = _getScaffold(Text('Failed to initialize Firebase.'));
           } else {
-            body = Text("Initializing Firebase...");
+            homeWidget = _getScaffold(Text('Initializing Firebase...'));
           }
-
-          // Display messages in a scaffold for styling
-          homeWidget = Scaffold(
-            appBar: AppBar(
-              title: Text("ComicWrap"),
-            ),
-            body: body,
-          );
         } else {
-          // Init succeeded, display full page
-          homeWidget = HomePage();
-
-          // Listen for auth changes - not sure if it should go here?
-          FirebaseAuth.instance.authStateChanges().listen((User user) {
-            if (user == null) {
-              print('User is currently signed out!');
-              // TODO: Sign user in anonymously, display indicator on settings for proper sign in
-            } else {
-              print('User is signed in!');
-            }
-          });
+          // Firebase auth state
+          homeWidget = StreamBuilder<User>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.active) {
+                var user = snapshot.data;
+                if (user == null) {
+                  // Firebase sign in state
+                  return FutureBuilder(
+                    future: _authSequence(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
+                        if (snapshot.hasError) {
+                          return _getScaffold(Text('Sign in error :('));
+                        } else {
+                          return _getScaffold(Text('Signing in...'));
+                        }
+                      } else {
+                        return _getScaffold(Text('Sign in complete!'));
+                      }
+                    },
+                  );
+                } else {
+                  return HomePage();
+                }
+              } else {
+                return _getScaffold(Text('Waiting for auth connection...'));
+              }
+            },
+          );
         }
 
         return MaterialApp(
@@ -60,5 +68,18 @@ class MyApp extends StatelessWidget {
             home: homeWidget);
       },
     );
+  }
+
+  Widget _getScaffold(Widget body) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("ComicWrap"),
+      ),
+      body: body,
+    );
+  }
+
+  Future _authSequence() async {
+    await FirebaseAuth.instance.signInAnonymously();
   }
 }
