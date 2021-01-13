@@ -1,4 +1,5 @@
 import 'package:comicwrap_f/home_page/home_page.dart';
+import 'package:comicwrap_f/system/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
                 if (user == null) {
                   // Firebase sign in state
                   return FutureBuilder(
-                    future: _authSequence(),
+                    future: startAuth(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState != ConnectionState.done) {
                         if (snapshot.hasError) {
@@ -77,9 +78,5 @@ class MyApp extends StatelessWidget {
       ),
       body: body,
     );
-  }
-
-  Future _authSequence() async {
-    await FirebaseAuth.instance.signInAnonymously();
   }
 }
