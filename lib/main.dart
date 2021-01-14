@@ -10,8 +10,16 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  const MyApp({Key key}) : super(key: key);
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+  final _homePageKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +59,7 @@ class MyApp extends StatelessWidget {
                     },
                   );
                 } else {
-                  return HomePage();
+                  return HomePage(key: _homePageKey);
                 }
               } else {
                 return _getScaffold(Text('Waiting for auth connection...'));
@@ -72,11 +80,16 @@ class MyApp extends StatelessWidget {
   }
 
   Widget _getScaffold(Widget body) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("ComicWrap"),
-      ),
-      body: body,
+    return Stack(
+      children: [
+        HomePage(key: _homePageKey),
+        Scaffold(
+          appBar: AppBar(
+            title: Text("ComicWrap"),
+          ),
+          body: body,
+        ),
+      ],
     );
   }
 }
