@@ -31,7 +31,7 @@ Future<void> linkGoogleAuth(BuildContext context) async {
             title: Text('Error!'),
             content: SingleChildScrollView(
               child: ListBody(
-                children: <Widget>[
+                children: [
                   Text('That account is already linked!'
                       ' Do you want to sign into it instead?'
                       ' (will lose existing data)'),
@@ -68,4 +68,56 @@ Future<void> linkGoogleAuth(BuildContext context) async {
   }
 
   print("Linked google account");
+}
+
+Future<void> linkEmailAuth(BuildContext context) async {
+  await showDialog(
+    context: context,
+    builder: (context) {
+      final node = FocusScope.of(context);
+      return AlertDialog(
+        title: Text('Email Sign In'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.email),
+                  labelText: 'Email',
+                  hintText: 'you@example.com',
+                ),
+                keyboardType: TextInputType.emailAddress,
+                onEditingComplete: () => node.nextFocus(),
+              ),
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.security),
+                  labelText: 'Password',
+                ),
+                obscureText: true,
+                onSubmitted: (_) {
+                  node.unfocus();
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Sign In'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          FlatButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
 }

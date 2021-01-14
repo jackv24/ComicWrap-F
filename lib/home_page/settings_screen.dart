@@ -22,7 +22,9 @@ class SettingsScreen extends ScaffoldScreen {
                   children: [
                     Text("You're an anonymous user. "
                         "Sign in to make sure you don't lose your data!"),
-                    SignInButton(Buttons.Email, onPressed: () {}),
+                    SignInButton(Buttons.Email, onPressed: () {
+                      linkEmailAuth(context);
+                    }),
                     SignInButton(Buttons.Google, onPressed: () {
                       linkGoogleAuth(context);
                     }),
