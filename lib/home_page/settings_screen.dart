@@ -15,7 +15,7 @@ class SettingsScreen extends ScaffoldScreen {
           if (snapshot.connectionState == ConnectionState.active) {
             var user = snapshot.data;
             if (user == null) {
-              return Text('Waiting for anonymous sign in...');
+              return Text('Waiting for sign in...');
             } else {
               if (user.isAnonymous) {
                 return ListView(

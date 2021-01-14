@@ -2,11 +2,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+bool _isChangingAuth = false;
+bool get isChangingAuth => _isChangingAuth;
+
 Future<void> startAuth() async {
   await FirebaseAuth.instance.signInAnonymously();
 }
 
 Future<void> linkGoogleAuth(BuildContext context) async {
+  _isChangingAuth = true;
+
   // Google auth flow
   final googleUser = await GoogleSignIn().signIn();
   final googleAuth = await googleUser.authentication;
@@ -57,12 +62,14 @@ Future<void> linkGoogleAuth(BuildContext context) async {
       );
 
       if (discardExisting) {
-        // TODO: Delete anon account (may require re-auth)
+        // Delete anonymous account
+        await FirebaseAuth.instance.currentUser.delete();
 
         // Sign in with previously authenticated google account
         await FirebaseAuth.instance.signInWithCredential(googleCredential);
       }
 
+      _isChangingAuth = false;
       return;
     }
   }

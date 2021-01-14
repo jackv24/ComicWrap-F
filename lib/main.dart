@@ -42,7 +42,8 @@ class _MyAppState extends State<MyApp> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.active) {
                 var user = snapshot.data;
-                if (user == null) {
+                // Only create new anonymous user if we're not changing auth elsewhere
+                if (user == null && !isChangingAuth) {
                   // Firebase sign in state
                   return FutureBuilder(
                     future: startAuth(),
