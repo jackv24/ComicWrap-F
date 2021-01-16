@@ -80,7 +80,7 @@ Future<void> linkEmailAuth(BuildContext context) async {
   );
 }
 
-Future<void> _promptSignIn(
+Future<bool> _promptSignIn(
     BuildContext context, AuthCredential signInCredential) async {
   // Show dialog to choose whether to cancel or just sign in
   final discardExisting = await showDialog<bool>(
@@ -116,15 +116,22 @@ Future<void> _promptSignIn(
     },
   );
 
-  if (discardExisting) {
-    // Delete anonymous account
-    await FirebaseAuth.instance.currentUser.delete();
+  try {
+    if (discardExisting) {
+      // In case it wasn't set already
+      _isChangingAuth = true;
 
-    // Sign in with authenticated account
-    await FirebaseAuth.instance.signInWithCredential(signInCredential);
+      // Delete anonymous account
+      await FirebaseAuth.instance.currentUser.delete();
+
+      // Sign in with authenticated account
+      await FirebaseAuth.instance.signInWithCredential(signInCredential);
+    }
+  } finally {
+    _isChangingAuth = false;
   }
 
-  _isChangingAuth = false;
+  return discardExisting;
 }
 
 class EmailLoginDialog extends StatefulWidget {
@@ -143,54 +150,60 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
   final _email = TextEditingController();
   final _pass = TextEditingController();
 
+  bool _preventPop = false;
+
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
 
-    return AlertDialog(
-      title: Text('Email Sign In'),
-      content: SingleChildScrollView(
-        child: ListBody(
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: Icon(Icons.email),
-                labelText: 'Email',
-                hintText: 'you@example.com',
-                errorText: _emailErrorText,
+    return WillPopScope(
+      onWillPop: () async => !_preventPop,
+      child: AlertDialog(
+        title: Text('Email Sign In'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.email),
+                  labelText: 'Email',
+                  hintText: 'you@example.com',
+                  errorText: _emailErrorText,
+                ),
+                keyboardType: TextInputType.emailAddress,
+                onEditingComplete: () => node.nextFocus(),
+                controller: _email,
+                enabled: !_preventPop,
               ),
-              keyboardType: TextInputType.emailAddress,
-              onEditingComplete: () => node.nextFocus(),
-              controller: _email,
-            ),
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: Icon(Icons.security),
-                labelText: 'Password',
-                errorText: _passErrorText,
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.security),
+                  labelText: 'Password',
+                  errorText: _passErrorText,
+                ),
+                obscureText: true,
+                onSubmitted: (_) {
+                  node.unfocus();
+                  _submit();
+                },
+                controller: _pass,
+                enabled: !_preventPop,
               ),
-              obscureText: true,
-              onSubmitted: (_) {
-                node.unfocus();
-                _submit();
-              },
-              controller: _pass,
-            ),
-          ],
+            ],
+          ),
         ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Sign In'),
+            onPressed: _preventPop ? null : () => _submit(),
+          ),
+          FlatButton(
+            child: Text('Cancel'),
+            onPressed:
+                _preventPop ? null : () => Navigator.of(context).pop(null),
+          ),
+        ],
       ),
-      actions: <Widget>[
-        FlatButton(
-          child: Text('Sign In'),
-          onPressed: () => _submit(),
-        ),
-        FlatButton(
-          child: Text('Cancel'),
-          onPressed: () {
-            Navigator.of(context).pop(null);
-          },
-        ),
-      ],
     );
   }
 
@@ -199,10 +212,16 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
     setState(() {
       _emailErrorText = null;
       _passErrorText = null;
+      _preventPop = true;
     });
 
     String errorCode =
         await widget.onSubmitAuth(EmailAuthDetails(_email.text, _pass.text));
+
+    setState(() {
+      _preventPop = false;
+    });
+
     switch (errorCode) {
       case 'invalid-email':
         setState(() {
@@ -224,12 +243,50 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
         return;
 
       case 'empty-email':
-        _emailErrorText = 'Required';
+        setState(() {
+          _emailErrorText = 'Required';
+        });
         return;
 
       case 'empty-pass':
-        _passErrorText = 'Required';
+        setState(() {
+          _passErrorText = 'Required';
+        });
         return;
+
+      case 'email-already-in-use':
+        final credential = EmailAuthProvider.credential(
+            email: _email.text, password: _pass.text);
+
+        setState(() {
+          _preventPop = true;
+        });
+
+        bool signedIn = false;
+        try {
+          signedIn = await _promptSignIn(context, credential);
+        } on FirebaseAuthException catch (e) {
+          print('Email sign in failed with error code: ${e.code}');
+          switch (e.code) {
+            case 'wrong-password':
+              // TODO: Find a way to not delete anon user before signing in
+              await startAuth();
+
+              setState(() {
+                _passErrorText = e.code;
+              });
+              break;
+          }
+        }
+
+        setState(() {
+          _preventPop = false;
+        });
+
+        // Don't close login dialog if we didn't sign in
+        if (!signedIn) return;
+
+        break;
     }
 
     // Close dialog if there were no errors
