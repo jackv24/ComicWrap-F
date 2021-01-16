@@ -1,10 +1,12 @@
-import 'package:comicwrap_f/scaffold_screen.dart';
 import 'package:comicwrap_f/system/auth.dart';
+import 'package:comicwrap_f/widgets/scaffold_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 
 class SettingsScreen extends ScaffoldScreen {
+  SettingsScreen() : super('Settings');
+
   @override
   Widget build(BuildContext context) {
     return Padding(

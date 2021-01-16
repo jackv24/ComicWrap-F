@@ -1,4 +1,4 @@
-import 'package:comicwrap_f/scaffold_screen.dart';
+import 'package:comicwrap_f/widgets/scaffold_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'library_screen.dart';
@@ -19,9 +19,13 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     var selectedScreen = _getScreenOption(context, selectedScreenIndex);
 
+    ThemeData theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("ComicWrap"),
+        title: Text(
+          selectedScreen.title,
+        ),
         actions: selectedScreen.actions,
       ),
       body: selectedScreen,
@@ -47,8 +51,8 @@ class _HomePageState extends State<HomePage> {
           });
         },
         showUnselectedLabels: true,
-        selectedItemColor: Theme.of(context).accentColor,
-        unselectedItemColor: Theme.of(context).disabledColor,
+        selectedItemColor: theme.accentColor,
+        unselectedItemColor: theme.disabledColor,
       ),
     );
   }
