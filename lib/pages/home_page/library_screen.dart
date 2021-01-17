@@ -32,7 +32,10 @@ class LibraryScreen extends ScaffoldScreen {
             return Text("Loading user data...");
           }
 
-          List<dynamic> comicPaths = snapshot.data.get('library');
+          var data = snapshot.data.data();
+          List<dynamic> comicPaths = data['library'];
+
+          if (comicPaths == null) return Text('User has no library!');
 
           return GridView.count(
             crossAxisCount: 3,

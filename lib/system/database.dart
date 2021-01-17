@@ -6,7 +6,7 @@ Future<void> createUserData() async {
   CollectionReference users = FirebaseFirestore.instance.collection('users');
 
   await users.doc(currentUser.uid).set({
-    'dummyData': 42,
+    'library': [],
   });
 
   print('Added user data');
