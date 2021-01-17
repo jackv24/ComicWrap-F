@@ -1,4 +1,4 @@
-import 'package:comicwrap_f/home_page/home_page.dart';
+import 'package:comicwrap_f/pages/home_page/home_page.dart';
 import 'package:comicwrap_f/system/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';

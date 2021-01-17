@@ -1,3 +1,4 @@
+import 'package:comicwrap_f/pages/comic_page.dart';
 import 'package:flutter/material.dart';
 
 class ComicInfoCard extends StatelessWidget {
@@ -9,11 +10,16 @@ class ComicInfoCard extends StatelessWidget {
         AspectRatio(
           aspectRatio: 8.5 / 11.0,
           child: Material(
+            color: Colors.grey,
             elevation: 5.0,
             borderRadius: BorderRadius.all(Radius.circular(12.0)),
             clipBehavior: Clip.antiAlias,
-            child: Container(
-              color: Colors.grey,
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => ComicPage(),
+                ));
+              },
             ),
           ),
         ),
