@@ -1,9 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/pages/comic_page.dart';
 import 'package:flutter/material.dart';
 
 class ComicInfoCard extends StatelessWidget {
+  final QueryDocumentSnapshot doc;
+
+  const ComicInfoCard(this.doc, {Key key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
+    final data = doc.data();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -20,12 +27,16 @@ class ComicInfoCard extends StatelessWidget {
                   builder: (context) => ComicPage(),
                 ));
               },
+              child: Image.network(
+                data['coverImageUrl'],
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         ),
         SizedBox(height: 5.0),
         Text(
-          'Comic Name Here',
+          data['name'] ?? '!!!null name!!!',
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.subtitle1,
         ),

@@ -1,3 +1,4 @@
+import 'package:comicwrap_f/system/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ bool get isChangingAuth => _isChangingAuth;
 
 Future<void> startAuth() async {
   await FirebaseAuth.instance.signInAnonymously();
+  await createUserData();
 }
 
 Future<void> linkGoogleAuth(BuildContext context) async {
@@ -122,6 +124,7 @@ Future<bool> _promptSignIn(
       _isChangingAuth = true;
 
       // Delete anonymous account
+      await deleteUserData();
       await FirebaseAuth.instance.currentUser.delete();
 
       // Sign in with authenticated account
