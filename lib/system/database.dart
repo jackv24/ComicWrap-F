@@ -24,6 +24,10 @@ Future<void> deleteUserData() async {
 // https://www.goodbyetohalos.com/comic/prologue-1
 // -> comics > www.goodbyetohalos.com > pages > comic prologue-1
 
-Stream<QuerySnapshot> getComicsStream() {
-  return FirebaseFirestore.instance.collection('comics').snapshots();
+Stream<DocumentSnapshot> getUserStream() {
+  User currentUser = FirebaseAuth.instance.currentUser;
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(currentUser.uid)
+      .snapshots();
 }

@@ -23,14 +23,16 @@ class LibraryScreen extends ScaffoldScreen {
   @override
   Widget build(BuildContext context) {
     return HomeScreenContainer(
-      StreamBuilder<QuerySnapshot>(
-        stream: getComicsStream(),
+      StreamBuilder<DocumentSnapshot>(
+        stream: getUserStream(),
         builder: (context, snapshot) {
-          if (snapshot.hasError) return Text('Error reading comics stream');
+          if (snapshot.hasError) return Text('Error reading user stream');
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Text("Loading comics...");
+            return Text("Loading user data...");
           }
+
+          List<dynamic> comicPaths = snapshot.data.get('library');
 
           return GridView.count(
             crossAxisCount: 3,
@@ -38,8 +40,11 @@ class LibraryScreen extends ScaffoldScreen {
             mainAxisSpacing: 12.0,
             crossAxisSpacing: 12.0,
             padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-            children: snapshot.data.docs.map((doc) {
-              return ComicInfoCard(doc);
+            children: comicPaths.map((comic) {
+              if (comic is DocumentReference)
+                return ComicInfoCard(comic.snapshots());
+              else
+                return Text('ERROR: $comic is not a DocumentReference');
             }).toList(),
           );
         },
