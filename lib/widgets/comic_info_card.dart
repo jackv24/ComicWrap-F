@@ -30,15 +30,15 @@ class ComicInfoCard extends StatelessWidget {
                 elevation: 5.0,
                 borderRadius: BorderRadius.all(Radius.circular(12.0)),
                 clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => ComicPage(),
-                    ));
-                  },
-                  child: Image.network(
-                    data['coverImageUrl'],
-                    fit: BoxFit.cover,
+                child: Ink.image(
+                  image: NetworkImage(data['coverImageUrl']),
+                  fit: BoxFit.cover,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => ComicPage(data),
+                      ));
+                    },
                   ),
                 ),
               ),
