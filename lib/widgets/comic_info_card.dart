@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/pages/comic_page.dart';
 import 'package:flutter/material.dart';
+import 'package:optimized_cached_image/optimized_cached_image.dart';
 
 class ComicInfoCard extends StatelessWidget {
   final Stream<DocumentSnapshot> docStream;
@@ -26,20 +27,27 @@ class ComicInfoCard extends StatelessWidget {
             AspectRatio(
               aspectRatio: 8.5 / 11.0,
               child: Material(
-                color: Colors.grey,
+                color: Colors.white,
                 elevation: 5.0,
                 borderRadius: BorderRadius.all(Radius.circular(12.0)),
                 clipBehavior: Clip.antiAlias,
-                child: Ink.image(
-                  image: NetworkImage(data['coverImageUrl']),
-                  fit: BoxFit.cover,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => ComicPage(data),
-                      ));
-                    },
-                  ),
+                child: OptimizedCacheImage(
+                  imageUrl: data['coverImageUrl'],
+                  imageBuilder: (context, imageProvider) {
+                    return Ink.image(
+                      image: imageProvider,
+                      fit: BoxFit.cover,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => ComicPage(data),
+                          ));
+                        },
+                      ),
+                    );
+                  },
+                  placeholder: (context, url) => CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => Icon(Icons.error),
                 ),
               ),
             ),
