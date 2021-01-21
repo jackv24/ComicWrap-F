@@ -17,7 +17,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var selectedScreen = _getScreenOption(context, selectedScreenIndex);
+    var selectedScreen = _getScreenOption(selectedScreenIndex);
 
     ThemeData theme = Theme.of(context);
 
@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
         title: Text(
           selectedScreen.title,
         ),
-        actions: selectedScreen.actions,
+        actions: selectedScreen.getActions(context),
       ),
       body: selectedScreen,
       bottomNavigationBar: BottomNavigationBar(
@@ -57,10 +57,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  ScaffoldScreen _getScreenOption(BuildContext context, int index) {
+  ScaffoldScreen _getScreenOption(int index) {
     switch (index) {
       case 0:
-        return LibraryScreen(context);
+        return LibraryScreen();
 
       case 1:
         return UpdatesScreen();

@@ -5,9 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 
-class SettingsScreen extends ScaffoldScreen {
-  SettingsScreen() : super('Settings');
-
+class SettingsScreen extends StatelessWidget implements ScaffoldScreen {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -60,5 +58,13 @@ class SettingsScreen extends ScaffoldScreen {
         ],
       ),
     );
+  }
+
+  @override
+  String get title => 'Settings';
+
+  @override
+  List<Widget> getActions(BuildContext context) {
+    return [];
   }
 }
