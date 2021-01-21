@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/pages/home_page/home_page.dart';
 import 'package:comicwrap_f/system/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ms_material_color/ms_material_color.dart';
 
@@ -36,6 +39,16 @@ class _MyAppState extends State<MyApp> {
             homeWidget = _getScaffold(Text('Initializing Firebase...'));
           }
         } else {
+          // TODO: Easy way to switch between emulators and production
+          String host = defaultTargetPlatform == TargetPlatform.android
+              ? '10.0.2.2'
+              : 'localhost';
+
+          FirebaseFirestore.instance.settings =
+              Settings(host: host + ':8080', sslEnabled: false);
+          FirebaseFunctions.instance
+              .useFunctionsEmulator(origin: 'http://$host:5001');
+
           // Firebase auth state
           homeWidget = StreamBuilder<User>(
             stream: FirebaseAuth.instance.authStateChanges(),

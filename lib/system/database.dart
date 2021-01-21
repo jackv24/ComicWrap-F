@@ -24,10 +24,13 @@ Future<void> deleteUserData() async {
 // https://www.goodbyetohalos.com/comic/prologue-1
 // -> comics > www.goodbyetohalos.com > pages > comic prologue-1
 
-Stream<DocumentSnapshot> getUserStream() {
+Future<Stream<DocumentSnapshot>> getUserStream() async {
   User currentUser = FirebaseAuth.instance.currentUser;
-  return FirebaseFirestore.instance
-      .collection('users')
-      .doc(currentUser.uid)
-      .snapshots();
+  final doc =
+      FirebaseFirestore.instance.collection('users').doc(currentUser.uid);
+
+  // Create user data if it doesn't exist (should be created during user sign in)
+  if ((await doc.get()).exists == false) await createUserData();
+
+  return doc.snapshots();
 }

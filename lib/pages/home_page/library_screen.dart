@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:comicwrap_f/widgets/scaffold_screen.dart';
@@ -8,49 +9,63 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 class LibraryScreen extends StatelessWidget implements ScaffoldScreen {
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: getUserStream(),
+    return FutureBuilder<Stream<DocumentSnapshot>>(
+      future: getUserStream(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) return Text('Error reading user stream');
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Text("Loading user data...");
+        // Waiting to get user stream
+        if (snapshot.connectionState != ConnectionState.done) {
+          if (snapshot.hasError) {
+            return Text('Error getting user data stream.');
+          } else {
+            return Text('Getting user data stream...');
+          }
         }
 
-        var data = snapshot.data.data();
-        List<dynamic> comicPaths = data['library'];
+        return StreamBuilder<DocumentSnapshot>(
+          stream: snapshot.data,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) return Text('Error reading user stream');
 
-        if (comicPaths == null) return Text('User has no library!');
-
-        return GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 12.0,
-            crossAxisSpacing: 12.0,
-            childAspectRatio: 0.57,
-          ),
-          padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-          itemCount: comicPaths.length,
-          itemBuilder: (context, index) {
-            final comic = comicPaths[index];
-            Widget comicWidget;
-            try {
-              comicWidget =
-                  ComicInfoCard((comic as DocumentReference).snapshots());
-            } catch (e) {
-              comicWidget = Text('ERROR: ${e.toString()}');
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Text("Loading user data...");
             }
-            return AnimationConfiguration.staggeredGrid(
-              position: index,
-              columnCount: 3,
-              duration: Duration(milliseconds: 200),
-              delay: Duration(milliseconds: 100),
-              child: ScaleAnimation(
-                scale: 0.85,
-                child: FadeInAnimation(
-                  child: comicWidget,
-                ),
+
+            var data = snapshot.data.data();
+            List<dynamic> comicPaths = data['library'];
+
+            if (comicPaths == null) return Text('User has no library!');
+
+            return GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 12.0,
+                crossAxisSpacing: 12.0,
+                childAspectRatio: 0.57,
               ),
+              padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+              itemCount: comicPaths.length,
+              itemBuilder: (context, index) {
+                final comic = comicPaths[index];
+                Widget comicWidget;
+                try {
+                  comicWidget =
+                      ComicInfoCard((comic as DocumentReference).snapshots());
+                } catch (e) {
+                  comicWidget = Text('ERROR: ${e.toString()}');
+                }
+                return AnimationConfiguration.staggeredGrid(
+                  position: index,
+                  columnCount: 3,
+                  duration: Duration(milliseconds: 200),
+                  delay: Duration(milliseconds: 100),
+                  child: ScaleAnimation(
+                    scale: 0.85,
+                    child: FadeInAnimation(
+                      child: comicWidget,
+                    ),
+                  ),
+                );
+              },
             );
           },
         );
@@ -63,7 +78,11 @@ class LibraryScreen extends StatelessWidget implements ScaffoldScreen {
       context: context,
       builder: (context) {
         return AddComicDialog(() async {
-          // TODO
+          HttpsCallable callable =
+              FirebaseFunctions.instance.httpsCallable('startComicScrape');
+          final result = await callable('https://www.goodbyetohalos.com/');
+          print(result.data);
+
           // No errors! :D
           return null;
         });
@@ -146,8 +165,10 @@ class _AddComicDialogState extends State<AddComicDialog> {
       _preventPop = true;
     });
 
-    // TODO: Implement
-    await Future.delayed(Duration(seconds: 2));
+    HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('startComicScrape');
+    final result = await callable('https://www.goodbyetohalos.com/');
+    print('Returned result: ' + result.toString());
 
     setState(() {
       _preventPop = false;

@@ -1,4 +1,3 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/system/auth.dart';
 import 'package:comicwrap_f/widgets/scaffold_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,18 +40,6 @@ class SettingsScreen extends StatelessWidget implements ScaffoldScreen {
               } else {
                 return Text('Waiting for auth connection...');
               }
-            },
-          ),
-          // Testing
-          ElevatedButton(
-            child: Text('Test Function'),
-            onPressed: () async {
-              FirebaseFunctions.instance
-                  .useFunctionsEmulator(origin: 'http://localhost:5001');
-              HttpsCallable callable =
-                  FirebaseFunctions.instance.httpsCallable('startComicScrape');
-              final result = await callable('https://www.goodbyetohalos.com/');
-              print(result.data);
             },
           ),
         ],
