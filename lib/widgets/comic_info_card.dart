@@ -46,8 +46,20 @@ class ComicInfoCard extends StatelessWidget {
                       ),
                     );
                   },
-                  placeholder: (context, url) => CircularProgressIndicator(),
+                  placeholder: (context, url) {
+                    return Stack(
+                      alignment: AlignmentDirectional.bottomCenter,
+                      children: [
+                        // Draw a solid element to fade out to image
+                        Container(
+                          color: Colors.white,
+                        ),
+                        LinearProgressIndicator(),
+                      ],
+                    );
+                  },
                   errorWidget: (context, url, error) => Icon(Icons.error),
+                  fadeInDuration: Duration(seconds: 2),
                 ),
               ),
             ),

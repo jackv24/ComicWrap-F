@@ -3,6 +3,7 @@ import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:comicwrap_f/widgets/scaffold_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import 'home_screen_container.dart';
 
@@ -16,7 +17,7 @@ class LibraryScreen extends ScaffoldScreen {
                   Icons.library_add,
                   color: Theme.of(context).primaryIconTheme.color,
                 ),
-                onPressed: null)
+                onPressed: () {})
           ],
         );
 
@@ -37,18 +38,37 @@ class LibraryScreen extends ScaffoldScreen {
 
           if (comicPaths == null) return Text('User has no library!');
 
-          return GridView.count(
-            crossAxisCount: 3,
-            childAspectRatio: 0.57,
-            mainAxisSpacing: 12.0,
-            crossAxisSpacing: 12.0,
+          return GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 12.0,
+              crossAxisSpacing: 12.0,
+              childAspectRatio: 0.57,
+            ),
             padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-            children: comicPaths.map((comic) {
-              if (comic is DocumentReference)
-                return ComicInfoCard(comic.snapshots());
-              else
-                return Text('ERROR: $comic is not a DocumentReference');
-            }).toList(),
+            itemCount: comicPaths.length,
+            itemBuilder: (context, index) {
+              final comic = comicPaths[index];
+              Widget comicWidget;
+              try {
+                comicWidget =
+                    ComicInfoCard((comic as DocumentReference).snapshots());
+              } catch (e) {
+                comicWidget = Text('ERROR: ${e.toString()}');
+              }
+              return AnimationConfiguration.staggeredGrid(
+                position: index,
+                columnCount: 3,
+                duration: Duration(milliseconds: 200),
+                delay: Duration(milliseconds: 100),
+                child: ScaleAnimation(
+                  scale: 0.85,
+                  child: FadeInAnimation(
+                    child: comicWidget,
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
