@@ -1,12 +1,12 @@
 /* eslint-disable require-jsdoc */
 
-import {describe, it, beforeEach, afterEach} from "mocha";
-import * as sinon from "sinon";
-import {expect} from "chai";
-import axios from "axios";
-import * as scraper from "./comic-scraper";
+import {describe, it, beforeEach, afterEach} from 'mocha';
+import * as sinon from 'sinon';
+import {expect} from 'chai';
+import axios from 'axios';
+import * as scraper from './comic-scraper';
 
-describe("Comic Scraper", () => {
+describe('Comic Scraper', () => {
   let sandbox: sinon.SinonSandbox;
 
   beforeEach(() => {
@@ -20,10 +20,10 @@ describe("Comic Scraper", () => {
   });
 
   function stubGoodbyetohalos() {
-    const get = sandbox.stub(axios, "get");
+    const get = sandbox.stub(axios, 'get');
 
     // Archive page
-    get.withArgs("https://www.goodbyetohalos.com/comic/archive").resolves(Promise.resolve({
+    get.withArgs('https://www.goodbyetohalos.com/comic/archive').resolves(Promise.resolve({
       data: `
       <select name="comic">
         <option value="comic/page-1">Page 1</option>
@@ -32,7 +32,7 @@ describe("Comic Scraper", () => {
     }));
 
     // Non-archive page
-    get.withArgs("https://www.goodbyetohalos.com/").resolves(Promise.resolve({
+    get.withArgs('https://www.goodbyetohalos.com/').resolves(Promise.resolve({
       data: `
       <nav role="navigation">
         <ul id="navigation" class="slimmenu">
@@ -45,25 +45,25 @@ describe("Comic Scraper", () => {
     }));
   }
 
-  it("finds page list for \"www.goodbyetohalos.com\" archive", async () => {
+  it('finds page list for "www.goodbyetohalos.com" archive', async () => {
     // Setup
     stubGoodbyetohalos();
 
     // Execute
-    const pages = await scraper.scrapeComicPages("https://www.goodbyetohalos.com/comic/archive");
+    const pages = await scraper.scrapeComicPages('https://www.goodbyetohalos.com/comic/archive');
 
     // Test: compare arrays with deep equality
-    expect(pages).to.eql([{text: "Page 1", link: "comic/page-1"}]);
+    expect(pages).to.eql([{text: 'Page 1', link: 'comic/page-1'}]);
   });
 
-  it("finds page list for \"www.goodbyetohalos.com\" non-archive", async () => {
+  it('finds page list for "www.goodbyetohalos.com" non-archive', async () => {
     // Setup
     stubGoodbyetohalos();
 
     // Execute
-    const pages = await scraper.scrapeComicPages("https://www.goodbyetohalos.com/");
+    const pages = await scraper.scrapeComicPages('https://www.goodbyetohalos.com/');
 
     // Test: compare arrays with deep equality
-    expect(pages).to.eql([{text: "Page 1", link: "comic/page-1"}]);
+    expect(pages).to.eql([{text: 'Page 1', link: 'comic/page-1'}]);
   });
 });

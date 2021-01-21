@@ -1,7 +1,5 @@
-/* eslint-disable require-jsdoc */
-
-import axios from "axios";
-import * as cheerio from "cheerio";
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 export async function scrapeComicPages(pageUrl: string) {
   const firstPage = await axios.get(pageUrl);
@@ -23,13 +21,13 @@ export async function scrapeComicPages(pageUrl: string) {
 
 async function getPagesFromArchive(archivePageHtml: string) {
   const $ = cheerio.load(archivePageHtml);
-  const select = $("[name='comic'] > option");
+  const select = $('[name="comic"] > option');
   const optionsArray = select.toArray();
   const pages = optionsArray.map((element, index) => {
     const val = $(element);
     return {
       text: val.text(),
-      link: val.attr("value"),
+      link: val.attr('value'),
     };
   });
 
@@ -38,8 +36,8 @@ async function getPagesFromArchive(archivePageHtml: string) {
 
 async function getArchivePageUrl(currentPageHtml: string) {
   const $ = cheerio.load(currentPageHtml);
-  const archiveLinks = $(".archive > a").toArray().map((element, index) => {
-    return $(element).attr("href");
+  const archiveLinks = $('.archive > a').toArray().map((element, index) => {
+    return $(element).attr('href');
   });
 
   if (archiveLinks.length > 0) return archiveLinks[0];
