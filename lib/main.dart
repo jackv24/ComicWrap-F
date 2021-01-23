@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ms_material_color/ms_material_color.dart';
 
+const bool USE_EMULATORS = bool.fromEnvironment('USE_EMULATORS');
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
@@ -39,15 +41,16 @@ class _MyAppState extends State<MyApp> {
             homeWidget = _getScaffold(Text('Initializing Firebase...'));
           }
         } else {
-          // TODO: Easy way to switch between emulators and production
-          String host = defaultTargetPlatform == TargetPlatform.android
-              ? '10.0.2.2'
-              : 'localhost';
+          if (USE_EMULATORS) {
+            String host = defaultTargetPlatform == TargetPlatform.android
+                ? '10.0.2.2'
+                : 'localhost';
 
-          FirebaseFirestore.instance.settings =
-              Settings(host: host + ':8080', sslEnabled: false);
-          FirebaseFunctions.instance
-              .useFunctionsEmulator(origin: 'http://$host:5001');
+            FirebaseFirestore.instance.settings =
+                Settings(host: host + ':8080', sslEnabled: false);
+            FirebaseFunctions.instance
+                .useFunctionsEmulator(origin: 'http://$host:5001');
+          }
 
           // Firebase auth state
           homeWidget = StreamBuilder<User>(

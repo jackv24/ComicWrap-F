@@ -22,6 +22,7 @@ class SettingsScreen extends StatelessWidget implements ScaffoldScreen {
                 } else {
                   if (user.isAnonymous) {
                     return ListView(
+                      shrinkWrap: true,
                       children: [
                         Text("You're an anonymous user. "
                             "Sign in to make sure you don't lose your data!"),

@@ -4,6 +4,7 @@
     "lint": "eslint --ext .js,.ts .",
     "build": "rm -rf lib && tsc",
     "serve": "npm run build && firebase emulators:start --only functions",
+    "serve-all": "npm run build && firebase emulators:start",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
