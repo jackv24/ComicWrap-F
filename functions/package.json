@@ -6,6 +6,7 @@
     "serve": "npm run build && firebase emulators:start --only functions",
     "serve-all": "npm run build && firebase emulators:start",
     "shell": "npm run build && firebase functions:shell",
+    "shell-debug": "npm run build && firebase functions:shell --inspect-functions",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",

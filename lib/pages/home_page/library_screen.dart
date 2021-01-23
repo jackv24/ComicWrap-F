@@ -167,14 +167,23 @@ class _AddComicDialogState extends State<AddComicDialog> {
 
     HttpsCallable callable =
         FirebaseFunctions.instance.httpsCallable('startComicScrape');
-    final result = await callable('https://www.goodbyetohalos.com/');
-    print('Returned result: ' + result.toString());
+
+    try {
+      final result = await callable(_url.text);
+      print('Returned result: ' + result.data);
+    } on FirebaseFunctionsException catch (e) {
+      print('Caught error: ' + e.code);
+      setState(() {
+        _urlErrorText = e.message;
+        _preventPop = false;
+      });
+
+      return;
+    }
 
     setState(() {
       _preventPop = false;
     });
-
-    // TODO: Display any error
 
     // Close dialog if there were no errors
     Navigator.of(context).pop();

@@ -9,23 +9,47 @@ const db = admin.firestore();
 // Kicks off scraping comic by writing a skeleton doc
 export const startComicScrape = functions.https
     .onCall(async (data, context) => {
+      if (!context.auth) {
+        throw new functions.https.HttpsError(
+            'unauthenticated',
+            'Authentication Required'
+        );
+      }
+
+      if (!data) {
+        throw new functions.https.HttpsError(
+            'invalid-argument',
+            'Required'
+        );
+      }
+
       const parsedUrl = url.parse(data);
-      // TODO: Error if parsedUrl falsey
-
       const hostName = parsedUrl.hostname;
-      // TODO: Error if hostname falsey
+      if (!hostName) {
+        throw new functions.https.HttpsError(
+            'invalid-argument',
+            'Invalid Url'
+        );
+      }
 
-      const existingComicDoc = await db.doc('comics/' + hostName).get();
+      // Reference to document of comic (existing or yet to be created below)
+      const comicDocRef = db.doc('comics/' + hostName);
 
-      // TODO: Check valid
-      // Don't do anything if document exists, just return the name
-      if (existingComicDoc.exists) return hostName;
+      // Add comic to calling user's library
+      const userDocRef = db.collection('users').doc(context.auth.uid);
+      const userDoc = await userDocRef.get();
+      const library =
+        userDoc.get('library') as FirebaseFirestore.DocumentReference[] ?? [];
+      library.push(comicDocRef);
+      await userDocRef.set({library: library}, {merge: true});
+
+      // Don't do anything more if document exists, just return the name
+      if ((await comicDocRef.get()).exists) return hostName;
 
       // Create basic document so it exists for client to subscribe to,
       // triggered event onCreate should handle filling out data
-      await db.doc('comics/' + hostName).create({
+      await comicDocRef.create({
         name: hostName,
-        // TODO: Make sure this is a valid URL
         scrapeUrl: data,
       });
 
