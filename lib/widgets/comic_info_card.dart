@@ -26,7 +26,7 @@ class ComicInfoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AspectRatio(
-              aspectRatio: 8.5 / 11.0,
+              aspectRatio: 210.0 / 297.0,
               child: Material(
                 color: Colors.white,
                 elevation: 5.0,

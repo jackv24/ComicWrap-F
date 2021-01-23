@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 class UpdatesScreen extends StatelessWidget implements ScaffoldScreen {
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return ListView(
       padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-      child: ListView(
-        children: [],
-      ),
+      children: [],
     );
   }
 

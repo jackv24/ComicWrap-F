@@ -40,7 +40,7 @@ class LibraryScreen extends StatelessWidget implements ScaffoldScreen {
                 crossAxisCount: 3,
                 mainAxisSpacing: 12.0,
                 crossAxisSpacing: 12.0,
-                childAspectRatio: 0.57,
+                childAspectRatio: 0.55,
               ),
               padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
               itemCount: comicPaths.length,
@@ -57,7 +57,7 @@ class LibraryScreen extends StatelessWidget implements ScaffoldScreen {
                   position: index,
                   columnCount: 3,
                   duration: Duration(milliseconds: 200),
-                  delay: Duration(milliseconds: 100),
+                  delay: Duration(milliseconds: 50),
                   child: ScaleAnimation(
                     scale: 0.85,
                     child: FadeInAnimation(
