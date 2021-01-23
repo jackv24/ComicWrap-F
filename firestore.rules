@@ -4,7 +4,7 @@ service cloud.firestore {
     match /users/{user} {
     	allow read, write: if request.auth != null && request.auth.uid == user;
     }
-    match /comics/{comic} {
+    match /comics/{comic=**} {
     	allow read: if request.auth != null;
     }
   }

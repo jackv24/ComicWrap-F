@@ -73,14 +73,14 @@ export const continueComicImport = functions.firestore
         const page = comicPages[i];
         if (!page.link) continue;
 
-        // Document name is index for sorting purposes, we can insert pages
-        // later without touching other documents by doing 1..1.5..2, etc
-        const docName = i.toString();
+        // Use page link as document name, since index could change
+        // Replace invalid characters with rarely used alternatives
+        const docName = page.link.replace('/', ' ');
 
         // Write document
         await collection.doc(docName).create({
+          index: i,
           text: page.text,
-          link: page.link,
         });
       }
 
