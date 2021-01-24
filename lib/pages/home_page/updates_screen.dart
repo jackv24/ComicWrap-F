@@ -1,20 +1,13 @@
-import 'package:comicwrap_f/widgets/scaffold_screen.dart';
 import 'package:flutter/material.dart';
 
-class UpdatesScreen extends StatelessWidget implements ScaffoldScreen {
+class UpdatesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-      children: [],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Updates'),
+      ),
+      body: Text('TODO'),
     );
-  }
-
-  @override
-  String get title => 'Updates';
-
-  @override
-  List<Widget> getActions(BuildContext context) {
-    return [];
   }
 }

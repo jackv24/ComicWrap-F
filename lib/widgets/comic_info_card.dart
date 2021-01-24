@@ -4,10 +4,24 @@ import 'package:comicwrap_f/pages/comic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:optimized_cached_image/optimized_cached_image.dart';
 
-class ComicInfoCard extends StatelessWidget {
-  final Stream<DocumentSnapshot> docStream;
+class ComicInfoCard extends StatefulWidget {
+  final DocumentReference docRef;
 
-  const ComicInfoCard(this.docStream, {Key key}) : super(key: key);
+  const ComicInfoCard(this.docRef, {Key key}) : super(key: key);
+
+  @override
+  _ComicInfoCardState createState() => _ComicInfoCardState();
+}
+
+class _ComicInfoCardState extends State<ComicInfoCard> {
+  Stream<DocumentSnapshot> docStream;
+
+  @override
+  void initState() {
+    docStream = widget.docRef.snapshots();
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

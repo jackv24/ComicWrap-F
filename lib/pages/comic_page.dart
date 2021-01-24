@@ -1,4 +1,7 @@
+import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/pages/comic_web_page.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ComicPage extends StatefulWidget {
@@ -14,9 +17,10 @@ class _ComicPageState extends State<ComicPage> {
   List<DocumentSnapshot> pages = [];
   bool isLoading = false;
   bool hasMore = true;
-  int documentLimit = 15;
   DocumentSnapshot lastDocument;
   ScrollController _scrollController;
+  final int initialDocLimit = 20;
+  final int moreDocLimit = 10;
 
   @override
   void initState() {
@@ -56,12 +60,7 @@ class _ComicPageState extends State<ComicPage> {
               : ListView.builder(
                   controller: _scrollController,
                   itemCount: pages.length,
-                  itemBuilder: (context, index) {
-                    final data = pages[index].data();
-                    return ListTile(
-                      title: Text(data['text'] ?? '!!Page $index!!'),
-                    );
-                  },
+                  itemBuilder: _listItemBuilder,
                 ),
           isLoading
               ? Container(
@@ -72,6 +71,22 @@ class _ComicPageState extends State<ComicPage> {
               : Container(),
         ],
       ),
+    );
+  }
+
+  Widget _listItemBuilder(BuildContext context, int index) {
+    final page = pages[index];
+    final data = page.data();
+    return OpenContainer(
+      closedBuilder: (context, openFunc) {
+        return ListTile(
+          title: Text(data['text'] ?? '!!Page $index!!'),
+          onTap: openFunc,
+        );
+      },
+      openBuilder: (context, closeFunc) {
+        return ComicWebPage(page);
+      },
     );
   }
 
@@ -95,20 +110,31 @@ class _ComicPageState extends State<ComicPage> {
         .orderBy('index', descending: true);
 
     QuerySnapshot querySnapshot;
+    int documentLimit;
     if (lastDocument == null) {
+      documentLimit = initialDocLimit;
       querySnapshot = await query.limit(documentLimit).get();
     } else {
+      documentLimit = moreDocLimit;
       querySnapshot = await query
           .startAfterDocument(lastDocument)
           .limit(documentLimit)
           .get();
     }
 
-    if (querySnapshot.docs.length < documentLimit) {
+    final docs = querySnapshot.docs;
+    if (docs.length < documentLimit) {
       hasMore = false;
+
+      // No pages were loaded at all, so cancel early
+      if (docs.length <= 0) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
     }
 
-    final docs = querySnapshot.docs;
     lastDocument = docs.last;
     pages.addAll(docs);
 

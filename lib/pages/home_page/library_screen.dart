@@ -2,74 +2,101 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
-import 'package:comicwrap_f/widgets/scaffold_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
-class LibraryScreen extends StatelessWidget implements ScaffoldScreen {
+class LibraryScreen extends StatefulWidget {
+  const LibraryScreen({Key key}) : super(key: key);
+
+  @override
+  _LibraryScreenState createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  Future<Stream<DocumentSnapshot>> userStreamFuture;
+
+  @override
+  void initState() {
+    userStreamFuture = getUserStream();
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Stream<DocumentSnapshot>>(
-      future: getUserStream(),
-      builder: (context, snapshot) {
-        // Waiting to get user stream
-        if (snapshot.connectionState != ConnectionState.done) {
-          if (snapshot.hasError) {
-            return Text('Error getting user data stream.');
-          } else {
-            return Text('Getting user data stream...');
-          }
-        }
-
-        return StreamBuilder<DocumentSnapshot>(
-          stream: snapshot.data,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) return Text('Error reading user stream');
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Text("Loading user data...");
-            }
-
-            var data = snapshot.data.data();
-            List<dynamic> comicPaths = data['library'];
-
-            if (comicPaths == null) return Text('User has no library!');
-
-            return GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 12.0,
-                crossAxisSpacing: 12.0,
-                childAspectRatio: 0.55,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Library'),
+        actions: [
+          IconButton(
+              icon: Icon(
+                Icons.library_add,
+                color: Theme.of(context).primaryIconTheme.color,
               ),
-              padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-              itemCount: comicPaths.length,
-              itemBuilder: (context, index) {
-                final comic = comicPaths[index];
-                Widget comicWidget;
-                try {
-                  comicWidget =
-                      ComicInfoCard((comic as DocumentReference).snapshots());
-                } catch (e) {
-                  comicWidget = Text('ERROR: ${e.toString()}');
-                }
-                return AnimationConfiguration.staggeredGrid(
-                  position: index,
-                  columnCount: 3,
-                  duration: Duration(milliseconds: 200),
-                  delay: Duration(milliseconds: 50),
-                  child: ScaleAnimation(
-                    scale: 0.85,
-                    child: FadeInAnimation(
-                      child: comicWidget,
+              onPressed: () => _onAddPressed(context)),
+        ],
+      ),
+      body: FutureBuilder<Stream<DocumentSnapshot>>(
+        future: userStreamFuture,
+        builder: (context, snapshot) {
+          // Waiting to get user stream
+          if (snapshot.connectionState != ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Text('Error getting user data stream.');
+            } else {
+              return Text('Getting user data stream...');
+            }
+          }
+
+          return StreamBuilder<DocumentSnapshot>(
+            stream: snapshot.data,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) return Text('Error reading user stream');
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Text("Loading user data...");
+              }
+
+              var data = snapshot.data.data();
+              List<dynamic> comicPaths = data['library'];
+
+              if (comicPaths == null) return Text('User has no library!');
+
+              return GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 12.0,
+                  crossAxisSpacing: 12.0,
+                  childAspectRatio: 0.55,
+                ),
+                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+                itemCount: comicPaths.length,
+                itemBuilder: (context, index) {
+                  final comic = comicPaths[index];
+                  Widget comicWidget;
+                  try {
+                    comicWidget = ComicInfoCard(comic as DocumentReference);
+                  } catch (e) {
+                    comicWidget = Text('ERROR: ${e.toString()}');
+                  }
+                  return AnimationConfiguration.staggeredGrid(
+                    position: index,
+                    columnCount: 3,
+                    duration: Duration(milliseconds: 200),
+                    delay: Duration(milliseconds: 50),
+                    child: ScaleAnimation(
+                      scale: 0.85,
+                      child: FadeInAnimation(
+                        child: comicWidget,
+                      ),
                     ),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -88,21 +115,6 @@ class LibraryScreen extends StatelessWidget implements ScaffoldScreen {
         });
       },
     );
-  }
-
-  @override
-  String get title => 'Library';
-
-  @override
-  List<Widget> getActions(BuildContext context) {
-    return [
-      IconButton(
-          icon: Icon(
-            Icons.library_add,
-            color: Theme.of(context).primaryIconTheme.color,
-          ),
-          onPressed: () => _onAddPressed(context)),
-    ];
   }
 }
 

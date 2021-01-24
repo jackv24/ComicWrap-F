@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/system/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 Future<void> createUserData() async {
@@ -25,6 +26,9 @@ Future<void> deleteUserData() async {
 // -> comics > www.goodbyetohalos.com > pages > comic prologue-1
 
 Future<Stream<DocumentSnapshot>> getUserStream() async {
+  // Depends on firebase core to be initialised
+  await firebaseInit;
+
   User currentUser = FirebaseAuth.instance.currentUser;
   final doc =
       FirebaseFirestore.instance.collection('users').doc(currentUser.uid);

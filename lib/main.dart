@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/pages/home_page/home_page.dart';
 import 'package:comicwrap_f/system/auth.dart';
+import 'package:comicwrap_f/system/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ms_material_color/ms_material_color.dart';
@@ -23,14 +23,23 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
   final _homePageKey = GlobalKey();
+  Stream<User> authStateChanges;
+
+  @override
+  void initState() {
+    firebaseInit.then((value) {
+      authStateChanges = FirebaseAuth.instance.authStateChanges();
+    });
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     // Firebase init state
     return FutureBuilder(
-      future: _initialization,
+      future: firebaseInit,
       builder: (context, snapshot) {
         Widget homeWidget;
         if (snapshot.connectionState != ConnectionState.done) {
@@ -54,7 +63,7 @@ class _MyAppState extends State<MyApp> {
 
           // Firebase auth state
           homeWidget = StreamBuilder<User>(
-            stream: FirebaseAuth.instance.authStateChanges(),
+            stream: authStateChanges,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.active) {
                 var user = snapshot.data;
