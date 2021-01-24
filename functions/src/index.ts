@@ -2,6 +2,8 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as url from 'url';
 import * as scraper from './comic-scraper';
+import * as helper from './helper';
+import urlExists = require('url-exist');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -23,12 +25,23 @@ export const startComicScrape = functions.https
         );
       }
 
-      const parsedUrl = url.parse(data);
+      // Automatically fixed up provided url if we can
+      const inputUrl = helper.getValidUrl(data);
+
+      const parsedUrl = url.parse(inputUrl);
       const hostName = parsedUrl.hostname;
       if (!hostName) {
         throw new functions.https.HttpsError(
             'invalid-argument',
-            'Invalid Url'
+            'Invalid URL'
+        );
+      }
+
+      // Actually ping url and see if it exists
+      if ((await urlExists(inputUrl)) == false) {
+        throw new functions.https.HttpsError(
+            'invalid-argument',
+            'URL does not exist'
         );
       }
 
@@ -50,7 +63,7 @@ export const startComicScrape = functions.https
       // triggered event onCreate should handle filling out data
       await comicDocRef.create({
         name: hostName,
-        scrapeUrl: data,
+        scrapeUrl: inputUrl,
       });
 
       // Return the name of the new document while import is being triggered
@@ -62,9 +75,11 @@ export const continueComicImport = functions.firestore
     .document('comics/{comicId}')
     .onCreate(async (snapshot, context) => {
       const scrapeUrl = snapshot.get('scrapeUrl');
+
+      // First we'll try simple scraping with CSS selectors, etc.
       const comicPages = await scraper.scrapeComicPages(scrapeUrl);
 
-      // TODO: Error
+      // TODO: Alternate scraping methods if that didn't work
       if (comicPages == null) return;
 
       const collection = snapshot.ref.collection('pages');

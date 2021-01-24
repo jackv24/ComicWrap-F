@@ -36,7 +36,13 @@ async function getPagesFromArchive(archivePageHtml: string) {
 
 async function getArchivePageUrl(currentPageHtml: string) {
   const $ = cheerio.load(currentPageHtml);
-  const archiveLinks = $('.archive > a').toArray().map((element, index) => {
+
+  let archiveSearch = $('.archive > a');
+  if (archiveSearch.length == 0) {
+    archiveSearch = $('#archive');
+  }
+
+  const archiveLinks = archiveSearch.toArray().map((element, index) => {
     return $(element).attr('href');
   });
 
