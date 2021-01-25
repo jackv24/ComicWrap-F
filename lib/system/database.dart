@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/system/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:rxdart/rxdart.dart';
 
 Future<void> createUserData() async {
   User currentUser = FirebaseAuth.instance.currentUser;
@@ -22,19 +23,27 @@ Future<void> deleteUserData() async {
   print('Delete user data');
 }
 
-// https://www.goodbyetohalos.com/comic/prologue-1
-// -> comics > www.goodbyetohalos.com > pages > comic prologue-1
+BehaviorSubject<DocumentSnapshot> _userDocSubject;
 
-Future<Stream<DocumentSnapshot>> getUserStream() async {
-  // Depends on firebase core to be initialised
-  await firebaseInit;
+Stream<DocumentSnapshot> getUserStream() {
+  if (_userDocSubject == null) {
+    _userDocSubject = BehaviorSubject<DocumentSnapshot>();
 
-  User currentUser = FirebaseAuth.instance.currentUser;
-  final doc =
-      FirebaseFirestore.instance.collection('users').doc(currentUser.uid);
+    // NOTE: All this is probably very wrong, but I am confused :(
+    // Depends on firebase core to be initialised
+    firebaseInit.then((firebaseApp) {
+      // Respond to user auth changes
+      FirebaseAuth.instance.authStateChanges().listen((user) {
+        if (user == null) return;
+        // Respond to user doc changes
+        final docRef =
+            FirebaseFirestore.instance.collection('users').doc(user.uid);
+        docRef.snapshots().listen((snapshot) {
+          _userDocSubject.add(snapshot);
+        });
+      });
+    });
+  }
 
-  // Create user data if it doesn't exist (should be created during user sign in)
-  if ((await doc.get()).exists == false) await createUserData();
-
-  return doc.snapshots();
+  return _userDocSubject.stream;
 }

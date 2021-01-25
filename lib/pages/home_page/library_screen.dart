@@ -13,15 +13,6 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  Future<Stream<DocumentSnapshot>> userStreamFuture;
-
-  @override
-  void initState() {
-    userStreamFuture = getUserStream();
-
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,62 +27,50 @@ class _LibraryScreenState extends State<LibraryScreen> {
               onPressed: () => _onAddPressed(context)),
         ],
       ),
-      body: FutureBuilder<Stream<DocumentSnapshot>>(
-        future: userStreamFuture,
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: getUserStream(),
         builder: (context, snapshot) {
-          // Waiting to get user stream
-          if (snapshot.connectionState != ConnectionState.done) {
-            if (snapshot.hasError) {
-              return Text('Error getting user data stream.');
-            } else {
-              return Text('Getting user data stream...');
-            }
+          if (snapshot.hasError) {
+            return Text('Error reading user stream');
           }
 
-          return StreamBuilder<DocumentSnapshot>(
-            stream: snapshot.data,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) return Text('Error reading user stream');
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Text("Loading user data...");
+          }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Text("Loading user data...");
+          var data = snapshot.data.data();
+          List<dynamic> comicPaths = data['library'];
+
+          if (comicPaths == null) return Text('User has no library!');
+
+          return GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 12.0,
+              crossAxisSpacing: 12.0,
+              childAspectRatio: 0.54,
+            ),
+            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+            itemCount: comicPaths.length,
+            itemBuilder: (context, index) {
+              final comic = comicPaths[index];
+              Widget comicWidget;
+              try {
+                comicWidget = ComicInfoCard(comic as DocumentReference);
+              } catch (e) {
+                comicWidget = Text('ERROR: ${e.toString()}');
               }
-
-              var data = snapshot.data.data();
-              List<dynamic> comicPaths = data['library'];
-
-              if (comicPaths == null) return Text('User has no library!');
-
-              return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 12.0,
-                  crossAxisSpacing: 12.0,
-                  childAspectRatio: 0.55,
+              return AnimationConfiguration.staggeredGrid(
+                position: index,
+                columnCount: 3,
+                duration: Duration(milliseconds: 200),
+                delay: Duration(milliseconds: 50),
+                child: ScaleAnimation(
+                  scale: 0.85,
+                  child: FadeInAnimation(
+                    child: comicWidget,
+                  ),
                 ),
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-                itemCount: comicPaths.length,
-                itemBuilder: (context, index) {
-                  final comic = comicPaths[index];
-                  Widget comicWidget;
-                  try {
-                    comicWidget = ComicInfoCard(comic as DocumentReference);
-                  } catch (e) {
-                    comicWidget = Text('ERROR: ${e.toString()}');
-                  }
-                  return AnimationConfiguration.staggeredGrid(
-                    position: index,
-                    columnCount: 3,
-                    duration: Duration(milliseconds: 200),
-                    delay: Duration(milliseconds: 50),
-                    child: ScaleAnimation(
-                      scale: 0.85,
-                      child: FadeInAnimation(
-                        child: comicWidget,
-                      ),
-                    ),
-                  );
-                },
               );
             },
           );

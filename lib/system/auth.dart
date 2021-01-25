@@ -4,10 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'firebase.dart';
+
 bool _isChangingAuth = false;
 bool get isChangingAuth => _isChangingAuth;
 
 Future<void> startAuth() async {
+  await firebaseInit;
+
   await FirebaseAuth.instance.signInAnonymously();
   await createUserData();
 }

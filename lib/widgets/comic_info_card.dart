@@ -2,7 +2,6 @@ import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/pages/comic_page.dart';
 import 'package:flutter/material.dart';
-import 'package:optimized_cached_image/optimized_cached_image.dart';
 
 class ComicInfoCard extends StatefulWidget {
   final DocumentReference docRef;
@@ -92,31 +91,13 @@ class CardImageButton extends StatelessWidget {
         child: Icon(Icons.error, color: Colors.red),
       );
     } else {
-      return OptimizedCacheImage(
-        imageUrl: coverImageUrl,
-        imageBuilder: (context, imageProvider) {
-          return Ink.image(
-            image: imageProvider,
-            fit: BoxFit.cover,
-            child: InkWell(
-              onTap: onTap,
-            ),
-          );
-        },
-        placeholder: (context, url) {
-          return Stack(
-            alignment: AlignmentDirectional.bottomCenter,
-            children: [
-              // Draw a solid element to fade out to image
-              Container(
-                color: Colors.white,
-              ),
-              LinearProgressIndicator(),
-            ],
-          );
-        },
-        errorWidget: (context, url, error) => Icon(Icons.error),
-        fadeInDuration: Duration(seconds: 2),
+      return Ink.image(
+        // TODO: Cached
+        image: NetworkImage(coverImageUrl),
+        fit: BoxFit.cover,
+        child: InkWell(
+          onTap: onTap,
+        ),
       );
     }
   }
