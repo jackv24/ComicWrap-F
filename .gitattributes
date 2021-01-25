@@ -1,0 +1,10 @@
+* text eol=lf
+
+*.gitignore text
+*.gitattributes text
+*.ts text
+*.js text
+*.json text
+
+*.png binary
+*.jpg binary
