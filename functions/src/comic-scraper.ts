@@ -4,47 +4,60 @@ import * as url from 'url';
 
 type CheerioRoot = ReturnType<typeof cheerio.load>;
 
-type ReturnPage = {
+export type ReturnPage = {
   text: string,
   docName: string
 }
 
-export async function scrapeComicPages(pageUrl: string) {
-  const pages = await tryScrapeComicPages(pageUrl);
-  if (!pages) return null;
+type FoundPage = {
+  text: string,
+  link: string | undefined
+}
 
-  return pages.map((value, index) => {
-    if (!value.link) return null;
+export async function scrapeComicPages(
+    pageUrl: string,
+    onPageFound: (page: ReturnPage) => Promise<void>
+) {
+  await tryScrapeComicPages(pageUrl, async (foundPage) => {
+    // Don't save pages without a link
+    if (!foundPage.link) return;
 
-    const parsedUrl = url.parse(value.link);
-    const pageNameSource = parsedUrl.pathname ?? value.link;
+    const parsedUrl = url.parse(foundPage.link);
+    const pageNameSource = parsedUrl.pathname ?? foundPage.link;
 
     // Use page link as document name, since index could change
     // Replace invalid characters with rarely used alternatives
-    const docName = pageNameSource.replace('/', ' ');
+    const docName = pageNameSource.replace(/\//g, ' ').trim();
 
-    return {
-      text: value.text,
+    const returnPage = {
+      text: foundPage.text,
       docName: docName,
     };
-  }).filter((val): val is ReturnPage => !!val);
+
+    // Save page
+    await onPageFound(returnPage);
+  });
+
+  return;
 }
 
-async function tryScrapeComicPages(pageUrl: string) {
+async function tryScrapeComicPages(
+    pageUrl: string,
+    onPageFound: (page: FoundPage) => Promise<void>
+) {
   // Attempt the quick method first
   const pagesFromSimple = await scrapeComicPagesSimple(pageUrl);
   if (pagesFromSimple && pagesFromSimple.length > 0) {
-    return pagesFromSimple;
+    // All pages are found in one go so we'll just loop them
+    for (const page of pagesFromSimple) {
+      await onPageFound(page);
+    }
+    return;
   }
 
   // Quick method failed, try crawling (slow & expensive)
-  const pagesFromCrawling = await scrapeViaCrawling(pageUrl);
-  if (pagesFromCrawling && pagesFromCrawling.length > 0) {
-    return pagesFromCrawling;
-  }
-
-  // Everything failed
-  return null;
+  await scrapeViaCrawling(pageUrl, onPageFound);
+  return;
 }
 
 async function scrapeComicPagesSimple(pageUrl: string) {
@@ -97,7 +110,10 @@ async function getArchivePageUrl(currentPageHtml: string) {
   return null;
 }
 
-async function scrapeViaCrawling(startPageUrl: string) {
+async function scrapeViaCrawling(
+    startPageUrl: string,
+    onPageFound: (page: FoundPage) => Promise<void>
+) {
   // Start from the first page so we can just go until we reach the end
   const startHtml = (await axios.get(startPageUrl)).data;
   const start$ = cheerio.load(startHtml);
@@ -106,21 +122,26 @@ async function scrapeViaCrawling(startPageUrl: string) {
   // Cancel if we couldn't find a link to the first page
   if (!firstNavs || firstNavs.length == 0) return null;
 
-  // Add first page to array and keep looping until we run out of next links
+  // Loop from start until there is no "next" page
   let currentPage = await scrapePage(firstNavs[0]);
-  const pages = [currentPage];
-  while (currentPage.next) {
+  while (currentPage) {
+    // We only need to keep some of the data
+    const foundPage = {
+      text: currentPage.title ?? currentPage.current,
+      link: currentPage.current,
+    };
+
+    // Save found page before moving onto next
+    await onPageFound(foundPage);
+
+    // Cancel loop, we've reached the last page
+    if (!currentPage.next) break;
+
+    // Move onto next page
     currentPage = await scrapePage(currentPage.next);
-    pages.push(currentPage);
   }
 
-  // Some data is only necessary while crawling
-  return pages.map((value, index) => {
-    return {
-      text: value.title ?? value.current,
-      link: value.current,
-    };
-  });
+  return;
 }
 
 async function scrapePage(pageUrl: string) {

@@ -50,7 +50,10 @@ describe('comic-scraper', () => {
         stubWebsite();
 
         // Execute
-        const pages = await scraper.scrapeComicPages('https://www.goodbyetohalos.com/comic/archive');
+        const pages: scraper.ReturnPage[] = [];
+        await scraper.scrapeComicPages('https://www.goodbyetohalos.com/comic/archive', async (page) => {
+          pages.push(page);
+        });
 
         // Test: compare arrays with deep equality
         expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
@@ -61,7 +64,10 @@ describe('comic-scraper', () => {
         stubWebsite();
 
         // Execute
-        const pages = await scraper.scrapeComicPages('https://www.goodbyetohalos.com/');
+        const pages: scraper.ReturnPage[] = [];
+        await scraper.scrapeComicPages('https://www.goodbyetohalos.com/', async (page) => {
+          pages.push(page);
+        });
 
         // Test: compare arrays with deep equality
         expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
@@ -76,7 +82,7 @@ describe('comic-scraper', () => {
         get.withArgs('https://www.peritale.com/comic/archive').resolves(Promise.resolve({
           data: `
           <select name="comic">
-            <option value="comic/page-1">Page 1</option>
+            <option value="/comic/page-1">Page 1</option>
           </select>
           `,
         }));
@@ -98,7 +104,10 @@ describe('comic-scraper', () => {
         stubWebsite();
 
         // Execute
-        const pages = await scraper.scrapeComicPages('https://www.peritale.com/comic/archive');
+        const pages: scraper.ReturnPage[] = [];
+        await scraper.scrapeComicPages('https://www.peritale.com/comic/archive', async (page) => {
+          pages.push(page);
+        });
 
         // Test: compare arrays with deep equality
         expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
@@ -109,7 +118,10 @@ describe('comic-scraper', () => {
         stubWebsite();
 
         // Execute
-        const pages = await scraper.scrapeComicPages('https://www.peritale.com/');
+        const pages: scraper.ReturnPage[] = [];
+        await scraper.scrapeComicPages('https://www.peritale.com/', async (page) => {
+          pages.push(page);
+        });
 
         // Test: compare arrays with deep equality
         expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);

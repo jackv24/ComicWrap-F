@@ -78,24 +78,22 @@ export const continueComicImport = functions
     .document('comics/{comicId}')
     .onCreate(async (snapshot, context) => {
       const scrapeUrl = snapshot.get('scrapeUrl');
-
-      // First we'll try simple scraping with CSS selectors, etc.
-      const comicPages = await scraper.scrapeComicPages(scrapeUrl);
-
-      // Scraping failed
-      if (comicPages == null) return;
-
       const collection = snapshot.ref.collection('pages');
 
-      for (let i = 0; i < comicPages.length; i++) {
-        const page = comicPages[i];
+      // TODO: Replace index with scrape time?
+      let pageCount = 0;
 
-        // Write document
-        await collection.doc(page.docName).create({
-          index: i,
-          text: page.text,
-        });
-      }
+      // Scrape pages, saving as we go
+      await scraper.scrapeComicPages(
+          scrapeUrl, async (page) => {
+            // Write document
+            await collection.doc(page.docName).create({
+              index: pageCount,
+              text: page.text,
+            });
+
+            pageCount++;
+          });
 
       return;
     });
