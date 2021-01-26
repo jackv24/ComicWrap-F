@@ -2,6 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/pages/comic_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class ComicInfoCard extends StatefulWidget {
   final DocumentReference docRef;
@@ -76,7 +77,7 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
   }
 }
 
-class CardImageButton extends StatelessWidget {
+class CardImageButton extends StatefulWidget {
   final String coverImageUrl;
   final Function() onTap;
 
@@ -84,19 +85,59 @@ class CardImageButton extends StatelessWidget {
       : super(key: key);
 
   @override
+  _CardImageButtonState createState() => _CardImageButtonState();
+}
+
+class _CardImageButtonState extends State<CardImageButton> {
+  FileInfo _cachedImage;
+  DownloadProgress _imageDownloadProgress;
+
+  @override
+  void initState() {
+    // Stream for cached cover image
+    DefaultCacheManager()
+        .getImageFile(widget.coverImageUrl, withProgress: true)
+        .listen((fileResponse) {
+      if (fileResponse is FileInfo) {
+        setState(() {
+          _cachedImage = fileResponse;
+          _imageDownloadProgress = null;
+        });
+      } else if (fileResponse is DownloadProgress) {
+        setState(() {
+          _imageDownloadProgress = fileResponse;
+        });
+      }
+    });
+
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (coverImageUrl?.isEmpty ?? true) {
-      return InkWell(
-        onTap: onTap,
-        child: Icon(Icons.error, color: Colors.red),
-      );
+    if (_cachedImage == null) {
+      if (_imageDownloadProgress == null) {
+        return InkWell(
+          onTap: widget.onTap,
+          child: Icon(Icons.error, color: Colors.red),
+        );
+      } else {
+        return Stack(
+          alignment: AlignmentDirectional.bottomCenter,
+          children: [
+            LinearProgressIndicator(
+              value: _imageDownloadProgress.progress,
+              minHeight: 8.0,
+            ),
+          ],
+        );
+      }
     } else {
       return Ink.image(
-        // TODO: Cached
-        image: NetworkImage(coverImageUrl),
+        image: FileImage(_cachedImage.file),
         fit: BoxFit.cover,
         child: InkWell(
-          onTap: onTap,
+          onTap: widget.onTap,
         ),
       );
     }
