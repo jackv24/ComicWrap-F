@@ -53,7 +53,7 @@ describe('comic-scraper', () => {
         const pages = await scraper.scrapeComicPages('https://www.goodbyetohalos.com/comic/archive');
 
         // Test: compare arrays with deep equality
-        expect(pages).to.eql([{text: 'Page 1', link: 'comic/page-1'}]);
+        expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
       });
 
       it('finds page list from non-archive', async () => {
@@ -64,7 +64,7 @@ describe('comic-scraper', () => {
         const pages = await scraper.scrapeComicPages('https://www.goodbyetohalos.com/');
 
         // Test: compare arrays with deep equality
-        expect(pages).to.eql([{text: 'Page 1', link: 'comic/page-1'}]);
+        expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
       });
     });
 
@@ -101,7 +101,7 @@ describe('comic-scraper', () => {
         const pages = await scraper.scrapeComicPages('https://www.peritale.com/comic/archive');
 
         // Test: compare arrays with deep equality
-        expect(pages).to.eql([{text: 'Page 1', link: 'comic/page-1'}]);
+        expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
       });
 
       it('finds page list from non-archive', async () => {
@@ -112,7 +112,7 @@ describe('comic-scraper', () => {
         const pages = await scraper.scrapeComicPages('https://www.peritale.com/');
 
         // Test: compare arrays with deep equality
-        expect(pages).to.eql([{text: 'Page 1', link: 'comic/page-1'}]);
+        expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
       });
     });
   });

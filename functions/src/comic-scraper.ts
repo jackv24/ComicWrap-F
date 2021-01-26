@@ -1,9 +1,36 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import * as url from 'url';
 
 type CheerioRoot = ReturnType<typeof cheerio.load>;
 
+type ReturnPage = {
+  text: string,
+  docName: string
+}
+
 export async function scrapeComicPages(pageUrl: string) {
+  const pages = await tryScrapeComicPages(pageUrl);
+  if (!pages) return null;
+
+  return pages.map((value, index) => {
+    if (!value.link) return null;
+
+    const parsedUrl = url.parse(value.link);
+    const pageNameSource = parsedUrl.pathname ?? value.link;
+
+    // Use page link as document name, since index could change
+    // Replace invalid characters with rarely used alternatives
+    const docName = pageNameSource.replace('/', ' ');
+
+    return {
+      text: value.text,
+      docName: docName,
+    };
+  }).filter((val): val is ReturnPage => !!val);
+}
+
+async function tryScrapeComicPages(pageUrl: string) {
   // Attempt the quick method first
   const pagesFromSimple = await scrapeComicPagesSimple(pageUrl);
   if (pagesFromSimple && pagesFromSimple.length > 0) {
@@ -72,7 +99,7 @@ async function getArchivePageUrl(currentPageHtml: string) {
 
 async function scrapeViaCrawling(startPageUrl: string) {
   // Start from the first page so we can just go until we reach the end
-  const startHtml = await axios.get(startPageUrl);
+  const startHtml = (await axios.get(startPageUrl)).data;
   const start$ = cheerio.load(startHtml);
   const firstNavs = getLinksFromElements(start$, '[class*="first"]');
 
@@ -99,7 +126,7 @@ async function scrapeViaCrawling(startPageUrl: string) {
 async function scrapePage(pageUrl: string) {
   console.log('Scraping page: ' + pageUrl);
 
-  const html = await axios.get(pageUrl);
+  const html = (await axios.get(pageUrl)).data;
   const $ = cheerio.load(html);
 
   const prevNavs = getLinksFromElements($, '[class*="prev"]');

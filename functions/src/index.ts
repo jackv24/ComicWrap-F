@@ -71,7 +71,10 @@ export const startComicScrape = functions.https
     });
 
 // Takes over importing the comic in the background after startComicScrape
-export const continueComicImport = functions.firestore
+export const continueComicImport = functions
+    .runWith({
+      timeoutSeconds: 540,
+    }).firestore
     .document('comics/{comicId}')
     .onCreate(async (snapshot, context) => {
       const scrapeUrl = snapshot.get('scrapeUrl');
@@ -79,21 +82,16 @@ export const continueComicImport = functions.firestore
       // First we'll try simple scraping with CSS selectors, etc.
       const comicPages = await scraper.scrapeComicPages(scrapeUrl);
 
-      // TODO: Alternate scraping methods if that didn't work
+      // Scraping failed
       if (comicPages == null) return;
 
       const collection = snapshot.ref.collection('pages');
 
       for (let i = 0; i < comicPages.length; i++) {
         const page = comicPages[i];
-        if (!page.link) continue;
-
-        // Use page link as document name, since index could change
-        // Replace invalid characters with rarely used alternatives
-        const docName = page.link.replace('/', ' ');
 
         // Write document
-        await collection.doc(docName).create({
+        await collection.doc(page.docName).create({
           index: i,
           text: page.text,
         });
