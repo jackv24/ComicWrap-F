@@ -39,7 +39,7 @@ android {
 
     defaultConfig {
         applicationId "com.jackvine.comicwrapf"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 29
         multiDexEnabled true
         versionCode flutterVersionCode.toInteger()

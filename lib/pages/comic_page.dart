@@ -85,7 +85,7 @@ class _ComicPageState extends State<ComicPage> {
         );
       },
       openBuilder: (context, closeFunc) {
-        return ComicWebPage(page);
+        return ComicWebPage(widget.doc, page);
       },
     );
   }
