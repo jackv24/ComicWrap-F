@@ -21,4 +21,40 @@ describe('helper', () => {
       expect(output).to.eql('https://www.test.com');
     });
   });
+
+  describe('separatePageTitle', () => {
+    it('"ComicName - PageTitle" succeeds', async () => {
+      // Execute
+      const titleInfo = helper.separatePageTitle('ComicName - PageTitle');
+
+      // Test
+      expect(titleInfo).to.eql({
+        comicTitle: 'ComicName',
+        pageTitle: 'PageTitle',
+      });
+    });
+
+    it('"ComicName - PageTitle - Subtitle" succeeds', async () => {
+      // Execute
+      const titleInfo = helper
+          .separatePageTitle('ComicName - PageTitle - Subtitle');
+
+      // Test
+      expect(titleInfo).to.eql({
+        comicTitle: 'ComicName',
+        pageTitle: 'PageTitle - Subtitle',
+      });
+    });
+
+    it('"ComicName" fails properly', async () => {
+      // Execute
+      const titleInfo = helper.separatePageTitle('ComicName');
+
+      // Test
+      expect(titleInfo).to.eql({
+        comicTitle: null,
+        pageTitle: 'ComicName',
+      });
+    });
+  });
 });

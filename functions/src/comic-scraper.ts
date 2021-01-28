@@ -6,12 +6,14 @@ type CheerioRoot = ReturnType<typeof cheerio.load>;
 
 export type ReturnPage = {
   text: string,
-  docName: string
+  docName: string,
+  wasCrawled: boolean,
 }
 
 type FoundPage = {
   text: string,
-  link: string | undefined
+  link: string | undefined,
+  wasCrawled: boolean,
 }
 
 export async function scrapeComicPages(
@@ -32,6 +34,7 @@ export async function scrapeComicPages(
     const returnPage = {
       text: foundPage.text,
       docName: docName,
+      wasCrawled: foundPage.wasCrawled,
     };
 
     // Save page
@@ -87,6 +90,7 @@ async function getPagesFromArchive(archivePageHtml: string) {
     return {
       text: val.text(),
       link: val.attr('value'),
+      wasCrawled: false,
     };
   });
 
@@ -129,6 +133,7 @@ async function scrapeViaCrawling(
     const foundPage = {
       text: currentPage.title ?? currentPage.current,
       link: currentPage.current,
+      wasCrawled: true,
     };
 
     // Save found page before moving onto next

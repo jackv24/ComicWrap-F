@@ -83,17 +83,43 @@ export const continueComicImport = functions
       // TODO: Replace index with scrape time?
       let pageCount = 0;
 
+      let foundComicName = false;
+      let wasAnyPageCrawled = false;
+
       // Scrape pages, saving as we go
       await scraper.scrapeComicPages(
           scrapeUrl, async (page) => {
+            let pageTitle = page.text;
+
+            if (page.wasCrawled) {
+              wasAnyPageCrawled = true;
+
+              // Crawled page titles would contain the comic name also
+              const splitTitle = helper.separatePageTitle(pageTitle);
+              pageTitle = splitTitle.pageTitle;
+
+              // Set comic name if it hasn't been set already
+              if (!foundComicName && splitTitle.comicTitle) {
+                foundComicName = true;
+                await snapshot.ref.set(
+                    {name: splitTitle.comicTitle},
+                    {merge: true},
+                );
+              }
+            }
+
             // Write document
             await collection.doc(page.docName).create({
               index: pageCount,
-              text: page.text,
+              text: pageTitle,
             });
 
             pageCount++;
           });
+
+      if (!foundComicName && !wasAnyPageCrawled) {
+        // TODO: load a page and get name from there
+      }
 
       return;
     });
