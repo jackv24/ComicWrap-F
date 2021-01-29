@@ -57,4 +57,15 @@ describe('helper', () => {
       });
     });
   });
+
+  describe('constructPageUrl', () => {
+    it('"www.comicname.com, comic page" succeeds', async () => {
+      // Execute
+      const pageUrl =
+          helper.constructPageUrl('www.comicname.com', 'comic page');
+
+      // Test
+      expect(pageUrl).to.eql('https://www.comicname.com/comic/page');
+    });
+  });
 });

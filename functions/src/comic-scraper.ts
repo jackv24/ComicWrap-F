@@ -149,7 +149,7 @@ async function scrapeViaCrawling(
   return;
 }
 
-async function scrapePage(pageUrl: string) {
+export async function scrapePage(pageUrl: string) {
   console.log('Scraping page: ' + pageUrl);
 
   const html = (await axios.get(pageUrl)).data;
@@ -174,4 +174,16 @@ function getLinksFromElements($: CheerioRoot, selector: string) {
     return $(element).attr('href');
   })
       .filter((item) => item) as string[];
+}
+
+export async function findImageUrlForPage(pageUrl: string) {
+  const html = (await axios.get(pageUrl)).data;
+  const $ = cheerio.load(html);
+
+  const imgUrls = $('img[id*="comic"]').toArray().map((element, index) => {
+    return $(element).attr('src');
+  })
+      .filter((item) => item) as string[];
+
+  return imgUrls.length > 0 ? imgUrls[0] : null;
 }

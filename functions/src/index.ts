@@ -84,7 +84,8 @@ export const continueComicImport = functions
       let pageCount = 0;
 
       let foundComicName = false;
-      let wasAnyPageCrawled = false;
+      let coverImageUrl: string | null = null;
+      let foundGoodCover = false;
 
       // Scrape pages, saving as we go
       await scraper.scrapeComicPages(
@@ -92,8 +93,6 @@ export const continueComicImport = functions
             let pageTitle = page.text;
 
             if (page.wasCrawled) {
-              wasAnyPageCrawled = true;
-
               // Crawled page titles would contain the comic name also
               const splitTitle = helper.separatePageTitle(pageTitle);
               pageTitle = splitTitle.pageTitle;
@@ -108,6 +107,28 @@ export const continueComicImport = functions
               }
             }
 
+            if (!foundGoodCover) {
+              // Prefer images from pages more likely to contain a cover image
+              const lcPageTitle = pageTitle.toLowerCase();
+              const couldBeCover = lcPageTitle.includes('cover') ||
+                  lcPageTitle.includes('title') ||
+                  lcPageTitle.includes('promo');
+
+              // Try extract cover image from page (not every page)
+              if (!coverImageUrl || couldBeCover) {
+                const pageUrl =
+                    helper.constructPageUrl(snapshot.id, page.docName);
+                const imageUrl = await scraper.findImageUrlForPage(pageUrl);
+                if (imageUrl) {
+                  coverImageUrl = imageUrl;
+
+                  // Can completely stop searching when we find a good candidate
+                  if (couldBeCover) foundGoodCover = true;
+                }
+              }
+            }
+
+
             // Write document
             await collection.doc(page.docName).create({
               index: pageCount,
@@ -117,8 +138,16 @@ export const continueComicImport = functions
             pageCount++;
           });
 
-      if (!foundComicName && !wasAnyPageCrawled) {
-        // TODO: load a page and get name from there
+      // If name wasn't found, load a page and get name from there
+      if (!foundComicName) {
+        const page = await scraper.scrapePage(scrapeUrl);
+        if (page.title) {
+          const splitTitle = helper.separatePageTitle(page.title);
+          await snapshot.ref.set(
+              {name: splitTitle.comicTitle, coverImageUrl: coverImageUrl},
+              {merge: true},
+          );
+        }
       }
 
       return;

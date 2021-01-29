@@ -50,7 +50,11 @@ describe('comic-scraper', () => {
         });
 
         // Test: compare arrays with deep equality
-        expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
+        expect(pages).to.eql([{
+          text: 'Page 1',
+          docName: 'comic page-1',
+          wasCrawled: false,
+        }]);
       });
 
       it('finds page list from non-archive', async () => {
@@ -61,7 +65,11 @@ describe('comic-scraper', () => {
         });
 
         // Test: compare arrays with deep equality
-        expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
+        expect(pages).to.eql([{
+          text: 'Page 1',
+          docName: 'comic page-1',
+          wasCrawled: false,
+        }]);
       });
     });
 
@@ -74,7 +82,11 @@ describe('comic-scraper', () => {
         });
 
         // Test: compare arrays with deep equality
-        expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
+        expect(pages).to.eql([{
+          text: 'Page 1',
+          docName: 'comic page-1',
+          wasCrawled: false,
+        }]);
       });
 
       it('finds page list from non-archive', async () => {
@@ -85,7 +97,11 @@ describe('comic-scraper', () => {
         });
 
         // Test: compare arrays with deep equality
-        expect(pages).to.eql([{text: 'Page 1', docName: 'comic page-1'}]);
+        expect(pages).to.eql([{
+          text: 'Page 1',
+          docName: 'comic page-1',
+          wasCrawled: false,
+        }]);
       });
     });
 
@@ -102,14 +118,17 @@ describe('comic-scraper', () => {
           {
             text: 'Misfile - Hell High - 2019-08-29',
             docName: 'hell-high 2019-08-29',
+            wasCrawled: true,
           },
           {
             text: 'Misfile - Hell High - 2019-08-30',
             docName: 'hell-high 2019-08-30',
+            wasCrawled: true,
           },
           {
             text: 'Misfile - Hell High - 2019-08-31',
             docName: 'hell-high 2019-08-31',
+            wasCrawled: true,
           },
         ]);
       });
