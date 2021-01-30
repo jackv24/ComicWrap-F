@@ -1,8 +1,8 @@
-import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:comicwrap_f/pages/comic_web_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import 'comic_web_page.dart';
 
 class ComicPage extends StatefulWidget {
   final DocumentSnapshot doc;
@@ -77,15 +77,12 @@ class _ComicPageState extends State<ComicPage> {
   Widget _listItemBuilder(BuildContext context, int index) {
     final page = pages[index];
     final data = page.data();
-    return OpenContainer(
-      closedBuilder: (context, openFunc) {
-        return ListTile(
-          title: Text(data['text'] ?? '!!Page $index!!'),
-          onTap: openFunc,
-        );
-      },
-      openBuilder: (context, closeFunc) {
-        return ComicWebPage(widget.doc, page);
+    return ListTile(
+      title: Text(data['text'] ?? '!!Page $index!!'),
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => ComicWebPage(widget.doc, page),
+        ));
       },
     );
   }
