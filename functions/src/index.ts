@@ -4,6 +4,7 @@ import * as url from 'url';
 import * as scraper from './comic-scraper';
 import * as helper from './helper';
 import urlExists = require('url-exist');
+import {firestore} from 'firebase-admin';
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -46,22 +47,23 @@ export const startComicScrape = functions.https
       }
 
       // Reference to document of comic (existing or yet to be created below)
-      const comicDocRef = db.doc('comics/' + hostName);
+      const sharedComicRef = db.collection('comics').doc(hostName);
 
       // Add comic to calling user's library
       const userDocRef = db.collection('users').doc(context.auth.uid);
-      const userDoc = await userDocRef.get();
-      const library =
-        userDoc.get('library') as FirebaseFirestore.DocumentReference[] ?? [];
-      library.push(comicDocRef);
-      await userDocRef.set({library: library}, {merge: true});
+      const userComicRef = userDocRef.collection('comics').doc(hostName);
+      userComicRef.create({
+        // For easy access, even though doc names are the same
+        sharedDoc: sharedComicRef,
+        lastReadTime: firestore.Timestamp.now(),
+      });
 
       // Don't do anything more if document exists, just return the name
-      if ((await comicDocRef.get()).exists) return hostName;
+      if ((await sharedComicRef.get()).exists) return hostName;
 
       // Create basic document so it exists for client to subscribe to,
       // triggered event onCreate should handle filling out data
-      await comicDocRef.create({
+      await sharedComicRef.create({
         name: hostName,
         scrapeUrl: inputUrl,
       });

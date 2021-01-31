@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:rxdart/rxdart.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({Key key}) : super(key: key);
@@ -13,6 +16,34 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
+  BehaviorSubject<QuerySnapshot> _userComicsSubject;
+  StreamSubscription _userDocComicsSub;
+
+  @override
+  void initState() {
+    // Keep latest event for build
+    _userComicsSubject = BehaviorSubject<QuerySnapshot>();
+
+    // User can change through authentication
+    getUserStream().listen((userDocSnapshot) async {
+      // Cancel previous stream sub before subbing to new one
+      if (_userDocComicsSub != null) {
+        await _userDocComicsSub.cancel();
+      }
+
+      // If user changes sub to new user comics collection
+      _userDocComicsSub = userDocSnapshot.reference
+          .collection('comics')
+          .orderBy('lastReadTime', descending: true)
+          .snapshots()
+          .listen((comicsCollectionSnap) {
+        _userComicsSubject.add(comicsCollectionSnap);
+      });
+    });
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,21 +58,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
               onPressed: () => _onAddPressed(context)),
         ],
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: getUserStream(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _userComicsSubject.stream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Text('Error reading user stream');
+            return Text('Error reading user comics stream');
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Text("Loading user data...");
+            return Text("Loading user comics stream...");
           }
 
-          var data = snapshot.data.data();
-          List<dynamic> comicPaths = data['library'];
-
-          if (comicPaths == null) return Text('User has no library!');
+          final userComicDocs = snapshot.data.docs;
+          if (userComicDocs.length == 0) return Text('User has no library!');
 
           return GridView.builder(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -51,12 +80,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
               childAspectRatio: 0.54,
             ),
             padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-            itemCount: comicPaths.length,
+            itemCount: userComicDocs.length,
             itemBuilder: (context, index) {
-              final comic = comicPaths[index];
+              final userComic = userComicDocs[index];
+              final userComicData = userComic.data();
+              final DocumentReference sharedComic = userComicData['sharedDoc'];
+
               Widget comicWidget;
               try {
-                comicWidget = ComicInfoCard(comic as DocumentReference);
+                comicWidget = ComicInfoCard(sharedComic);
               } catch (e) {
                 comicWidget = Text('ERROR: ${e.toString()}');
               }

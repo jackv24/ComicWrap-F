@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -13,8 +14,15 @@ class ComicPage extends StatefulWidget {
   _ComicPageState createState() => _ComicPageState();
 }
 
+class _PagePair {
+  final DocumentSnapshot sharedPage;
+  final Future<DocumentSnapshot> userPageFuture;
+
+  const _PagePair(this.sharedPage, this.userPageFuture);
+}
+
 class _ComicPageState extends State<ComicPage> {
-  List<DocumentSnapshot> pages = [];
+  List<_PagePair> pages = [];
   bool isLoading = false;
   bool hasMore = true;
   DocumentSnapshot lastDocument;
@@ -76,13 +84,35 @@ class _ComicPageState extends State<ComicPage> {
 
   Widget _listItemBuilder(BuildContext context, int index) {
     final page = pages[index];
-    final data = page.data();
-    return ListTile(
-      title: Text(data['text'] ?? '!!Page $index!!'),
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => ComicWebPage(widget.doc, page),
-        ));
+    final data = page.sharedPage.data();
+    final title = data['text'] ?? '!!Page $index!!';
+
+    // Wait to get read state of pages
+    return FutureBuilder<DocumentSnapshot>(
+      future: page.userPageFuture,
+      builder: (context, snapshot) {
+        Widget trailing;
+        if (snapshot.hasError) {
+          trailing = Icon(Icons.error);
+        }
+        if (snapshot.connectionState != ConnectionState.done) {
+          trailing = Icon(Icons.refresh);
+        }
+
+        // Different appearance for read pages
+        final textStyle = (snapshot.data?.exists ?? false)
+            ? TextStyle(color: Colors.grey)
+            : null;
+
+        return ListTile(
+          title: Text(title, style: textStyle),
+          trailing: trailing,
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => ComicWebPage(widget.doc, page.sharedPage),
+            ));
+          },
+        );
       },
     );
   }
@@ -133,7 +163,24 @@ class _ComicPageState extends State<ComicPage> {
     }
 
     lastDocument = docs.last;
-    pages.addAll(docs);
+
+    // Add all new pages
+    docs.forEach((pageDoc) {
+      // User should be authenticated
+      final userId = FirebaseAuth.instance.currentUser.uid;
+
+      // Start read user doc state here so we only do it once
+      final readDocFuture = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('comics')
+          .doc(widget.doc.id)
+          .collection('readPages')
+          .doc(pageDoc.id)
+          .get();
+
+      pages.add(_PagePair(pageDoc, readDocFuture));
+    });
 
     setState(() {
       isLoading = false;

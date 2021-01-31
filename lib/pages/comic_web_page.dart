@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -69,13 +70,36 @@ class _ComicWebPageState extends State<ComicWebPage> {
               .get()
               .asStream()
               .listen((event) {
+            // Update page display
             setState(() {
               newPage = event;
               print('Got data for page: ' + pageId);
             });
+
+            // Don't need to wait for this, just let it happen whenever
+            _markPageRead(newPage);
           });
         },
       ),
     );
+  }
+
+  void _markPageRead(DocumentSnapshot doc) async {
+    // Pretty safe to assume user is authenticated if they made it here
+    final userId = FirebaseAuth.instance.currentUser.uid;
+
+    final userPageRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('comics')
+        .doc(widget.comicDoc.id)
+        .collection('readPages')
+        .doc(doc.id);
+
+    // Creating user page doc will mark as read
+    await userPageRef.set({
+      // Will show indicator for new pages
+      'isNew': false,
+    }, SetOptions(merge: true));
   }
 }
