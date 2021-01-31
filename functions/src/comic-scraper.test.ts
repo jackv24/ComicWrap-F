@@ -24,13 +24,18 @@ describe('comic-scraper', () => {
 
         // Replace spaces with /
         const urlPath = name.replace(/ /g, '/');
+        console.log('Stubbing URL path: ' + urlPath);
 
-        // Root url has / on the end, others don't
-        const url = urlPath.includes('/') ? `https://${urlPath}` : `https://${urlPath}/`;
-        console.log('Stubbing URL: ' + url);
+        // Match possible url variants
+        const urls = [
+          `https://${urlPath}`,
+          `https://${urlPath}/`,
+          `http://${urlPath}`,
+          `http://${urlPath}/`,
+        ];
 
         // Read file when url matching file is requested
-        get.withArgs(url).resolves(Promise.resolve({
+        get.withArgs(sinon.match.in(urls)).resolves(Promise.resolve({
           data: fs.readFileSync(filePath).toString(),
         }));
       }
@@ -131,6 +136,43 @@ describe('comic-scraper', () => {
             wasCrawled: true,
           },
         ]);
+      });
+
+      it('find image url for page', async () => {
+        const imageUrl = await scraper.findImageUrlForPage('https://www.misfile.com/');
+
+        expect(imageUrl).to.equal('https://www.misfile.com/comics/1611610701-page341.jpg');
+      });
+    });
+
+    describe('killsixbilliondemons.com', () => {
+      it('finds pages', async () => {
+        // Execute
+        const pages: scraper.ReturnPage[] = [];
+        await scraper.scrapeComicPages('https://killsixbilliondemons.com/', async (page) => {
+          pages.push(page);
+        });
+
+        // Test: compare arrays with deep equality
+        expect(pages).to.eql([
+          {
+            // eslint-disable-next-line max-len
+            text: 'Kill Six Billion Demons » KILL SIX BILLION DEMONS – Chapter 1',
+            docName: 'comic kill-six-billion-demons-chapter-1',
+            wasCrawled: true,
+          },
+          {
+            text: 'Kill Six Billion Demons » KSBD 1-1',
+            docName: 'comic ksbd-chapter-1-1',
+            wasCrawled: true,
+          },
+        ]);
+      });
+
+      it('find image url for page', async () => {
+        const imageUrl = await scraper.findImageUrlForPage('https://killsixbilliondemons.com/');
+
+        expect(imageUrl).to.equal('https://killsixbilliondemons.com/wp-content/uploads/2021/01/BOI26.jpg');
       });
     });
   });

@@ -121,13 +121,13 @@ async function scrapeViaCrawling(
   // Start from the first page so we can just go until we reach the end
   const startHtml = (await axios.get(startPageUrl)).data;
   const start$ = cheerio.load(startHtml);
-  const firstNavs = getLinksFromElements(start$, '[class*="first"]');
+  const firstNav = getLinkFromElements(start$, '[class*="first"]');
 
   // Cancel if we couldn't find a link to the first page
-  if (!firstNavs || firstNavs.length == 0) return null;
+  if (!firstNav) return null;
 
   // Loop from start until there is no "next" page
-  let currentPage = await scrapePage(firstNavs[0]);
+  let currentPage = await scrapePage(firstNav);
   while (currentPage) {
     // We only need to keep some of the data
     const foundPage = {
@@ -152,38 +152,61 @@ async function scrapeViaCrawling(
 export async function scrapePage(pageUrl: string) {
   console.log('Scraping page: ' + pageUrl);
 
-  const html = (await axios.get(pageUrl)).data;
+  const webPage = await axios.get(pageUrl);
+  const html = webPage.data;
   const $ = cheerio.load(html);
 
-  const prevNavs = getLinksFromElements($, '[class*="prev"]');
-  const nextNavs = getLinksFromElements($, '[class*="next"]');
+  const prevLink = getLinkFromElements($, '[class*="prev"]');
+  const nextLink = getLinkFromElements($, '[class*="next"]');
   const titles = $('title').toArray().map((element, index) => {
     return $(element).text();
   });
 
   return {
     title: titles.length > 0 ? titles[0] : null,
-    previous: prevNavs.length > 0 ? prevNavs[0] : null,
-    next: nextNavs.length > 0 ? nextNavs[0] : null,
+    previous: prevLink,
+    next: nextLink,
     current: pageUrl,
   };
 }
 
-function getLinksFromElements($: CheerioRoot, selector: string) {
-  return $(selector).toArray().map((element, index) => {
-    return $(element).attr('href');
-  })
-      .filter((item) => item) as string[];
+function getLinkFromElements($: CheerioRoot, selector: string) {
+  const items: string[] = [];
+
+  for (const element of $(selector).toArray()) {
+    const elementRef = $(element);
+    // Only elements with a link are valid
+    const link = elementRef.attr('href');
+    if (!link) continue;
+
+    // Add to fallback array
+    items.push(link);
+
+    // Prefer linking to page, rather than chapter
+    const text = elementRef.text() ?? elementRef.attr('title');
+    if (!text) continue;
+    const textLower = text.toLowerCase();
+    if (textLower.includes('page')) return link;
+  }
+
+  return items.length > 0 ? items[0] : null;
 }
 
 export async function findImageUrlForPage(pageUrl: string) {
   const html = (await axios.get(pageUrl)).data;
   const $ = cheerio.load(html);
 
-  const imgUrls = $('img[id*="comic"]').toArray().map((element, index) => {
-    return $(element).attr('src');
-  })
-      .filter((item) => item) as string[];
+  // img with ID
+  for (const element of $('img[id*="comic"]').toArray()) {
+    const src = $(element).attr('src');
+    if (src) return src;
+  }
 
-  return imgUrls.length > 0 ? imgUrls[0] : null;
+  // img as a child (any level) of div with ID
+  for (const element of $('[id*="comic"] img').toArray()) {
+    const src = $(element).attr('src');
+    if (src) return src;
+  }
+
+  return null;
 }

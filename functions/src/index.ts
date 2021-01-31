@@ -107,6 +107,7 @@ export const continueComicImport = functions
               }
             }
 
+            // Completely stop searching for cover if we found a "good" one
             if (!foundGoodCover) {
               // Prefer images from pages more likely to contain a cover image
               const lcPageTitle = pageTitle.toLowerCase();
@@ -124,6 +125,14 @@ export const continueComicImport = functions
 
                   // Can completely stop searching when we find a good candidate
                   if (couldBeCover) foundGoodCover = true;
+
+                  console.log('Found cover image: ' + pageUrl);
+
+                  // Update image immediately since crawling may take a while
+                  await snapshot.ref.set(
+                      {coverImageUrl: coverImageUrl},
+                      {merge: true},
+                  );
                 }
               }
             }
@@ -144,7 +153,7 @@ export const continueComicImport = functions
         if (page.title) {
           const splitTitle = helper.separatePageTitle(page.title);
           await snapshot.ref.set(
-              {name: splitTitle.comicTitle, coverImageUrl: coverImageUrl},
+              {name: splitTitle.comicTitle},
               {merge: true},
           );
         }
