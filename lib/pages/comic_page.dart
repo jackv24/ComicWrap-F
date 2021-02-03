@@ -21,14 +21,20 @@ class _PagePair {
   const _PagePair(this.sharedPage, this.userPageFuture);
 }
 
+enum _ScrollDirection {
+  none,
+  down,
+  up,
+}
+
 class _ComicPageState extends State<ComicPage> {
   List<_PagePair> pages = [];
-  bool isLoading = false;
-  bool hasMore = true;
-  DocumentSnapshot lastDocument;
   ScrollController _scrollController;
+  bool isLoading = false;
   final int initialDocLimit = 20;
   final int moreDocLimit = 10;
+  bool hasMoreDown = true;
+  bool hasMoreUp = true;
 
   Query _pagesQuery;
 
@@ -41,7 +47,7 @@ class _ComicPageState extends State<ComicPage> {
         .orderBy('index', descending: true);
 
     // Scrollview won't build if we don't have any pages
-    _getPages();
+    _getPages(_ScrollDirection.none);
 
     super.initState();
   }
@@ -52,13 +58,22 @@ class _ComicPageState extends State<ComicPage> {
     final data = doc.data();
 
     _scrollController.addListener(() {
-      double maxScroll = _scrollController.position.maxScrollExtent;
-      double currentScroll = _scrollController.position.pixels;
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final minScroll = _scrollController.position.minScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
 
       // Fetch more documents if user scrolls 20% of device height
-      double delta = MediaQuery.of(context).size.height * 0.2;
-      if (maxScroll - currentScroll <= delta) {
-        _getPages();
+      final delta = MediaQuery.of(context).size.height * 0.2;
+
+      final distanceToMax = maxScroll - currentScroll;
+      final distanceToMin = currentScroll - minScroll;
+
+      //print('Delta: $delta, To Min: $distanceToMin, To Max: $distanceToMax');
+
+      if (distanceToMax <= delta) {
+        _getPages(_ScrollDirection.down);
+      } else if (distanceToMin <= delta) {
+        _getPages(_ScrollDirection.up);
       }
     });
 
@@ -134,51 +149,70 @@ class _ComicPageState extends State<ComicPage> {
     );
   }
 
-  void _getPages() async {
-    if (!hasMore) {
-      return;
-    }
-
+  void _getPages(_ScrollDirection scrollDir,
+      {DocumentSnapshot centredOnDoc}) async {
     if (isLoading) {
       return;
     }
 
-    print('Loading more pages');
+    switch (scrollDir) {
+      // Reset hasMore flags
+      case _ScrollDirection.none:
+        hasMoreDown = true;
+        hasMoreUp = true;
+        break;
+
+      // Cancel if there's no more in the given direction
+      case _ScrollDirection.down:
+        if (!hasMoreDown) return;
+        break;
+
+      case _ScrollDirection.up:
+        if (!hasMoreUp) return;
+        break;
+    }
+
+    print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
     setState(() {
       isLoading = true;
     });
 
-    QuerySnapshot querySnapshot;
-    int documentLimit;
-    if (lastDocument == null) {
-      documentLimit = initialDocLimit;
-      querySnapshot = await _pagesQuery.limit(documentLimit).get();
-    } else {
-      documentLimit = moreDocLimit;
-      querySnapshot = await _pagesQuery
-          .startAfterDocument(lastDocument)
-          .limit(documentLimit)
-          .get();
+    switch (scrollDir) {
+      case _ScrollDirection.none:
+        if (centredOnDoc != null) {
+          // TODO: Centre on provided doc
+        } else {
+          // Start from top of list
+          final querySnapshot = await _pagesQuery.limit(initialDocLimit).get();
+          _addPagesToEnd(querySnapshot.docs, initialDocLimit);
+        }
+        break;
+
+      case _ScrollDirection.down:
+        {
+          // Get more pages from last until limit
+          final querySnapshot = await _pagesQuery
+              .startAfterDocument(pages.last.sharedPage)
+              .limit(moreDocLimit)
+              .get();
+
+          _addPagesToEnd(querySnapshot.docs, moreDocLimit);
+        }
+        break;
+
+      case _ScrollDirection.up:
+        {
+          // Get more pages from limit until first
+          final querySnapshot = await _pagesQuery
+              .endBeforeDocument(pages.first.sharedPage)
+              .limitToLast(moreDocLimit)
+              .get();
+
+          _addPagesToStart(querySnapshot.docs, moreDocLimit);
+        }
+        break;
     }
-
-    final docs = querySnapshot.docs;
-    if (docs.length < documentLimit) {
-      hasMore = false;
-
-      // No pages were loaded at all, so cancel early
-      if (docs.length <= 0) {
-        setState(() {
-          isLoading = false;
-        });
-        return;
-      }
-    }
-
-    lastDocument = docs.last;
-
-    // Add all new pages
-    docs.forEach(_addPage);
 
     setState(() {
       isLoading = false;
@@ -186,15 +220,17 @@ class _ComicPageState extends State<ComicPage> {
   }
 
   void _centerPagesOn(DocumentSnapshot centreDoc) async {
-    // TODO
+    pages.clear();
+    pages.add(_PagePair(centreDoc, _getUserPage(centreDoc)));
+    _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
   }
 
-  void _addPage(QueryDocumentSnapshot pageDoc) {
+  Future<DocumentSnapshot> _getUserPage(DocumentSnapshot pageDoc) {
     // User should be authenticated
     final userId = FirebaseAuth.instance.currentUser.uid;
 
     // Start read user doc state here so we only do it once
-    final readDocFuture = FirebaseFirestore.instance
+    return FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .collection('comics')
@@ -202,7 +238,25 @@ class _ComicPageState extends State<ComicPage> {
         .collection('readPages')
         .doc(pageDoc.id)
         .get();
+  }
 
-    pages.add(_PagePair(pageDoc, readDocFuture));
+  void _addPagesToEnd(List<QueryDocumentSnapshot> docs, int limit) {
+    // Add to end of list
+    pages.addAll(docs.map((e) => _PagePair(e, _getUserPage(e))));
+
+    // Don't load any more after this if we reached the end
+    if (docs.length < limit) {
+      hasMoreDown = false;
+    }
+  }
+
+  void _addPagesToStart(List<QueryDocumentSnapshot> docs, int limit) {
+    // Insert at start of list
+    pages.insertAll(0, docs.map((e) => _PagePair(e, _getUserPage(e))));
+
+    // Don't load any more after this if we reached the start
+    if (docs.length < limit) {
+      hasMoreUp = false;
+    }
   }
 }
