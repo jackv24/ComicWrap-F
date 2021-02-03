@@ -44,42 +44,51 @@ class _ComicWebPageState extends State<ComicWebPage> {
       appBar: AppBar(
         title: Text(pageTitle),
       ),
-      body: WebView(
-        initialUrl: _initialUrl,
-        javascriptMode: JavascriptMode.unrestricted,
-        onPageStarted: (currentPage) {
-          // We no longer need the data from the previous new page
-          if (getNewPageSub != null) {
-            getNewPageSub.cancel();
-            getNewPageSub = null;
-          }
+      body: WillPopScope(
+        onWillPop: () async {
+          // Pop with value of current page
+          Navigator.of(context).pop(newPage);
 
-          final pageId = currentPage.split('/').skip(3).join(' ');
-          if (newPage != null && pageId == newPage.id) {
-            // Don't trigger rebuild if we haven't changed page
-            print('Already on page: ' + pageId);
-            return;
-          } else {
-            print('Navigating to page: ' + pageId);
-          }
-
-          // Get data for the new page
-          getNewPageSub = widget.comicDoc.reference
-              .collection('pages')
-              .doc(pageId)
-              .get()
-              .asStream()
-              .listen((event) {
-            // Update page display
-            setState(() {
-              newPage = event;
-              print('Got data for page: ' + pageId);
-            });
-
-            // Don't need to wait for this, just let it happen whenever
-            _markPageRead(newPage);
-          });
+          // We manually handle popping above
+          return false;
         },
+        child: WebView(
+          initialUrl: _initialUrl,
+          javascriptMode: JavascriptMode.unrestricted,
+          onPageStarted: (currentPage) {
+            // We no longer need the data from the previous new page
+            if (getNewPageSub != null) {
+              getNewPageSub.cancel();
+              getNewPageSub = null;
+            }
+
+            final pageId = currentPage.split('/').skip(3).join(' ');
+            if (newPage != null && pageId == newPage.id) {
+              // Don't trigger rebuild if we haven't changed page
+              print('Already on page: ' + pageId);
+              return;
+            } else {
+              print('Navigating to page: ' + pageId);
+            }
+
+            // Get data for the new page
+            getNewPageSub = widget.comicDoc.reference
+                .collection('pages')
+                .doc(pageId)
+                .get()
+                .asStream()
+                .listen((event) {
+              // Update page display
+              setState(() {
+                newPage = event;
+                print('Got data for page: ' + pageId);
+              });
+
+              // Don't need to wait for this, just let it happen whenever
+              _markPageRead(newPage);
+            });
+          },
+        ),
       ),
     );
   }

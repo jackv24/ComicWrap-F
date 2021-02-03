@@ -30,9 +30,15 @@ class _ComicPageState extends State<ComicPage> {
   final int initialDocLimit = 20;
   final int moreDocLimit = 10;
 
+  Query _pagesQuery;
+
   @override
   void initState() {
     _scrollController = ScrollController();
+
+    _pagesQuery = widget.doc.reference
+        .collection('pages')
+        .orderBy('index', descending: true);
 
     // Scrollview won't build if we don't have any pages
     _getPages();
@@ -108,9 +114,20 @@ class _ComicPageState extends State<ComicPage> {
           title: Text(title, style: textStyle),
           trailing: trailing,
           onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(
+            Navigator.of(context)
+                .push(MaterialPageRoute(
               builder: (context) => ComicWebPage(widget.doc, page.sharedPage),
-            ));
+            ))
+                .then((value) {
+              if (value is DocumentSnapshot) {
+                final pageData = value?.data();
+                final pageTitle = pageData != null ? pageData['text'] : '';
+                print('Web Page popped on "$pageTitle" document');
+                _centerPagesOn(value);
+              } else {
+                print('Web Page popped without DocumentSnapshot!');
+              }
+            });
           },
         );
       },
@@ -132,18 +149,14 @@ class _ComicPageState extends State<ComicPage> {
       isLoading = true;
     });
 
-    final query = widget.doc.reference
-        .collection('pages')
-        .orderBy('index', descending: true);
-
     QuerySnapshot querySnapshot;
     int documentLimit;
     if (lastDocument == null) {
       documentLimit = initialDocLimit;
-      querySnapshot = await query.limit(documentLimit).get();
+      querySnapshot = await _pagesQuery.limit(documentLimit).get();
     } else {
       documentLimit = moreDocLimit;
-      querySnapshot = await query
+      querySnapshot = await _pagesQuery
           .startAfterDocument(lastDocument)
           .limit(documentLimit)
           .get();
@@ -165,25 +178,31 @@ class _ComicPageState extends State<ComicPage> {
     lastDocument = docs.last;
 
     // Add all new pages
-    docs.forEach((pageDoc) {
-      // User should be authenticated
-      final userId = FirebaseAuth.instance.currentUser.uid;
-
-      // Start read user doc state here so we only do it once
-      final readDocFuture = FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('comics')
-          .doc(widget.doc.id)
-          .collection('readPages')
-          .doc(pageDoc.id)
-          .get();
-
-      pages.add(_PagePair(pageDoc, readDocFuture));
-    });
+    docs.forEach(_addPage);
 
     setState(() {
       isLoading = false;
     });
+  }
+
+  void _centerPagesOn(DocumentSnapshot centreDoc) async {
+    // TODO
+  }
+
+  void _addPage(QueryDocumentSnapshot pageDoc) {
+    // User should be authenticated
+    final userId = FirebaseAuth.instance.currentUser.uid;
+
+    // Start read user doc state here so we only do it once
+    final readDocFuture = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('comics')
+        .doc(widget.doc.id)
+        .collection('readPages')
+        .doc(pageDoc.id)
+        .get();
+
+    pages.add(_PagePair(pageDoc, readDocFuture));
   }
 }
