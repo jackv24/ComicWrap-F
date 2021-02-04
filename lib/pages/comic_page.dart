@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import 'comic_web_page.dart';
 
+const listItemHeight = 50.0;
+
 class ComicPage extends StatefulWidget {
   final DocumentSnapshot doc;
 
@@ -30,11 +32,12 @@ enum _ScrollDirection {
 class _ComicPageState extends State<ComicPage> {
   List<_PagePair> pages = [];
   ScrollController _scrollController;
-  bool isLoading = false;
   final int initialDocLimit = 20;
   final int moreDocLimit = 10;
   bool hasMoreDown = true;
   bool hasMoreUp = true;
+  bool isLoadingDown = false;
+  bool isLoadingUp = false;
 
   Query _pagesQuery;
 
@@ -90,11 +93,19 @@ class _ComicPageState extends State<ComicPage> {
                   controller: _scrollController,
                   itemCount: pages.length,
                   itemBuilder: _listItemBuilder,
+                  itemExtent: listItemHeight,
                 ),
-          isLoading
+          isLoadingDown
               ? Container(
                   padding: EdgeInsets.all(12),
                   alignment: AlignmentDirectional.bottomCenter,
+                  child: CircularProgressIndicator(),
+                )
+              : Container(),
+          isLoadingUp
+              ? Container(
+                  padding: EdgeInsets.all(12),
+                  alignment: AlignmentDirectional.topCenter,
                   child: CircularProgressIndicator(),
                 )
               : Container(),
@@ -151,7 +162,7 @@ class _ComicPageState extends State<ComicPage> {
 
   void _getPages(_ScrollDirection scrollDir,
       {DocumentSnapshot centredOnDoc}) async {
-    if (isLoading) {
+    if (isLoadingUp || isLoadingDown) {
       return;
     }
 
@@ -174,14 +185,41 @@ class _ComicPageState extends State<ComicPage> {
 
     print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
-    setState(() {
-      isLoading = true;
-    });
-
     switch (scrollDir) {
       case _ScrollDirection.none:
+        setState(() {
+          isLoadingUp = true;
+          isLoadingDown = true;
+        });
+
+        // Get pages before and after centre page
         if (centredOnDoc != null) {
-          // TODO: Centre on provided doc
+          final halfDocLimit = (initialDocLimit / 2).round();
+
+          // Get page above top
+          final upQuerySnapshot = await _pagesQuery
+              .endBeforeDocument(pages.first.sharedPage)
+              .limitToLast(halfDocLimit)
+              .get();
+
+          // If we didn't get all up pages, get more down pages instead
+          int downDocLimit = halfDocLimit;
+          final upDocsLeft = halfDocLimit - upQuerySnapshot.docs.length;
+          if (upDocsLeft > 0) downDocLimit += upDocsLeft;
+
+          // Get pages below bottom
+          final downQuerySnapshot = await _pagesQuery
+              .startAfterDocument(pages.last.sharedPage)
+              .limit(downDocLimit)
+              .get();
+
+          // Insert into pages list
+          _addPagesToStart(upQuerySnapshot.docs, halfDocLimit);
+          _addPagesToEnd(downQuerySnapshot.docs, downDocLimit);
+
+          // Jump to position centred
+          _scrollController
+              .jumpTo(upQuerySnapshot.docs.length * listItemHeight);
         } else {
           // Start from top of list
           final querySnapshot = await _pagesQuery.limit(initialDocLimit).get();
@@ -191,6 +229,10 @@ class _ComicPageState extends State<ComicPage> {
 
       case _ScrollDirection.down:
         {
+          setState(() {
+            isLoadingDown = true;
+          });
+
           // Get more pages from last until limit
           final querySnapshot = await _pagesQuery
               .startAfterDocument(pages.last.sharedPage)
@@ -203,6 +245,10 @@ class _ComicPageState extends State<ComicPage> {
 
       case _ScrollDirection.up:
         {
+          setState(() {
+            isLoadingUp = true;
+          });
+
           // Get more pages from limit until first
           final querySnapshot = await _pagesQuery
               .endBeforeDocument(pages.first.sharedPage)
@@ -210,12 +256,17 @@ class _ComicPageState extends State<ComicPage> {
               .get();
 
           _addPagesToStart(querySnapshot.docs, moreDocLimit);
+
+          // Compensate scroll position since we're adding to the top
+          _scrollController.jumpTo(_scrollController.position.pixels +
+              (querySnapshot.docs.length * listItemHeight));
         }
         break;
     }
 
     setState(() {
-      isLoading = false;
+      isLoadingDown = false;
+      isLoadingUp = false;
     });
   }
 
