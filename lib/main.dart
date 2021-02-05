@@ -6,13 +6,16 @@ import 'package:comicwrap_f/system/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:ms_material_color/ms_material_color.dart';
 import 'package:rxdart/subjects.dart';
 
 const bool USE_EMULATORS = bool.fromEnvironment('USE_EMULATORS');
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
   runApp(MyApp());
 }
 

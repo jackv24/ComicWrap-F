@@ -2,15 +2,18 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ComicWebPage extends StatefulWidget {
   final DocumentSnapshot comicDoc;
   final DocumentSnapshot pageDoc;
+  final Future<LazyBox<bool>> pageReadBoxFuture;
 
-  const ComicWebPage(this.comicDoc, this.pageDoc, {Key key}) : super(key: key);
+  const ComicWebPage(this.comicDoc, this.pageDoc, this.pageReadBoxFuture,
+      {Key key})
+      : super(key: key);
 
   @override
   _ComicWebPageState createState() => _ComicWebPageState();
@@ -94,21 +97,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
   }
 
   void _markPageRead(DocumentSnapshot doc) async {
-    // Pretty safe to assume user is authenticated if they made it here
-    final userId = FirebaseAuth.instance.currentUser.uid;
-
-    final userPageRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('comics')
-        .doc(widget.comicDoc.id)
-        .collection('readPages')
-        .doc(doc.id);
-
-    // Creating user page doc will mark as read
-    await userPageRef.set({
-      // Will show indicator for new pages
-      'isNew': false,
-    }, SetOptions(merge: true));
+    final box = await widget.pageReadBoxFuture;
+    return box.put(doc.id, true);
   }
 }
