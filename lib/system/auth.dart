@@ -11,9 +11,7 @@ bool get isChangingAuth => _isChangingAuth;
 
 Future<void> startAuth() async {
   await firebaseInit;
-
   await FirebaseAuth.instance.signInAnonymously();
-  await createUserData();
 }
 
 Future<void> linkGoogleAuth(BuildContext context) async {

@@ -3,17 +3,6 @@ import 'package:comicwrap_f/system/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
 
-Future<void> createUserData() async {
-  User currentUser = FirebaseAuth.instance.currentUser;
-  CollectionReference users = FirebaseFirestore.instance.collection('users');
-
-  await users.doc(currentUser.uid).set({
-    'library': [],
-  });
-
-  print('Added user data');
-}
-
 Future<void> deleteUserData() async {
   User currentUser = FirebaseAuth.instance.currentUser;
   CollectionReference users = FirebaseFirestore.instance.collection('users');

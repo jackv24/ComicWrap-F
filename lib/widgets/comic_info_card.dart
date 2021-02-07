@@ -37,6 +37,14 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
         var data = snapshot.data.data();
         String coverImageUrl = data['coverImageUrl'];
 
+        // If cover url is relative, make it absolute
+        if (!coverImageUrl.startsWith('http')) {
+          String scrapeUrl = data['scrapeUrl'];
+          if (scrapeUrl?.isNotEmpty ?? false) {
+            coverImageUrl = scrapeUrl + coverImageUrl;
+          }
+        }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
