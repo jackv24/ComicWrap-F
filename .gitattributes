@@ -8,3 +8,5 @@
 
 *.png binary
 *.jpg binary
+
+functions/test_html/* linguist-vendored
