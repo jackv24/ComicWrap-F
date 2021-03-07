@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:universal_io/io.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ComicWebPage extends StatefulWidget {
