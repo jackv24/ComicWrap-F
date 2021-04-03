@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
 
 Future<void> deleteUserData() async {
-  User currentUser = FirebaseAuth.instance.currentUser;
+  User currentUser = FirebaseAuth.instance.currentUser!;
   CollectionReference users = FirebaseFirestore.instance.collection('users');
 
   await users.doc(currentUser.uid).delete();
@@ -12,7 +12,7 @@ Future<void> deleteUserData() async {
   print('Delete user data');
 }
 
-BehaviorSubject<DocumentSnapshot> _userDocSubject;
+BehaviorSubject<DocumentSnapshot>? _userDocSubject;
 
 Stream<DocumentSnapshot> getUserStream() {
   if (_userDocSubject == null) {
@@ -20,7 +20,7 @@ Stream<DocumentSnapshot> getUserStream() {
 
     // NOTE: All this is probably very wrong, but I am confused :(
     // Depends on firebase core to be initialised
-    firebaseInit.then((firebaseApp) {
+    firebaseInit!.then((firebaseApp) {
       // Respond to user auth changes
       FirebaseAuth.instance.authStateChanges().listen((user) {
         if (user == null) return;
@@ -28,11 +28,11 @@ Stream<DocumentSnapshot> getUserStream() {
         final docRef =
             FirebaseFirestore.instance.collection('users').doc(user.uid);
         docRef.snapshots().listen((snapshot) {
-          _userDocSubject.add(snapshot);
+          _userDocSubject!.add(snapshot);
         });
       });
     });
   }
 
-  return _userDocSubject.stream;
+  return _userDocSubject!.stream;
 }

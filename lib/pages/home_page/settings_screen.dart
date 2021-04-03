@@ -10,11 +10,11 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  Stream<User> authStateChanges;
+  Stream<User?>? authStateChanges;
 
   @override
   void initState() {
-    firebaseInit.then((value) {
+    firebaseInit!.then((value) {
       authStateChanges = FirebaseAuth.instance.authStateChanges();
     });
 
@@ -31,7 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
         children: [
           // Sign-in UI
-          StreamBuilder<User>(
+          StreamBuilder<User?>(
             stream: authStateChanges,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.active) {

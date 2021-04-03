@@ -5,20 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class ComicInfoCard extends StatefulWidget {
-  final DocumentReference docRef;
+  final DocumentReference? docRef;
 
-  const ComicInfoCard(this.docRef, {Key key}) : super(key: key);
+  const ComicInfoCard(this.docRef, {Key? key}) : super(key: key);
 
   @override
   _ComicInfoCardState createState() => _ComicInfoCardState();
 }
 
 class _ComicInfoCardState extends State<ComicInfoCard> {
-  Stream<DocumentSnapshot> docStream;
+  Stream<DocumentSnapshot>? docStream;
 
   @override
   void initState() {
-    docStream = widget.docRef.snapshots();
+    docStream = widget.docRef!.snapshots();
 
     super.initState();
   }
@@ -34,14 +34,14 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
           return Text("Loading...");
         }
 
-        var data = snapshot.data.data();
+        var data = snapshot.data!.data()!;
         String coverImageUrl = data['coverImageUrl'];
 
         // If cover url is relative, make it absolute
         if (!coverImageUrl.startsWith('http')) {
-          String scrapeUrl = data['scrapeUrl'];
+          String? scrapeUrl = data['scrapeUrl'];
           if (scrapeUrl?.isNotEmpty ?? false) {
-            coverImageUrl = scrapeUrl + coverImageUrl;
+            coverImageUrl = scrapeUrl! + coverImageUrl;
           }
         }
 
@@ -68,7 +68,7 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
             ),
             SizedBox(height: 5.0),
             Text(
-              data['name'] ?? snapshot.data.id,
+              data['name'] ?? snapshot.data!.id,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.subtitle1,
             ),
@@ -86,10 +86,10 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
 }
 
 class CardImageButton extends StatefulWidget {
-  final String coverImageUrl;
-  final Function() onTap;
+  final String? coverImageUrl;
+  final Function()? onTap;
 
-  const CardImageButton({Key key, this.coverImageUrl, this.onTap})
+  const CardImageButton({Key? key, this.coverImageUrl, this.onTap})
       : super(key: key);
 
   @override
@@ -97,14 +97,14 @@ class CardImageButton extends StatefulWidget {
 }
 
 class _CardImageButtonState extends State<CardImageButton> {
-  FileInfo _cachedImage;
-  DownloadProgress _imageDownloadProgress;
+  FileInfo? _cachedImage;
+  DownloadProgress? _imageDownloadProgress;
 
   @override
   void initState() {
     // Stream for cached cover image
     DefaultCacheManager()
-        .getImageFile(widget.coverImageUrl, withProgress: true)
+        .getImageFile(widget.coverImageUrl!, withProgress: true)
         .listen((fileResponse) {
       if (fileResponse is FileInfo) {
         setState(() {
@@ -134,7 +134,7 @@ class _CardImageButtonState extends State<CardImageButton> {
           alignment: AlignmentDirectional.bottomCenter,
           children: [
             LinearProgressIndicator(
-              value: _imageDownloadProgress.progress,
+              value: _imageDownloadProgress!.progress,
               minHeight: 8.0,
             ),
           ],
@@ -142,7 +142,7 @@ class _CardImageButtonState extends State<CardImageButton> {
       }
     } else {
       return Ink.image(
-        image: FileImage(_cachedImage.file),
+        image: FileImage(_cachedImage!.file),
         fit: BoxFit.cover,
         child: InkWell(
           onTap: widget.onTap,

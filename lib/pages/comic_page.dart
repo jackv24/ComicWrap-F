@@ -8,9 +8,9 @@ import 'comic_web_page.dart';
 const listItemHeight = 50.0;
 
 class ComicPage extends StatefulWidget {
-  final DocumentSnapshot doc;
+  final DocumentSnapshot? doc;
 
-  const ComicPage(this.doc, {Key key}) : super(key: key);
+  const ComicPage(this.doc, {Key? key}) : super(key: key);
 
   @override
   _ComicPageState createState() => _ComicPageState();
@@ -18,7 +18,7 @@ class ComicPage extends StatefulWidget {
 
 class _PagePair {
   final DocumentSnapshot sharedPage;
-  final Future<bool> userPageIsReadFuture;
+  final Future<bool?> userPageIsReadFuture;
 
   const _PagePair(this.sharedPage, this.userPageIsReadFuture);
 }
@@ -34,23 +34,23 @@ class _ComicPageState extends State<ComicPage> {
   final int _moreDocLimit = 10;
 
   List<_PagePair> _pages = [];
-  ScrollController _scrollController;
+  ScrollController? _scrollController;
   bool _hasMoreDown = true;
   bool _hasMoreUp = true;
   bool _isLoadingDown = false;
   bool _isLoadingUp = false;
 
-  Future<LazyBox<bool>> _pageReadBoxFuture;
+  Future<LazyBox<bool>>? _pageReadBoxFuture;
 
-  Query _pagesQuery;
+  late Query _pagesQuery;
 
   @override
   void initState() {
     _scrollController = ScrollController();
 
-    _pageReadBoxFuture = Hive.openLazyBox<bool>(widget.doc.id);
+    _pageReadBoxFuture = Hive.openLazyBox<bool>(widget.doc!.id);
 
-    _pagesQuery = widget.doc.reference
+    _pagesQuery = widget.doc!.reference
         .collection('pages')
         .orderBy('index', descending: true);
 
@@ -62,20 +62,20 @@ class _ComicPageState extends State<ComicPage> {
 
   @override
   void dispose() {
-    _pageReadBoxFuture.then((value) => value.close());
+    _pageReadBoxFuture!.then((value) => value.close());
 
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final doc = widget.doc;
-    final data = doc.data();
+    final doc = widget.doc!;
+    final data = doc.data()!;
 
-    _scrollController.addListener(() {
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      final minScroll = _scrollController.position.minScrollExtent;
-      final currentScroll = _scrollController.position.pixels;
+    _scrollController!.addListener(() {
+      final maxScroll = _scrollController!.position.maxScrollExtent;
+      final minScroll = _scrollController!.position.minScrollExtent;
+      final currentScroll = _scrollController!.position.pixels;
 
       // Fetch more documents if user scrolls 20% of device height
       final delta = MediaQuery.of(context).size.height * 0.2;
@@ -128,14 +128,14 @@ class _ComicPageState extends State<ComicPage> {
 
   Widget _listItemBuilder(BuildContext context, int index) {
     final page = _pages[index];
-    final data = page.sharedPage.data();
+    final data = page.sharedPage.data()!;
     final title = data['text'] ?? '!!Page $index!!';
 
     // Wait to get read state of pages
-    return FutureBuilder<bool>(
+    return FutureBuilder<bool?>(
       future: page.userPageIsReadFuture,
       builder: (context, snapshot) {
-        Widget trailing;
+        Widget? trailing;
         if (snapshot.hasError) {
           trailing = Icon(Icons.error);
         }
@@ -158,7 +158,7 @@ class _ComicPageState extends State<ComicPage> {
             ))
                 .then((value) {
               if (value is DocumentSnapshot) {
-                final pageData = value?.data();
+                final pageData = value.data();
                 final pageTitle = pageData != null ? pageData['text'] : '';
                 print('Web Page popped on "$pageTitle" document');
                 _centerPagesOn(value);
@@ -173,7 +173,7 @@ class _ComicPageState extends State<ComicPage> {
   }
 
   void _getPages(_ScrollDirection scrollDir,
-      {DocumentSnapshot centredOnDoc}) async {
+      {DocumentSnapshot? centredOnDoc}) async {
     if (_isLoadingUp || _isLoadingDown) {
       return;
     }
@@ -230,7 +230,7 @@ class _ComicPageState extends State<ComicPage> {
           _addPagesToEnd(downQuerySnapshot.docs, downDocLimit);
 
           // Jump to position centred
-          _scrollController
+          _scrollController!
               .jumpTo(upQuerySnapshot.docs.length * listItemHeight);
         } else {
           // Start from top of list
@@ -270,7 +270,7 @@ class _ComicPageState extends State<ComicPage> {
           _addPagesToStart(querySnapshot.docs, _moreDocLimit);
 
           // Compensate scroll position since we're adding to the top
-          _scrollController.jumpTo(_scrollController.position.pixels +
+          _scrollController!.jumpTo(_scrollController!.position.pixels +
               (querySnapshot.docs.length * listItemHeight));
         }
         break;
@@ -288,9 +288,9 @@ class _ComicPageState extends State<ComicPage> {
     _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
   }
 
-  Future<bool> _getIsUserPageRead(DocumentSnapshot pageDoc) {
+  Future<bool?> _getIsUserPageRead(DocumentSnapshot pageDoc) {
     // Start read user doc state here so we only do it once
-    return _pageReadBoxFuture.then((box) => box.get(pageDoc.id));
+    return _pageReadBoxFuture!.then((box) => box.get(pageDoc.id));
   }
 
   void _addPagesToEnd(List<QueryDocumentSnapshot> docs, int limit) {

@@ -9,15 +9,15 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:rxdart/rxdart.dart';
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({Key key}) : super(key: key);
+  const LibraryScreen({Key? key}) : super(key: key);
 
   @override
   _LibraryScreenState createState() => _LibraryScreenState();
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  BehaviorSubject<QuerySnapshot> _userComicsSubject;
-  StreamSubscription _userDocComicsSub;
+  late BehaviorSubject<QuerySnapshot> _userComicsSubject;
+  StreamSubscription? _userDocComicsSub;
 
   @override
   void initState() {
@@ -28,7 +28,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     getUserStream().listen((userDocSnapshot) async {
       // Cancel previous stream sub before subbing to new one
       if (_userDocComicsSub != null) {
-        await _userDocComicsSub.cancel();
+        await _userDocComicsSub!.cancel();
       }
 
       // If user changes sub to new user comics collection
@@ -69,7 +69,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             return Text("Loading user comics stream...");
           }
 
-          final userComicDocs = snapshot.data.docs;
+          final userComicDocs = snapshot.data!.docs;
           if (userComicDocs.length == 0) return Text('User has no library!');
 
           return GridView.builder(
@@ -83,8 +83,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
             itemCount: userComicDocs.length,
             itemBuilder: (context, index) {
               final userComic = userComicDocs[index];
-              final userComicData = userComic.data();
-              final DocumentReference sharedComic = userComicData['sharedDoc'];
+              final userComicData = userComic.data()!;
+              final DocumentReference? sharedComic = userComicData['sharedDoc'];
 
               Widget comicWidget;
               try {
@@ -118,7 +118,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         return AddComicDialog(() async {
           HttpsCallable callable =
               FirebaseFunctions.instance.httpsCallable('startComicScrape');
-          final result = await callable('https://www.goodbyetohalos.com/');
+          final HttpsCallableResult<dynamic> result =
+              await callable('https://www.goodbyetohalos.com/');
           print(result.data);
 
           // No errors! :D
@@ -130,16 +131,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
 }
 
 class AddComicDialog extends StatefulWidget {
-  final Future<String> Function() onAdded;
+  final Future<String?> Function() onAdded;
 
-  AddComicDialog(this.onAdded, {Key key}) : super(key: key);
+  AddComicDialog(this.onAdded, {Key? key}) : super(key: key);
 
   @override
   _AddComicDialogState createState() => _AddComicDialogState();
 }
 
 class _AddComicDialogState extends State<AddComicDialog> {
-  String _urlErrorText;
+  String? _urlErrorText;
   final _url = TextEditingController();
 
   bool _preventPop = false;
@@ -167,11 +168,11 @@ class _AddComicDialogState extends State<AddComicDialog> {
           ),
         ),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
             child: Text('Add'),
             onPressed: _preventPop ? null : () => _submit(),
           ),
-          FlatButton(
+          TextButton(
             child: Text('Cancel'),
             onPressed:
                 _preventPop ? null : () => Navigator.of(context).pop(null),
@@ -192,7 +193,7 @@ class _AddComicDialogState extends State<AddComicDialog> {
         FirebaseFunctions.instance.httpsCallable('startComicScrape');
 
     try {
-      final result = await callable(_url.text);
+      final HttpsCallableResult<dynamic> result = await callable(_url.text);
       print('Returned result: ' + result.data);
     } on FirebaseFunctionsException catch (e) {
       print('Caught error: ' + e.code);

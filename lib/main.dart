@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:ms_material_color/ms_material_color.dart';
 import 'package:rxdart/subjects.dart';
 
 const bool USE_EMULATORS = bool.fromEnvironment('USE_EMULATORS');
@@ -20,7 +19,7 @@ void main() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key key}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -28,15 +27,15 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _homePageKey = GlobalKey();
-  BehaviorSubject<User> _authSubject;
-  Future<void> _startAuth;
+  late BehaviorSubject<User?> _authSubject;
+  Future<void>? _startAuth;
 
   @override
   void initState() {
-    _authSubject = BehaviorSubject<User>();
+    _authSubject = BehaviorSubject<User?>();
 
     // Wait for firebase to initialise
-    firebaseInit.then((firebaseApp) {
+    firebaseInit!.then((firebaseApp) {
       // Setup connection to emulators if desired
       if (USE_EMULATORS) {
         String host = defaultTargetPlatform == TargetPlatform.android
@@ -80,7 +79,7 @@ class _MyAppState extends State<MyApp> {
           }
         } else {
           // Firebase auth state
-          homeWidget = StreamBuilder<User>(
+          homeWidget = StreamBuilder<User?>(
             stream: _authSubject.stream,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.active) {
@@ -114,7 +113,7 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
             title: 'ComicWrap',
             theme: ThemeData(
-              primarySwatch: MsMaterialColor(0xffe91e63),
+              primarySwatch: Colors.pink,
               visualDensity: VisualDensity.adaptivePlatformDensity,
             ),
             home: homeWidget);

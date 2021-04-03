@@ -7,12 +7,12 @@ import 'package:universal_io/io.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ComicWebPage extends StatefulWidget {
-  final DocumentSnapshot comicDoc;
+  final DocumentSnapshot? comicDoc;
   final DocumentSnapshot pageDoc;
-  final Future<LazyBox<bool>> pageReadBoxFuture;
+  final Future<LazyBox<bool>>? pageReadBoxFuture;
 
   const ComicWebPage(this.comicDoc, this.pageDoc, this.pageReadBoxFuture,
-      {Key key})
+      {Key? key})
       : super(key: key);
 
   @override
@@ -20,10 +20,10 @@ class ComicWebPage extends StatefulWidget {
 }
 
 class _ComicWebPageState extends State<ComicWebPage> {
-  StreamSubscription<DocumentSnapshot> getNewPageSub;
-  DocumentSnapshot newPage;
+  StreamSubscription<DocumentSnapshot>? getNewPageSub;
+  DocumentSnapshot? newPage;
 
-  String _initialUrl;
+  String? _initialUrl;
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
 
     // Construct url from comic and page ID
-    final rootUrl = 'https://${widget.comicDoc.id}/';
+    final rootUrl = 'https://${widget.comicDoc!.id}/';
     final pagePath = widget.pageDoc.id.trim().replaceAll(' ', '/');
     _initialUrl = rootUrl + pagePath;
 
@@ -61,12 +61,12 @@ class _ComicWebPageState extends State<ComicWebPage> {
           onPageStarted: (currentPage) {
             // We no longer need the data from the previous new page
             if (getNewPageSub != null) {
-              getNewPageSub.cancel();
+              getNewPageSub!.cancel();
               getNewPageSub = null;
             }
 
             final pageId = currentPage.split('/').skip(3).join(' ');
-            if (newPage != null && pageId == newPage.id) {
+            if (newPage != null && pageId == newPage!.id) {
               // Don't trigger rebuild if we haven't changed page
               print('Already on page: ' + pageId);
               return;
@@ -75,7 +75,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
             }
 
             // Get data for the new page
-            getNewPageSub = widget.comicDoc.reference
+            getNewPageSub = widget.comicDoc!.reference
                 .collection('pages')
                 .doc(pageId)
                 .get()
@@ -88,7 +88,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
               });
 
               // Don't need to wait for this, just let it happen whenever
-              _markPageRead(newPage);
+              _markPageRead(newPage!);
             });
           },
         ),
@@ -97,7 +97,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
   }
 
   void _markPageRead(DocumentSnapshot doc) async {
-    final box = await widget.pageReadBoxFuture;
+    final box = await widget.pageReadBoxFuture!;
     return box.put(doc.id, true);
   }
 }

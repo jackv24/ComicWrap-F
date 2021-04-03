@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:comicwrap_f/system/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -18,7 +20,8 @@ Future<void> linkGoogleAuth(BuildContext context) async {
   _isChangingAuth = true;
 
   // Google auth flow
-  final googleUser = await GoogleSignIn().signIn();
+  final googleUser =
+      await (GoogleSignIn().signIn() as FutureOr<GoogleSignInAccount>);
   final googleAuth = await googleUser.authentication;
   final googleCredential = GoogleAuthProvider.credential(
     accessToken: googleAuth.accessToken,
@@ -26,7 +29,7 @@ Future<void> linkGoogleAuth(BuildContext context) async {
   );
 
   try {
-    await FirebaseAuth.instance.currentUser
+    await FirebaseAuth.instance.currentUser!
         .linkWithCredential(googleCredential);
   } on FirebaseAuthException catch (e) {
     print('Account link failed with error code: ${e.code}');
@@ -53,13 +56,13 @@ Future<void> linkEmailAuth(BuildContext context) async {
     builder: (context) {
       return EmailLoginDialog((authDetails) async {
         // Firebase just given unknown error if any details are empty
-        if (authDetails.email?.isEmpty ?? true) {
-          if (authDetails.pass?.isEmpty ?? true) {
+        if (authDetails.email.isEmpty) {
+          if (authDetails.pass.isEmpty) {
             return 'empty-auth';
           } else {
             return 'empty-email';
           }
-        } else if (authDetails.pass?.isEmpty ?? true) {
+        } else if (authDetails.pass.isEmpty) {
           return 'empty-pass';
         }
 
@@ -70,7 +73,7 @@ Future<void> linkEmailAuth(BuildContext context) async {
               email: authDetails.email, password: authDetails.pass);
 
           // Link email account to existing anonymous account
-          await FirebaseAuth.instance.currentUser
+          await FirebaseAuth.instance.currentUser!
               .linkWithCredential(credential);
         } on FirebaseAuthException catch (e) {
           print('Account link failed with error code: ${e.code}');
@@ -87,7 +90,7 @@ Future<void> linkEmailAuth(BuildContext context) async {
 Future<bool> _promptSignIn(
     BuildContext context, AuthCredential signInCredential) async {
   // Show dialog to choose whether to cancel or just sign in
-  final discardExisting = await showDialog<bool>(
+  final discardExisting = await (showDialog<bool>(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
@@ -103,13 +106,13 @@ Future<bool> _promptSignIn(
           ),
         ),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
             child: Text('Sign In'),
             onPressed: () {
               Navigator.of(context).pop(true);
             },
           ),
-          FlatButton(
+          TextButton(
             child: Text('Cancel'),
             onPressed: () {
               Navigator.of(context).pop(false);
@@ -118,7 +121,7 @@ Future<bool> _promptSignIn(
         ],
       );
     },
-  );
+  ) as FutureOr<bool>);
 
   try {
     if (discardExisting) {
@@ -127,7 +130,7 @@ Future<bool> _promptSignIn(
 
       // Delete anonymous account
       await deleteUserData();
-      await FirebaseAuth.instance.currentUser.delete();
+      await FirebaseAuth.instance.currentUser!.delete();
 
       // Sign in with authenticated account
       await FirebaseAuth.instance.signInWithCredential(signInCredential);
@@ -140,17 +143,17 @@ Future<bool> _promptSignIn(
 }
 
 class EmailLoginDialog extends StatefulWidget {
-  final Future<String> Function(EmailAuthDetails authDetails) onSubmitAuth;
+  final Future<String?> Function(EmailAuthDetails authDetails) onSubmitAuth;
 
-  const EmailLoginDialog(this.onSubmitAuth, {Key key}) : super(key: key);
+  const EmailLoginDialog(this.onSubmitAuth, {Key? key}) : super(key: key);
 
   @override
   _EmailLoginDialogState createState() => _EmailLoginDialogState();
 }
 
 class _EmailLoginDialogState extends State<EmailLoginDialog> {
-  String _emailErrorText;
-  String _passErrorText;
+  String? _emailErrorText;
+  String? _passErrorText;
 
   final _email = TextEditingController();
   final _pass = TextEditingController();
@@ -198,11 +201,11 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
           ),
         ),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
             child: Text('Sign In'),
             onPressed: _preventPop ? null : () => _submit(),
           ),
-          FlatButton(
+          TextButton(
             child: Text('Cancel'),
             onPressed:
                 _preventPop ? null : () => Navigator.of(context).pop(null),
@@ -220,7 +223,7 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
       _preventPop = true;
     });
 
-    String errorCode =
+    String? errorCode =
         await widget.onSubmitAuth(EmailAuthDetails(_email.text, _pass.text));
 
     setState(() {
