@@ -20,8 +20,12 @@ Future<void> linkGoogleAuth(BuildContext context) async {
   _isChangingAuth = true;
 
   // Google auth flow
-  final googleUser =
-      await (GoogleSignIn().signIn() as FutureOr<GoogleSignInAccount>);
+  final googleUser = await GoogleSignIn().signIn();
+  if (googleUser == null) {
+    _isChangingAuth = false;
+    return;
+  }
+
   final googleAuth = await googleUser.authentication;
   final googleCredential = GoogleAuthProvider.credential(
     accessToken: googleAuth.accessToken,
@@ -90,7 +94,7 @@ Future<void> linkEmailAuth(BuildContext context) async {
 Future<bool> _promptSignIn(
     BuildContext context, AuthCredential signInCredential) async {
   // Show dialog to choose whether to cancel or just sign in
-  final discardExisting = await (showDialog<bool>(
+  final discardExisting = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
@@ -121,7 +125,7 @@ Future<bool> _promptSignIn(
         ],
       );
     },
-  ) as FutureOr<bool>);
+  ) ?? false;
 
   try {
     if (discardExisting) {
