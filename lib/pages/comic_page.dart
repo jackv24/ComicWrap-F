@@ -30,7 +30,7 @@ enum _ScrollDirection {
 }
 
 class _ComicPageState extends State<ComicPage> {
-  final int _initialDocLimit = 20;
+  final int _initialDocLimit = 30;
   final int _moreDocLimit = 10;
 
   List<_PagePair> _pages = [];

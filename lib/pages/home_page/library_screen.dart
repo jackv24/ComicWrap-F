@@ -73,8 +73,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           if (userComicDocs.length == 0) return Text('User has no library!');
 
           return GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 150.0,
               mainAxisSpacing: 12.0,
               crossAxisSpacing: 12.0,
               childAspectRatio: 0.54,
