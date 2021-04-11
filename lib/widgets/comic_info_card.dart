@@ -62,7 +62,8 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
                       onTap: () => openFunc(),
                     );
                   },
-                  openBuilder: (context, closeFunc) => ComicPage(snapshot.data),
+                  openBuilder: (context, closeFunc) =>
+                      ComicPage(snapshot.data, coverImageUrl),
                 ),
               ),
             ),

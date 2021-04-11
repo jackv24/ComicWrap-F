@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -9,8 +10,9 @@ const listItemHeight = 50.0;
 
 class ComicPage extends StatefulWidget {
   final DocumentSnapshot? doc;
+  final String coverImageUrl;
 
-  const ComicPage(this.doc, {Key? key}) : super(key: key);
+  const ComicPage(this.doc, this.coverImageUrl, {Key? key}) : super(key: key);
 
   @override
   _ComicPageState createState() => _ComicPageState();
@@ -96,33 +98,84 @@ class _ComicPageState extends State<ComicPage> {
       appBar: AppBar(
         title: Text(data['name'] ?? doc.id),
       ),
-      body: Stack(
-        alignment: AlignmentDirectional.bottomCenter,
-        children: [
-          _pages.length == 0
-              ? Center(child: Text('No pages...'))
-              : ListView.builder(
-                  controller: _scrollController,
-                  itemCount: _pages.length,
-                  itemBuilder: _listItemBuilder,
-                  itemExtent: listItemHeight,
-                ),
-          _isLoadingDown
-              ? Container(
-                  padding: EdgeInsets.all(12),
-                  alignment: AlignmentDirectional.bottomCenter,
-                  child: CircularProgressIndicator(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Draw extra info as side bar on large screens
+          if (constraints.maxWidth > 600) {
+            return Row(
+              children: [
+                // Extra info side bar
+                ComicInfoSection(widget.coverImageUrl),
+                // Page List
+                Expanded(
+                  child: Card(
+                    elevation: 5,
+                    margin: EdgeInsetsDirectional.zero,
+                    shape: ContinuousRectangleBorder(),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(8, 0, 0, 0),
+                      // Regular ListView
+                      child: _buildList(
+                          context,
+                          ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _pages.length,
+                            itemBuilder: _listItemBuilder,
+                            itemExtent: listItemHeight,
+                          )),
+                    ),
+                  ),
                 )
-              : Container(),
-          _isLoadingUp
-              ? Container(
-                  padding: EdgeInsets.all(12),
-                  alignment: AlignmentDirectional.topCenter,
-                  child: CircularProgressIndicator(),
-                )
-              : Container(),
-        ],
+              ],
+            );
+          } else {
+            return Container(
+              child: _buildList(
+                  context,
+                  CustomScrollView(
+                    controller: _scrollController,
+                    slivers: [
+                      // Extra info at top
+                      // SliverToBoxAdapter(
+                      //   child: ComicInfoSection(widget.coverImageUrl),
+                      // ),
+                      // Page List
+                      SliverFixedExtentList(
+                        itemExtent: listItemHeight,
+                        delegate: SliverChildBuilderDelegate(
+                          _listItemBuilder,
+                          childCount: _pages.length,
+                        ),
+                      )
+                    ],
+                  )),
+            );
+          }
+        },
       ),
+    );
+  }
+
+  Widget _buildList(BuildContext context, Widget listWidget) {
+    return Stack(
+      alignment: AlignmentDirectional.bottomCenter,
+      children: [
+        _pages.length == 0 ? Center(child: Text('No pages...')) : listWidget,
+        _isLoadingDown
+            ? Container(
+                padding: EdgeInsets.all(12),
+                alignment: AlignmentDirectional.bottomCenter,
+                child: CircularProgressIndicator(),
+              )
+            : Container(),
+        _isLoadingUp
+            ? Container(
+                padding: EdgeInsets.all(12),
+                alignment: AlignmentDirectional.topCenter,
+                child: CircularProgressIndicator(),
+              )
+            : Container(),
+      ],
     );
   }
 
@@ -311,5 +364,46 @@ class _ComicPageState extends State<ComicPage> {
     if (docs.length < limit) {
       _hasMoreUp = false;
     }
+  }
+}
+
+class ComicInfoSection extends StatelessWidget {
+  final String coverImageUrl;
+
+  const ComicInfoSection(this.coverImageUrl, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 400,
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cover image
+          Container(
+            width: 200,
+            child: Material(
+              color: Colors.white,
+              elevation: 5.0,
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              clipBehavior: Clip.antiAlias,
+              child: AspectRatio(
+                aspectRatio: 210.0 / 297.0,
+                child: Material(
+                  color: Colors.white,
+                  elevation: 5.0,
+                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                  clipBehavior: Clip.antiAlias,
+                  child: CardImageButton(
+                    coverImageUrl: coverImageUrl,
+                  ),
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
