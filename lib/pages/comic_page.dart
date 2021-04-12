@@ -10,7 +10,7 @@ const listItemHeight = 50.0;
 
 class ComicPage extends StatefulWidget {
   final DocumentSnapshot? doc;
-  final String coverImageUrl;
+  final String? coverImageUrl;
 
   const ComicPage(this.doc, this.coverImageUrl, {Key? key}) : super(key: key);
 
@@ -105,50 +105,33 @@ class _ComicPageState extends State<ComicPage> {
             return Row(
               children: [
                 // Extra info side bar
-                ComicInfoSection(widget.coverImageUrl),
+                Container(
+                  width: 300,
+                  alignment: AlignmentDirectional.topStart,
+                  child: ComicInfoSection(widget.coverImageUrl),
+                ),
                 // Page List
                 Expanded(
-                  child: Card(
-                    elevation: 5,
-                    margin: EdgeInsetsDirectional.zero,
-                    shape: ContinuousRectangleBorder(),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(8, 0, 0, 0),
-                      // Regular ListView
-                      child: _buildList(
-                          context,
-                          ListView.builder(
-                            controller: _scrollController,
-                            itemCount: _pages.length,
-                            itemBuilder: _listItemBuilder,
-                            itemExtent: listItemHeight,
-                          )),
-                    ),
-                  ),
-                )
+                    child: _buildList(
+                        context, EdgeInsets.symmetric(horizontal: 8)))
               ],
             );
           } else {
             return Container(
-              child: _buildList(
-                  context,
-                  CustomScrollView(
-                    controller: _scrollController,
-                    slivers: [
-                      // Extra info at top
-                      // SliverToBoxAdapter(
-                      //   child: ComicInfoSection(widget.coverImageUrl),
-                      // ),
-                      // Page List
-                      SliverFixedExtentList(
-                        itemExtent: listItemHeight,
-                        delegate: SliverChildBuilderDelegate(
-                          _listItemBuilder,
-                          childCount: _pages.length,
-                        ),
-                      )
-                    ],
-                  )),
+              child: Column(
+                children: [
+                  // Extra info top bar
+                  Container(
+                    height: 200,
+                    alignment: AlignmentDirectional.topStart,
+                    child: ComicInfoSection(widget.coverImageUrl),
+                  ),
+                  // Page List
+                  Expanded(
+                      child: _buildList(
+                          context, EdgeInsets.symmetric(vertical: 4)))
+                ],
+              ),
             );
           }
         },
@@ -156,26 +139,39 @@ class _ComicPageState extends State<ComicPage> {
     );
   }
 
-  Widget _buildList(BuildContext context, Widget listWidget) {
-    return Stack(
-      alignment: AlignmentDirectional.bottomCenter,
-      children: [
-        _pages.length == 0 ? Center(child: Text('No pages...')) : listWidget,
-        _isLoadingDown
-            ? Container(
-                padding: EdgeInsets.all(12),
-                alignment: AlignmentDirectional.bottomCenter,
-                child: CircularProgressIndicator(),
-              )
-            : Container(),
-        _isLoadingUp
-            ? Container(
-                padding: EdgeInsets.all(12),
-                alignment: AlignmentDirectional.topCenter,
-                child: CircularProgressIndicator(),
-              )
-            : Container(),
-      ],
+  Widget _buildList(BuildContext context, EdgeInsetsGeometry listPadding) {
+    return Card(
+      elevation: 5,
+      margin: EdgeInsetsDirectional.zero,
+      shape: ContinuousRectangleBorder(),
+      child: Stack(
+        alignment: AlignmentDirectional.bottomCenter,
+        children: [
+          _pages.length == 0
+              ? Center(child: Text('No pages...'))
+              : ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _pages.length,
+                  itemBuilder: _listItemBuilder,
+                  itemExtent: listItemHeight,
+                  padding: listPadding,
+                ),
+          _isLoadingDown
+              ? Container(
+                  padding: EdgeInsets.all(12),
+                  alignment: AlignmentDirectional.bottomCenter,
+                  child: CircularProgressIndicator(),
+                )
+              : Container(),
+          _isLoadingUp
+              ? Container(
+                  padding: EdgeInsets.all(12),
+                  alignment: AlignmentDirectional.topCenter,
+                  child: CircularProgressIndicator(),
+                )
+              : Container(),
+        ],
+      ),
     );
   }
 
@@ -368,41 +364,31 @@ class _ComicPageState extends State<ComicPage> {
 }
 
 class ComicInfoSection extends StatelessWidget {
-  final String coverImageUrl;
+  final String? coverImageUrl;
 
   const ComicInfoSection(this.coverImageUrl, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 400,
       padding: EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Cover image
-          Container(
-            width: 200,
-            child: Material(
-              color: Colors.white,
-              elevation: 5.0,
-              borderRadius: BorderRadius.all(Radius.circular(12.0)),
-              clipBehavior: Clip.antiAlias,
-              child: AspectRatio(
-                aspectRatio: 210.0 / 297.0,
-                child: Material(
-                  color: Colors.white,
-                  elevation: 5.0,
-                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                  clipBehavior: Clip.antiAlias,
-                  child: CardImageButton(
-                    coverImageUrl: coverImageUrl,
-                  ),
-                ),
-              ),
+      child: Material(
+        color: Colors.white,
+        elevation: 5.0,
+        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+        clipBehavior: Clip.antiAlias,
+        child: AspectRatio(
+          aspectRatio: 210.0 / 297.0,
+          child: Material(
+            color: Colors.white,
+            elevation: 5.0,
+            borderRadius: BorderRadius.all(Radius.circular(12.0)),
+            clipBehavior: Clip.antiAlias,
+            child: CardImageButton(
+              coverImageUrl: coverImageUrl,
             ),
-          )
-        ],
+          ),
+        ),
       ),
     );
   }

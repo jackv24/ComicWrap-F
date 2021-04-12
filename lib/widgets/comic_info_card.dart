@@ -35,10 +35,10 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
         }
 
         var data = snapshot.data!.data()!;
-        String coverImageUrl = data['coverImageUrl'];
+        String? coverImageUrl = data['coverImageUrl'];
 
         // If cover url is relative, make it absolute
-        if (!coverImageUrl.startsWith('http')) {
+        if (coverImageUrl != null && !coverImageUrl.startsWith('http')) {
           String? scrapeUrl = data['scrapeUrl'];
           if (scrapeUrl?.isNotEmpty ?? false) {
             coverImageUrl = scrapeUrl! + coverImageUrl;
@@ -104,20 +104,22 @@ class _CardImageButtonState extends State<CardImageButton> {
   @override
   void initState() {
     // Stream for cached cover image
-    DefaultCacheManager()
-        .getImageFile(widget.coverImageUrl!, withProgress: true)
-        .listen((fileResponse) {
-      if (fileResponse is FileInfo) {
-        setState(() {
-          _cachedImage = fileResponse;
-          _imageDownloadProgress = null;
-        });
-      } else if (fileResponse is DownloadProgress) {
-        setState(() {
-          _imageDownloadProgress = fileResponse;
-        });
-      }
-    });
+    if (widget.coverImageUrl != null) {
+      DefaultCacheManager()
+          .getImageFile(widget.coverImageUrl!, withProgress: true)
+          .listen((fileResponse) {
+        if (fileResponse is FileInfo) {
+          setState(() {
+            _cachedImage = fileResponse;
+            _imageDownloadProgress = null;
+          });
+        } else if (fileResponse is DownloadProgress) {
+          setState(() {
+            _imageDownloadProgress = fileResponse;
+          });
+        }
+      });
+    }
 
     super.initState();
   }
