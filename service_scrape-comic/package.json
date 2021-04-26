@@ -2,7 +2,8 @@
   "scripts": {
     "start": "node ./dst/index.js",
     "gcp-build": "tsc -p .",
-    "build": "rm -rf dst && tsc -p ."
+    "build": "rm -rf dst && tsc -p .",
+    "test": "npm run build && mocha --recursive \"./dst/*.test.js\" --reporter spec"
   },
   "dependencies": {
     "axios": "^0.21.1",
