@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
-    "cheerio": "*",
+    "cheerio": "^1.0.0-rc.6",
     "firebase-admin": "^9.6.0"
   },
   "devDependencies": {
