@@ -24,9 +24,12 @@ db.collection('comics').onSnapshot((snapshot) => {
     // Create import promise
     const promise = importComic(doc)
       .catch(async (reason) => {
+        const e = String(reason);
+        console.log(`Error importing ${doc.id}: ${e}`);
+
         // Write error to database for later inspection
         await doc.ref.update({
-          'importError': String(reason)
+          'importError': e
         });
       })
       .finally(async () => {
@@ -118,6 +121,15 @@ async function importComic(snapshot: FirebaseFirestore.QueryDocumentSnapshot<Fir
         });
 
         pageCount++;
+
+        // Canceled comic importing by manually changing database field
+        const shouldContinue = (await snapshot.ref.get()).get('shouldImport');
+        if (!shouldContinue) {
+          console.log('Canceled importing at page: ' + page.docName);
+          return scraper.FoundPageResult.Cancel;
+        }
+
+        return scraper.FoundPageResult.Success;
       });
 
   // If name wasn't found, load a page and get name from there

@@ -52,6 +52,7 @@ describe('comic-scraper', () => {
         const pages: scraper.ReturnPage[] = [];
         await scraper.scrapeComicPages('https://www.goodbyetohalos.com/comic/archive', async (page) => {
           pages.push(page);
+          return scraper.FoundPageResult.Success;
         });
 
         // Test: compare arrays with deep equality
@@ -67,6 +68,7 @@ describe('comic-scraper', () => {
         const pages: scraper.ReturnPage[] = [];
         await scraper.scrapeComicPages('https://www.goodbyetohalos.com/', async (page) => {
           pages.push(page);
+          return scraper.FoundPageResult.Success;
         });
 
         // Test: compare arrays with deep equality
@@ -84,6 +86,7 @@ describe('comic-scraper', () => {
         const pages: scraper.ReturnPage[] = [];
         await scraper.scrapeComicPages('https://www.peritale.com/comic/archive', async (page) => {
           pages.push(page);
+          return scraper.FoundPageResult.Success;
         });
 
         // Test: compare arrays with deep equality
@@ -99,6 +102,7 @@ describe('comic-scraper', () => {
         const pages: scraper.ReturnPage[] = [];
         await scraper.scrapeComicPages('https://www.peritale.com/', async (page) => {
           pages.push(page);
+          return scraper.FoundPageResult.Success;
         });
 
         // Test: compare arrays with deep equality
@@ -116,6 +120,7 @@ describe('comic-scraper', () => {
         const pages: scraper.ReturnPage[] = [];
         await scraper.scrapeComicPages('https://www.misfile.com/', async (page) => {
           pages.push(page);
+          return scraper.FoundPageResult.Success;
         });
 
         // Test: compare arrays with deep equality
@@ -151,6 +156,7 @@ describe('comic-scraper', () => {
         const pages: scraper.ReturnPage[] = [];
         await scraper.scrapeComicPages('https://killsixbilliondemons.com/', async (page) => {
           pages.push(page);
+          return scraper.FoundPageResult.Success;
         });
 
         // Test: compare arrays with deep equality

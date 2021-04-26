@@ -16,13 +16,19 @@ type FoundPage = {
   wasCrawled: boolean,
 }
 
+export enum FoundPageResult {
+  Success,
+  Skipped,
+  Cancel
+}
+
 export async function scrapeComicPages(
     pageUrl: string,
-    onPageFound: (page: ReturnPage) => Promise<void>
+    onPageFound: (page: ReturnPage) => Promise<FoundPageResult>
 ) {
   await tryScrapeComicPages(pageUrl, async (foundPage) => {
     // Don't save pages without a link
-    if (!foundPage.link) return;
+    if (!foundPage.link) return FoundPageResult.Skipped;
 
     const parsedUrl = url.parse(foundPage.link);
     const pageNameSource = parsedUrl.pathname ?? foundPage.link;
@@ -38,7 +44,7 @@ export async function scrapeComicPages(
     };
 
     // Save page
-    await onPageFound(returnPage);
+    return onPageFound(returnPage);
   });
 
   return;
@@ -46,7 +52,7 @@ export async function scrapeComicPages(
 
 async function tryScrapeComicPages(
     pageUrl: string,
-    onPageFound: (page: FoundPage) => Promise<void>
+    onPageFound: (page: FoundPage) => Promise<FoundPageResult>
 ) {
   // Attempt the quick method first
   const pagesFromSimple = await scrapeComicPagesSimple(pageUrl);
@@ -116,7 +122,7 @@ async function getArchivePageUrl(currentPageHtml: string) {
 
 async function scrapeViaCrawling(
     startPageUrl: string,
-    onPageFound: (page: FoundPage) => Promise<void>
+    onPageFound: (page: FoundPage) => Promise<FoundPageResult>
 ) {
   // Start from the first page so we can just go until we reach the end
   const startHtml = (await axios.get(startPageUrl)).data;
@@ -137,7 +143,10 @@ async function scrapeViaCrawling(
     };
 
     // Save found page before moving onto next
-    await onPageFound(foundPage);
+    const result = await onPageFound(foundPage);
+
+    // Cancel requested
+    if (result == FoundPageResult.Cancel) break;
 
     // Cancel loop, we've reached the last page
     if (!currentPage.next) break;
