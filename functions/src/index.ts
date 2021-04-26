@@ -65,6 +65,8 @@ export const startComicScrape = functions.https
       await sharedComicRef.create({
         name: hostName,
         scrapeUrl: inputUrl,
+        // Import job will be picked up by reading this field
+        shouldImport: true,
       });
 
       // Return the name of the new document while import is being triggered
