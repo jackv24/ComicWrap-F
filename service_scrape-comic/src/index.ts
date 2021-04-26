@@ -6,6 +6,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+const runningImports = new Map<string, Promise<void>>();
 
 // Respond to all comic doc changes
 db.collection('comics').onSnapshot((snapshot) => {
@@ -17,20 +18,42 @@ db.collection('comics').onSnapshot((snapshot) => {
     // Don't do anything if import is not queued, or is already running
     if (!shouldImport || isImporting) return;
 
-    // TODO: Handle promises properly
-    importComic(doc).then(async () => {
-      // Mark importing as finished
-      await doc.ref.update({
-        'shouldImport': false,
-        'isImporting': false
+    // In case isImporting is false despite an import promise running
+    if (runningImports.has(doc.ref.path)) return;
+
+    // Create import promise
+    const promise = importComic(doc)
+      .catch(async (reason) => {
+        // Write error to database for later inspection
+        await doc.ref.update({
+          'importError': String(reason)
+        });
+      })
+      .finally(async () => {
+        // Mark importing as finished
+        await doc.ref.update({
+          'shouldImport': false,
+          'isImporting': false
+        });
+
+        // Remove from running map now that it's finished
+        runningImports.delete(doc.ref.path);
       });
-    });
+
+    runningImports.set(doc.ref.path, promise);
   });
 });
 
 async function importComic(snapshot: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>) {
   const scrapeUrl = snapshot.get('scrapeUrl');
   const collection = snapshot.ref.collection('pages');
+
+  // Mark comic as importing so we don't run multiple at once
+  await snapshot.ref.update({
+    'isImporting': true,
+    // Clear previous error to avoid confusion
+    'importError': ''
+  })
 
   // TODO: Replace index with scrape time?
   let pageCount = 0;
