@@ -205,14 +205,14 @@ export async function findImageUrlForPage(pageUrl: string) {
   const html = (await axios.get(pageUrl)).data;
   const $ = cheerio.load(html);
 
-  // img with ID
-  for (const element of $('img[id*="comic"]').toArray()) {
+  // img with ID or class
+  for (const element of $('img[id*="comic"], img[class*="comic"]').toArray()) {
     const src = $(element).attr('src');
     if (src) return src;
   }
 
-  // img as a child (any level) of div with ID
-  for (const element of $('[id*="comic"] img').toArray()) {
+  // img as a child (any level) of div with ID or class
+  for (const element of $('[id*="comic"] img, [class*="comic"] img').toArray()) {
     const src = $(element).attr('src');
     if (src) return src;
   }
