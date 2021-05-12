@@ -180,6 +180,38 @@ describe('comic-scraper', () => {
 
         expect(imageUrl).to.equal('https://killsixbilliondemons.com/wp-content/uploads/2021/01/BOI26.jpg');
       });
+
+      describe('croakingbound.com', () => {
+        it('finds pages', async () => {
+          // Execute
+          const pages: scraper.ReturnPage[] = [];
+          await scraper.scrapeComicPages('https://croakingbound.com/', async (page) => {
+            pages.push(page);
+            return scraper.FoundPageResult.Success;
+          });
+  
+          // Test: compare arrays with deep equality
+          expect(pages).to.eql([
+            {
+              // eslint-disable-next-line max-len
+              text: 'Kill Six Billion Demons » KILL SIX BILLION DEMONS – Chapter 1',
+              docName: 'Hop 01 Page 01 – CROAKINGBOUND',
+              wasCrawled: true,
+            },
+            {
+              text: 'Hop 01 Page 02 – CROAKINGBOUND',
+              docName: 'comics hop-01-page-02',
+              wasCrawled: true,
+            },
+          ]);
+        });
+  
+        it('find image url for page', async () => {
+          const imageUrl = await scraper.findImageUrlForPage('https://croakingbound.com/');
+  
+          expect(imageUrl).to.equal('https://croakingbound.com/wp-content/uploads/2021/05/web-CBH03PG22.png');
+        });
+      });
     });
   });
 });
