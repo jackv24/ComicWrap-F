@@ -194,8 +194,8 @@ describe('comic-scraper', () => {
           expect(pages).to.eql([
             {
               // eslint-disable-next-line max-len
-              text: 'Kill Six Billion Demons » KILL SIX BILLION DEMONS – Chapter 1',
-              docName: 'Hop 01 Page 01 – CROAKINGBOUND',
+              text: 'Hop 01 Page 01 – CROAKINGBOUND',
+              docName: 'comics hop-01-page-01',
               wasCrawled: true,
             },
             {

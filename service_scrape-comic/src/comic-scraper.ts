@@ -149,7 +149,7 @@ async function scrapeViaCrawling(
     if (result == FoundPageResult.Cancel) break;
 
     // Cancel loop, we've reached the last page
-    if (!currentPage.next) break;
+    if (!currentPage.next || currentPage.next === currentPage.current) break;
 
     // Move onto next page
     currentPage = await scrapePage(currentPage.next);
@@ -162,6 +162,8 @@ export async function scrapePage(pageUrl: string) {
   console.log('Scraping page: ' + pageUrl);
 
   const webPage = await axios.get(pageUrl);
+  if (!webPage) console.log('ERROR: Get page failed!');
+
   const html = webPage.data;
   const $ = cheerio.load(html);
 
