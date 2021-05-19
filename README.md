@@ -6,6 +6,8 @@ This is super not ready for active use, you've been warned!
 
 # Building and Running
 
+**WIP!**
+
 There are a few parts to the whole system:
 - A Flutter App (for Android or iOS)
 - Firebase project for the Database, Functions and Auth
@@ -13,17 +15,17 @@ There are a few parts to the whole system:
 
 ## Prerequisites
 
+- Firebase project created (for development - can use free tier with [emulators](https://firebase.google.com/docs/emulator-suite) for functions)
 - Flutter App
   - [Flutter SDK](https://flutter.dev/docs/get-started/install)
   - [Android Studio](https://developer.android.com/studio/install) (or [VS Code with dev tools](https://flutter.dev/docs/development/tools/vs-code))
   - (for iOS dev) macOS with XCode
-- [Firebase Emulators](https://firebase.google.com/docs/emulator-suite)
 - Node.js & npm
 
 ## Setup
 
-The Flutter app should work on it's own and will connect to my Firebase instance. As long as you're not working on backend stuff you'll only need the Flutter tools.
-
 ### Flutter
 
-**WIP!**
+- Create a Firebase project
+  - (Android) download and copy `google-services.json` to `android/app/`
+  - (iOS) download and copy `GoogleService-Info.plist` to `ios/`
