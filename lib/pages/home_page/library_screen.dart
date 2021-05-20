@@ -27,9 +27,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     // User can change through authentication
     getUserStream().listen((userDocSnapshot) async {
       // Cancel previous stream sub before subbing to new one
-      if (_userDocComicsSub != null) {
-        await _userDocComicsSub!.cancel();
-      }
+      _userDocComicsSub?.cancel();
 
       // If user changes sub to new user comics collection
       _userDocComicsSub = userDocSnapshot.reference
@@ -45,68 +43,102 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   @override
+  void dispose() {
+    _userDocComicsSub?.cancel();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Library'),
-        actions: [
-          IconButton(
-              icon: Icon(
-                Icons.library_add,
-                color: Theme.of(context).primaryIconTheme.color,
-              ),
-              onPressed: () => _onAddPressed(context)),
-        ],
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _userComicsSubject.stream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text('Error reading user comics stream');
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Text("Loading user comics stream...");
-          }
-
-          final userComicDocs = snapshot.data!.docs;
-          if (userComicDocs.length == 0) return Text('User has no library!');
-
-          return GridView.builder(
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 150.0,
-              mainAxisSpacing: 12.0,
-              crossAxisSpacing: 12.0,
-              childAspectRatio: 0.54,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 120.0,
+            flexibleSpace: const FlexibleSpaceBar(
+              title: Text('Library'),
             ),
-            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-            itemCount: userComicDocs.length,
-            itemBuilder: (context, index) {
-              final userComic = userComicDocs[index];
-              final userComicData = userComic.data()!;
-              final DocumentReference? sharedComic = userComicData['sharedDoc'];
-
-              Widget comicWidget;
-              try {
-                comicWidget = ComicInfoCard(sharedComic);
-              } catch (e) {
-                comicWidget = Text('ERROR: ${e.toString()}');
+            actions: [
+              IconButton(
+                  icon: Icon(
+                    Icons.library_add,
+                    color: Theme.of(context).primaryIconTheme.color,
+                  ),
+                  onPressed: () => _onAddPressed(context)),
+            ],
+            leading: IconButton(
+                icon: Icon(
+                  Icons.menu,
+                  color: Theme.of(context).primaryIconTheme.color,
+                ),
+                onPressed: () {}),
+          ),
+          StreamBuilder<QuerySnapshot>(
+            stream: _userComicsSubject.stream,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return SliverToBoxAdapter(
+                  child: Text('Error reading user comics stream'),
+                );
               }
-              return AnimationConfiguration.staggeredGrid(
-                position: index,
-                columnCount: 3,
-                duration: Duration(milliseconds: 200),
-                delay: Duration(milliseconds: 50),
-                child: ScaleAnimation(
-                  scale: 0.85,
-                  child: FadeInAnimation(
-                    child: comicWidget,
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SliverToBoxAdapter(
+                  child: Text("Loading user comics stream..."),
+                );
+              }
+
+              final userComicDocs = snapshot.data!.docs;
+              if (userComicDocs.length == 0) {
+                return SliverToBoxAdapter(
+                  child: Text('User has no library!'),
+                );
+              }
+
+              return SliverPadding(
+                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 150.0,
+                    mainAxisSpacing: 12.0,
+                    crossAxisSpacing: 12.0,
+                    childAspectRatio: 0.54,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final userComic = userComicDocs[index];
+                      final userComicData = userComic.data()!;
+                      final DocumentReference? sharedComic =
+                          userComicData['sharedDoc'];
+
+                      Widget comicWidget;
+                      try {
+                        comicWidget = ComicInfoCard(sharedComic);
+                      } catch (e) {
+                        comicWidget = Text('ERROR: ${e.toString()}');
+                      }
+                      return AnimationConfiguration.staggeredGrid(
+                        position: index,
+                        columnCount: 3,
+                        duration: Duration(milliseconds: 200),
+                        delay: Duration(milliseconds: 50),
+                        child: ScaleAnimation(
+                          scale: 0.85,
+                          child: FadeInAnimation(
+                            child: comicWidget,
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: userComicDocs.length,
                   ),
                 ),
               );
             },
-          );
-        },
+          )
+        ],
       ),
     );
   }
