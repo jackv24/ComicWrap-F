@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
