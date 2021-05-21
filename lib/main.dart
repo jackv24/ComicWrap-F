@@ -1,9 +1,9 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:comicwrap_f/pages/library_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:appwrite/appwrite.dart';
 
 const String API_ENDPOINT = String.fromEnvironment('COMICWRAPF_API_ENDPOINT');
 const String API_PROJECTID = String.fromEnvironment('COMICWRAPF_API_PROJECTID');
@@ -22,16 +22,17 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  late Client client;
   late Future<Response<dynamic>> _getUserAccount;
 
   @override
   void initState() {
     // Connect to server
-    final client = Client();
+    client = Client();
     client.setEndpoint(API_ENDPOINT).setProject(API_PROJECTID).setSelfSigned();
 
     final account = Account(client);
-    _getUserAccount = account.get();
+    _getUserAccount = account.createAnonymousSession();
 
     super.initState();
   }
@@ -42,23 +43,30 @@ class _MyAppState extends State<MyApp> {
     return FutureBuilder(
       future: _getUserAccount,
       builder: (context, snapshot) {
+        Widget homeWidget;
+
         // Still signing in
         if (snapshot.connectionState != ConnectionState.done) {
           if (snapshot.hasError) {
-            return _getScaffold(Text('Sign in error :('));
+            homeWidget = _getScaffold(Text('Sign in error :('));
           } else {
-            return _getScaffold(Text('Signing in...'));
+            homeWidget = _getScaffold(Text('Signing in...'));
           }
+        } else {
+          homeWidget = LibraryScreen(
+            client: client,
+          );
         }
 
         // Sign in complete, display full app
         return MaterialApp(
-            title: 'ComicWrap',
-            theme: ThemeData(
-              primarySwatch: Colors.pink,
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-            ),
-            home: LibraryScreen());
+          title: 'ComicWrap',
+          theme: ThemeData(
+            primarySwatch: Colors.pink,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          home: homeWidget,
+        );
       },
     );
   }
