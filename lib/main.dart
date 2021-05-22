@@ -1,12 +1,10 @@
 import 'package:appwrite/appwrite.dart';
+import 'package:comicwrap_f/environment_config.dart';
 import 'package:comicwrap_f/pages/library_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
-const String API_ENDPOINT = String.fromEnvironment('COMICWRAPF_API_ENDPOINT');
-const String API_PROJECTID = String.fromEnvironment('COMICWRAPF_API_PROJECTID');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +27,10 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     // Connect to server
     client = Client();
-    client.setEndpoint(API_ENDPOINT).setProject(API_PROJECTID).setSelfSigned();
+    client
+        .setEndpoint(EnvironmentConfig.apiEndpoint)
+        .setProject(EnvironmentConfig.apiProjectId)
+        .setSelfSigned();
 
     final account = Account(client);
     _getUserAccount = account.createAnonymousSession();

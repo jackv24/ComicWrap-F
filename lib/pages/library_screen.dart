@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:appwrite/appwrite.dart';
+import 'package:comicwrap_f/environment_config.dart';
 import 'package:comicwrap_f/models/collection_models.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void initState() {
     _database = Database(widget.client);
-    _listComics = _database.listDocuments(collectionId: '60a713b4805b0');
+    _listComics = _database.listDocuments(
+        collectionId: EnvironmentConfig.apiComicsCollectionId);
 
     super.initState();
   }
@@ -34,8 +36,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         onRefresh: () async {
           // Rebuild UI
           setState(() {
-            _listComics =
-                _database.listDocuments(collectionId: '60a713b4805b0');
+            _listComics = _database.listDocuments(
+                collectionId: EnvironmentConfig.apiComicsCollectionId);
           });
 
           // Display refresh indicator until finished
