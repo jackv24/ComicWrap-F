@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:appwrite/appwrite.dart';
 import 'package:comicwrap_f/models/collection_models.dart';
+import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class LibraryScreen extends StatefulWidget {
   final Client client;
@@ -14,12 +16,13 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
+  late Database _database;
   late Future<Response<dynamic>> _listComics;
 
   @override
   void initState() {
-    final database = Database(widget.client);
-    _listComics = database.listDocuments(collectionId: '60a713b4805b0');
+    _database = Database(widget.client);
+    _listComics = _database.listDocuments(collectionId: '60a713b4805b0');
 
     super.initState();
   }
@@ -27,106 +30,107 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: 120.0,
-            flexibleSpace: const FlexibleSpaceBar(
-              title: Text('Library'),
-            ),
-            actions: [
-              IconButton(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Rebuild UI
+          setState(() {
+            _listComics =
+                _database.listDocuments(collectionId: '60a713b4805b0');
+          });
+
+          // Display refresh indicator until finished
+          await _listComics;
+        },
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 120.0,
+              flexibleSpace: const FlexibleSpaceBar(
+                title: Text('Library'),
+              ),
+              actions: [
+                IconButton(
+                    icon: Icon(
+                      Icons.library_add,
+                      color: Theme.of(context).primaryIconTheme.color,
+                    ),
+                    onPressed: () => _onAddPressed(context)),
+              ],
+              leading: IconButton(
                   icon: Icon(
-                    Icons.library_add,
+                    Icons.menu,
                     color: Theme.of(context).primaryIconTheme.color,
                   ),
-                  onPressed: () => _onAddPressed(context)),
-            ],
-            leading: IconButton(
-                icon: Icon(
-                  Icons.menu,
-                  color: Theme.of(context).primaryIconTheme.color,
-                ),
-                onPressed: () {}),
-          ),
-          FutureBuilder<Response<dynamic>>(
-            future: _listComics,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                if (snapshot.hasError) {
+                  onPressed: () {}),
+            ),
+            FutureBuilder<Response<dynamic>>(
+              future: _listComics,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  if (snapshot.hasError) {
+                    return SliverToBoxAdapter(
+                      child: Text('Error getting comics :('),
+                    );
+                  } else {
+                    return SliverToBoxAdapter(
+                      child: Text('Getting comics...'),
+                    );
+                  }
+                }
+
+                if (snapshot.data == null) {
                   return SliverToBoxAdapter(
-                    child: Text('Error getting comics :('),
-                  );
-                } else {
-                  return SliverToBoxAdapter(
-                    child: Text('Getting comics...'),
+                    child: Text('Snapshot data is null!'),
                   );
                 }
-              }
 
-              if (snapshot.data == null) {
-                return SliverToBoxAdapter(
-                  child: Text('Snapshot data is null!'),
+                final data = snapshot.data!.data;
+                final comics = DocumentsListModel.fromJson(data);
+
+                if (comics.sum == 0) {
+                  return SliverToBoxAdapter(
+                    child: Text('User has no library!'),
+                  );
+                }
+
+                return SliverPadding(
+                  padding:
+                      EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 150.0,
+                      mainAxisSpacing: 12.0,
+                      crossAxisSpacing: 12.0,
+                      childAspectRatio: 0.54,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final comic = ComicDocumentModel.fromJson(
+                            comics.documents[index]);
+
+                        return AnimationConfiguration.staggeredGrid(
+                          position: index,
+                          columnCount: 3,
+                          duration: Duration(milliseconds: 200),
+                          delay: Duration(milliseconds: 50),
+                          child: ScaleAnimation(
+                            scale: 0.85,
+                            child: FadeInAnimation(
+                              child: ComicInfoCard(comic),
+                            ),
+                          ),
+                        );
+                      },
+                      childCount: comics.documents.length,
+                    ),
+                  ),
                 );
-              }
-
-              final data = snapshot.data!.data;
-              final comics = DocumentsListModel.fromJson(data);
-
-              if (comics.sum == 0) {
-                return SliverToBoxAdapter(
-                  child: Text('User has no library!'),
-                );
-              }
-
-              // TEMP
-              return SliverToBoxAdapter(
-                child: Text('Use has some comics! (TODO)'),
-              );
-
-              // return SliverPadding(
-              //   padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-              //   sliver: SliverGrid(
-              //     gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              //       maxCrossAxisExtent: 150.0,
-              //       mainAxisSpacing: 12.0,
-              //       crossAxisSpacing: 12.0,
-              //       childAspectRatio: 0.54,
-              //     ),
-              //     delegate: SliverChildBuilderDelegate(
-              //       (context, index) {
-              //         final userComic = userComicDocs[index];
-              //         final userComicData = userComic.data()!;
-              //         final DocumentReference? sharedComic =
-              //             userComicData['sharedDoc'];
-              //
-              //         Widget comicWidget;
-              //         try {
-              //           comicWidget = ComicInfoCard(sharedComic);
-              //         } catch (e) {
-              //           comicWidget = Text('ERROR: ${e.toString()}');
-              //         }
-              //         return AnimationConfiguration.staggeredGrid(
-              //           position: index,
-              //           columnCount: 3,
-              //           duration: Duration(milliseconds: 200),
-              //           delay: Duration(milliseconds: 50),
-              //           child: ScaleAnimation(
-              //             scale: 0.85,
-              //             child: FadeInAnimation(
-              //               child: comicWidget,
-              //             ),
-              //           ),
-              //         );
-              //       },
-              //       childCount: userComicDocs.length,
-              //     ),
-              //   ),
-              // );
-            },
-          )
-        ],
+              },
+            )
+          ],
+        ),
       ),
     );
   }

@@ -1,28 +1,34 @@
+import 'package:comicwrap_f/models/collection_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class ComicInfoCard extends StatefulWidget {
-  // final DocumentReference? docRef;
+  final ComicDocumentModel comicDoc;
 
-  const ComicInfoCard(/*this.docRef, */ {Key? key}) : super(key: key);
+  const ComicInfoCard(this.comicDoc, {Key? key}) : super(key: key);
 
   @override
   _ComicInfoCardState createState() => _ComicInfoCardState();
 }
 
 class _ComicInfoCardState extends State<ComicInfoCard> {
-  //Stream<DocumentSnapshot>? docStream;
-
   @override
   void initState() {
-    //docStream = widget.docRef!.snapshots();
-
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    // TEMP
+    String? coverImageUrl = widget.comicDoc.coverImageUrl;
+
+    // If cover url is relative, make it absolute
+    if (coverImageUrl != null && !coverImageUrl.startsWith('http')) {
+      final scrapeUrl = widget.comicDoc.scrapeUrl;
+      if (scrapeUrl?.isNotEmpty ?? false) {
+        coverImageUrl = scrapeUrl! + coverImageUrl;
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -33,15 +39,24 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
             elevation: 5.0,
             borderRadius: BorderRadius.all(Radius.circular(12.0)),
             clipBehavior: Clip.antiAlias,
-            child: CardImageButton(
-              coverImageUrl: null,
-              onTap: null,
-            ),
+            child:
+                /*OpenContainer(
+              closedBuilder: (context, openFunc) {
+                return */
+                CardImageButton(
+              coverImageUrl: coverImageUrl,
+              onTap: () => {}, //openFunc(),
+            ) /*;
+              },
+              openBuilder: (context, closeFunc) =>
+                  ComicPage(snapshot.data, coverImageUrl),
+            )*/
+            ,
           ),
         ),
         SizedBox(height: 5.0),
         Text(
-          'NAME',
+          widget.comicDoc.name,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.subtitle1,
         ),
@@ -53,65 +68,6 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
         ),
       ],
     );
-
-    // return StreamBuilder<DocumentSnapshot>(
-    //   stream: docStream,
-    //   builder: (context, snapshot) {
-    //     if (snapshot.hasError) return Text('Error');
-    //
-    //     if (snapshot.connectionState == ConnectionState.waiting) {
-    //       return Text("Loading...");
-    //     }
-    //
-    //     var data = snapshot.data!.data()!;
-    //     String? coverImageUrl = data['coverImageUrl'];
-    //
-    //     // If cover url is relative, make it absolute
-    //     if (coverImageUrl != null && !coverImageUrl.startsWith('http')) {
-    //       String? scrapeUrl = data['scrapeUrl'];
-    //       if (scrapeUrl?.isNotEmpty ?? false) {
-    //         coverImageUrl = scrapeUrl! + coverImageUrl;
-    //       }
-    //     }
-    //
-    //     return Column(
-    //       crossAxisAlignment: CrossAxisAlignment.start,
-    //       children: [
-    //         AspectRatio(
-    //           aspectRatio: 210.0 / 297.0,
-    //           child: Material(
-    //             color: Colors.white,
-    //             elevation: 5.0,
-    //             borderRadius: BorderRadius.all(Radius.circular(12.0)),
-    //             clipBehavior: Clip.antiAlias,
-    //             child: OpenContainer(
-    //               closedBuilder: (context, openFunc) {
-    //                 return CardImageButton(
-    //                   coverImageUrl: coverImageUrl,
-    //                   onTap: () => openFunc(),
-    //                 );
-    //               },
-    //               openBuilder: (context, closeFunc) =>
-    //                   ComicPage(snapshot.data, coverImageUrl),
-    //             ),
-    //           ),
-    //         ),
-    //         SizedBox(height: 5.0),
-    //         Text(
-    //           data['name'] ?? snapshot.data!.id,
-    //           overflow: TextOverflow.ellipsis,
-    //           style: Theme.of(context).textTheme.subtitle1,
-    //         ),
-    //         SizedBox(height: 2.0),
-    //         Text(
-    //           '3 days ago',
-    //           overflow: TextOverflow.ellipsis,
-    //           style: Theme.of(context).textTheme.subtitle2,
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
   }
 }
 
