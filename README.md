@@ -36,5 +36,6 @@ flutter pub run environment_config:generate \
   --apiEndpoint="[API ENDPOINT]" \
   --apiProjectId="[PROJECT ID]" \
   --apiComicsCollectionId="[COMICS COLLECTION ID]" \
-  --apiUsersCollectionId="[USERS COLLECTION ID]"
+  --apiUsersCollectionId="[USERS COLLECTION ID]" \
+  --apiFuncUserAddComicId="[FUNCTION ID]"
 ```

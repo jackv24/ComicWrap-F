@@ -19,12 +19,15 @@ class LibraryScreen extends StatefulWidget {
 class _LibraryScreenState extends State<LibraryScreen> {
   late Database _database;
   late Future<Response<dynamic>> _listComics;
+  late Functions _functions;
 
   @override
   void initState() {
     _database = Database(widget.client);
     _listComics = _database.listDocuments(
         collectionId: EnvironmentConfig.apiComicsCollectionId);
+
+    _functions = Functions(widget.client);
 
     super.initState();
   }
@@ -141,14 +144,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AddComicDialog();
+        return AddComicDialog(functions: _functions);
       },
     );
   }
 }
 
 class AddComicDialog extends StatefulWidget {
-  AddComicDialog({Key? key}) : super(key: key);
+  final Functions functions;
+
+  AddComicDialog({Key? key, required this.functions}) : super(key: key);
 
   @override
   _AddComicDialogState createState() => _AddComicDialogState();
@@ -204,22 +209,19 @@ class _AddComicDialogState extends State<AddComicDialog> {
       _preventPop = true;
     });
 
-    // TODO
-    // HttpsCallable callable =
-    //     FirebaseFunctions.instance.httpsCallable('startComicScrape');
-    //
-    // try {
-    //   final HttpsCallableResult<dynamic> result = await callable(_url.text);
-    //   print('Returned result: ' + result.data);
-    // } on FirebaseFunctionsException catch (e) {
-    //   print('Caught error: ' + e.code);
-    //   setState(() {
-    //     _urlErrorText = e.message;
-    //     _preventPop = false;
-    //   });
-    //
-    //   return;
-    // }
+    try {
+      final Response<dynamic> result = await widget.functions.createExecution(
+          functionId: EnvironmentConfig.apiFuncUserAddComicId, data: _url.text);
+      print('Returned result: ' + result.data);
+    } on Exception catch (e) {
+      print('Caught error: ' + e.toString());
+      setState(() {
+        _urlErrorText = e.toString();
+        _preventPop = false;
+      });
+
+      return;
+    }
 
     setState(() {
       _preventPop = false;

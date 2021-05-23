@@ -98,6 +98,7 @@ environment_config:
     apiProjectId:
     apiComicsCollectionId:
     apiUsersCollectionId:
+    apiFuncUserAddComicId:
 #    some_key: # key name
 #      type: # optional, default to 'String'
 #      short_name: # optional, short name for key during command run

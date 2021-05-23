@@ -10,3 +10,5 @@ typings/
 
 # Node.js dependency directory
 node_modules/
+
+*.tar.gz
