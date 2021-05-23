@@ -21,13 +21,19 @@ class ComicDocumentModel {
   late String name;
   late String? coverImageUrl;
   late String? scrapeUrl;
+  late String? lastReadDate;
 
-  ComicDocumentModel({required this.name, this.coverImageUrl, this.scrapeUrl});
+  ComicDocumentModel(
+      {required this.name,
+      this.coverImageUrl,
+      this.scrapeUrl,
+      this.lastReadDate});
 
   ComicDocumentModel.fromJson(Map<String, dynamic> json) {
     name = json['name'];
     coverImageUrl = json['coverImageUrl'];
     scrapeUrl = json['scrapeUrl'];
+    lastReadDate = json['lastReadDate'];
   }
 
   Map<String, dynamic> toJson() {
@@ -35,6 +41,7 @@ class ComicDocumentModel {
     json['name'] = name;
     if (coverImageUrl != null) json['coverImageUrl'] = coverImageUrl;
     if (scrapeUrl != null) json['scrapeUrl'] = scrapeUrl;
+    if (lastReadDate != null) json['lastReadDate'] = lastReadDate;
     return json;
   }
 }

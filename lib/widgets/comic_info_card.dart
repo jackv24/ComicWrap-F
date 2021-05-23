@@ -19,14 +19,29 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
 
   @override
   Widget build(BuildContext context) {
-    String? coverImageUrl = widget.comicDoc.coverImageUrl;
+    final comic = widget.comicDoc;
+
+    String? coverImageUrl = comic.coverImageUrl;
 
     // If cover url is relative, make it absolute
     if (coverImageUrl != null && !coverImageUrl.startsWith('http')) {
-      final scrapeUrl = widget.comicDoc.scrapeUrl;
+      final scrapeUrl = comic.scrapeUrl;
       if (scrapeUrl?.isNotEmpty ?? false) {
         coverImageUrl = scrapeUrl! + coverImageUrl;
       }
+    }
+
+    String lastReadText;
+    if (comic.lastReadDate != null && comic.lastReadDate!.isNotEmpty) {
+      final dateTime = DateTime.tryParse(comic.lastReadDate!);
+      if (dateTime != null) {
+        final days = DateTime.now().difference(dateTime).inDays;
+        lastReadText = 'Read $days ago';
+      } else {
+        lastReadText = 'Parse error!';
+      }
+    } else {
+      lastReadText = 'Never read';
     }
 
     return Column(
@@ -56,13 +71,13 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
         ),
         SizedBox(height: 5.0),
         Text(
-          widget.comicDoc.name,
+          comic.name,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.subtitle1,
         ),
         SizedBox(height: 2.0),
         Text(
-          '3 days ago',
+          lastReadText,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.subtitle2,
         ),
