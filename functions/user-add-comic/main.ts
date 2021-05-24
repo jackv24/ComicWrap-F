@@ -1,34 +1,34 @@
-import { isURL } from "https://deno.land/x/is_url/mod.ts";
+import axiod from "https://deno.land/x/axiod/mod.ts";
 
-// function getValidUrl(inputUrl: string) {
-//   if (inputUrl.startsWith('http://') || inputUrl.startsWith('https://')) {
-//     return inputUrl;
-//   }
+function getValidUrl(inputUrl: string) {
+  if (inputUrl.startsWith('http://') || inputUrl.startsWith('https://')) {
+    return inputUrl;
+  }
 
-//   // Add missing protocol specifier if needed
-//   return `https://${inputUrl}`;
-// }
+  // Add missing protocol specifier if needed
+  return `https://${inputUrl}`;
+}
 
-function userAddComic(data: string) {
+async function userAddComic(data: string) {
   if (!data) {
     return 'Required';
   }
 
   // Automatically fixed up provided url if we can
-  const inputUrl = data;//getValidUrl(data);
+  const inputUrl = getValidUrl(data);
 
-  const parsedUrl = isURL(inputUrl);
-  if (!parsedUrl) {
-    return 'Invalid URL';
+  try {
+    await axiod.get(inputUrl);
+    return 'Valid URL!';
+  } catch(e) {
+    return `Invalid URL: ${e}`;
   }
-
-  return 'Valid URL!';
 }
 
 const data = Deno.env.get('APPWRITE_FUNCTION_DATA');
 if (!data) {
   console.log('undefined');
 } else {
-  const response = userAddComic(data);
+  const response = await userAddComic(data);
   console.log(response);
 }
