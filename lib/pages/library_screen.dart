@@ -210,13 +210,33 @@ class _AddComicDialogState extends State<AddComicDialog> {
     });
 
     try {
-      final Response<dynamic> result = await widget.functions.createExecution(
+      // Start function execution
+      final startedResponse = await widget.functions.createExecution(
           functionId: EnvironmentConfig.apiFuncUserAddComicId, data: _url.text);
-      print('Returned result: ' + result.data);
-    } on Exception catch (e) {
-      print('Caught error: ' + e.toString());
+
+      // Poll for execution state
+      while ((await widget.functions.getExecution(
+                  functionId: EnvironmentConfig.apiFuncUserAddComicId,
+                  executionId: startedResponse.data['\$id']))
+              .data['status'] ==
+          'waiting') {
+        // Wait a bit between polls
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+
+      // Function completed! Display result... TODO: handle success
+      final completeResponse = await widget.functions.getExecution(
+          functionId: EnvironmentConfig.apiFuncUserAddComicId,
+          executionId: startedResponse.data['\$id']);
       setState(() {
-        _urlErrorText = e.toString();
+        _urlErrorText = completeResponse.data['stdout'];
+        _preventPop = false;
+      });
+
+      return;
+    } on AppwriteException catch (e) {
+      setState(() {
+        _urlErrorText = 'Error ${e.code}: ${e.message}';
         _preventPop = false;
       });
 
