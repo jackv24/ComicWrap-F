@@ -29,13 +29,12 @@ There are a few parts to the whole system:
 
 ### Flutter
 
-1. Run `flutter pub get`
-2. Generate environment config:
+1. Create `.envrc` in root directory with the following contents:
 ```
-flutter pub run environment_config:generate \
-  --apiEndpoint="[API ENDPOINT]" \
-  --apiProjectId="[PROJECT ID]" \
-  --apiComicsCollectionId="[COMICS COLLECTION ID]" \
-  --apiUsersCollectionId="[USERS COLLECTION ID]" \
-  --apiFuncUserAddComicId="[FUNCTION ID]"
+export APPWRITE_ENDPOINT=<endpoint>
+export APPWRITE_PROJECT=<id>
+export APPWRITE_COL_COMICS=<id>
+export APPWRITE_COL_USERS=<id>
+export APPWRITE_FUNC_USERADDCOMIC=<id>
+
 ```

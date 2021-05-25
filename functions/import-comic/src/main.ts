@@ -1,5 +1,4 @@
-import * as admin from 'firebase-admin';
-import * as scraper from './comic-scraper';
+import * as scraper from './comic-scraper.ts';
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault()

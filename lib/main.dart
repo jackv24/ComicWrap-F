@@ -1,5 +1,5 @@
 import 'package:appwrite/appwrite.dart';
-import 'package:comicwrap_f/environment_config.dart';
+import 'package:comicwrap_f/environment.dart';
 import 'package:comicwrap_f/pages/library_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,8 +28,8 @@ class _MyAppState extends State<MyApp> {
     // Connect to server
     client = Client();
     client
-        .setEndpoint(EnvironmentConfig.apiEndpoint)
-        .setProject(EnvironmentConfig.apiProjectId)
+        .setEndpoint(appwriteEndpoint)
+        .setProject(appwriteProject)
         .setSelfSigned();
 
     final account = Account(client);

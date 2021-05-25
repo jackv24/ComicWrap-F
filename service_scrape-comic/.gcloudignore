@@ -1,7 +1,0 @@
-.gcloudignore
-.git
-.gitignore
-node_modules/
-scripts
-dst
-test_html

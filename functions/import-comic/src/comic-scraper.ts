@@ -1,6 +1,6 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
-import * as url from 'url';
+import axiod from "https://deno.land/x/axiod/mod.ts";
+import { cheerio } from "https://deno.land/x/cheerio@1.0.4/mod.ts";
+import { urlParse } from 'https://deno.land/x/url_parse/mod.ts';
 
 type CheerioRoot = ReturnType<typeof cheerio.load>;
 
@@ -26,11 +26,11 @@ export async function scrapeComicPages(
     pageUrl: string,
     onPageFound: (page: ReturnPage) => Promise<FoundPageResult>
 ) {
-  await tryScrapeComicPages(pageUrl, async (foundPage) => {
+  await tryScrapeComicPages(pageUrl, (foundPage) => {
     // Don't save pages without a link
-    if (!foundPage.link) return FoundPageResult.Skipped;
+    if (!foundPage.link) return Promise.resolve(FoundPageResult.Skipped);
 
-    const parsedUrl = url.parse(foundPage.link);
+    const parsedUrl = urlParse(foundPage.link);
     const pageNameSource = parsedUrl.pathname ?? foundPage.link;
 
     // Use page link as document name, since index could change
@@ -70,28 +70,28 @@ async function tryScrapeComicPages(
 }
 
 async function scrapeComicPagesSimple(pageUrl: string) {
-  const firstPage = await axios.get(pageUrl);
+  const firstPage = await axiod.get(pageUrl);
 
   // Attempt to find page list
-  const result = await getPagesFromArchive(firstPage.data);
+  const result = getPagesFromArchive(firstPage.data);
   if (result.length > 0) return result;
 
   // Could not find page list in provided URL, try and find an
   // archive page which may have one
-  const archivePageUrl = await getArchivePageUrl(firstPage.data);
+  const archivePageUrl = getArchivePageUrl(firstPage.data);
   if (!archivePageUrl) return null;
 
   // Found an archive page, try find a page list again
-  const archivePage = await axios.get(archivePageUrl);
-  const retriedResult = await getPagesFromArchive(archivePage.data);
+  const archivePage = await axiod.get(archivePageUrl);
+  const retriedResult = getPagesFromArchive(archivePage.data);
   return retriedResult;
 }
 
-async function getPagesFromArchive(archivePageHtml: string) {
+function getPagesFromArchive(archivePageHtml: string) {
   const $ = cheerio.load(archivePageHtml);
   const select = $('[name="comic"] > option');
   const optionsArray = select.toArray();
-  const pages = optionsArray.map((element, index) => {
+  const pages = optionsArray.map((element, _index) => {
     const val = $(element);
     return {
       text: val.text(),
@@ -103,7 +103,7 @@ async function getPagesFromArchive(archivePageHtml: string) {
   return pages;
 }
 
-async function getArchivePageUrl(currentPageHtml: string) {
+function getArchivePageUrl(currentPageHtml: string) {
   const $ = cheerio.load(currentPageHtml);
 
   let archiveSearch = $('.archive > a');
@@ -111,7 +111,7 @@ async function getArchivePageUrl(currentPageHtml: string) {
     archiveSearch = $('#archive');
   }
 
-  const archiveLinks = archiveSearch.toArray().map((element, index) => {
+  const archiveLinks = archiveSearch.toArray().map((element, _index) => {
     return $(element).attr('href');
   });
 
@@ -125,7 +125,7 @@ async function scrapeViaCrawling(
     onPageFound: (page: FoundPage) => Promise<FoundPageResult>
 ) {
   // Start from the first page so we can just go until we reach the end
-  const startHtml = (await axios.get(startPageUrl)).data;
+  const startHtml = (await axiod.get(startPageUrl)).data;
   const start$ = cheerio.load(startHtml);
   const firstNav = getLinkFromElements(start$, '[class*="first"]');
 
@@ -161,7 +161,7 @@ async function scrapeViaCrawling(
 export async function scrapePage(pageUrl: string) {
   console.log('Scraping page: ' + pageUrl);
 
-  const webPage = await axios.get(pageUrl);
+  const webPage = await axiod.get(pageUrl);
   if (!webPage) console.log('ERROR: Get page failed!');
 
   const html = webPage.data;
@@ -169,7 +169,7 @@ export async function scrapePage(pageUrl: string) {
 
   const prevLink = getLinkFromElements($, '[class*="prev"]');
   const nextLink = getLinkFromElements($, '[class*="next"]');
-  const titles = $('title').toArray().map((element, index) => {
+  const titles = $('title').toArray().map((element, _index) => {
     return $(element).text();
   });
 
@@ -204,7 +204,7 @@ function getLinkFromElements($: CheerioRoot, selector: string) {
 }
 
 export async function findImageUrlForPage(pageUrl: string) {
-  const html = (await axios.get(pageUrl)).data;
+  const html = (await axiod.get(pageUrl)).data;
   const $ = cheerio.load(html);
 
   // img with ID or class

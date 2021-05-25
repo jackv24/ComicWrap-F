@@ -41,4 +41,4 @@ app.*.symbols
 app.*.map.json
 
 # Secrets
-lib/environment_config.dart
+.envrc

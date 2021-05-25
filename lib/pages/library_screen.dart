@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:appwrite/appwrite.dart';
-import 'package:comicwrap_f/environment_config.dart';
+import 'package:comicwrap_f/environment.dart';
 import 'package:comicwrap_f/models/collection_models.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/material.dart';
@@ -24,8 +24,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void initState() {
     _database = Database(widget.client);
-    _listComics = _database.listDocuments(
-        collectionId: EnvironmentConfig.apiComicsCollectionId);
+    _listComics = _database.listDocuments(collectionId: appwriteColComics);
 
     _functions = Functions(widget.client);
 
@@ -39,8 +38,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         onRefresh: () async {
           // Rebuild UI
           setState(() {
-            _listComics = _database.listDocuments(
-                collectionId: EnvironmentConfig.apiComicsCollectionId);
+            _listComics =
+                _database.listDocuments(collectionId: appwriteColComics);
           });
 
           // Display refresh indicator until finished
@@ -212,11 +211,11 @@ class _AddComicDialogState extends State<AddComicDialog> {
     try {
       // Start function execution
       final startedResponse = await widget.functions.createExecution(
-          functionId: EnvironmentConfig.apiFuncUserAddComicId, data: _url.text);
+          functionId: appwriteFuncUseAddComic, data: _url.text);
 
       // Poll for execution state
       while ((await widget.functions.getExecution(
-                  functionId: EnvironmentConfig.apiFuncUserAddComicId,
+                  functionId: appwriteFuncUseAddComic,
                   executionId: startedResponse.data['\$id']))
               .data['status'] ==
           'waiting') {
@@ -226,7 +225,7 @@ class _AddComicDialogState extends State<AddComicDialog> {
 
       // Function completed! Display result... TODO: handle success
       final completeResponse = await widget.functions.getExecution(
-          functionId: EnvironmentConfig.apiFuncUserAddComicId,
+          functionId: appwriteFuncUseAddComic,
           executionId: startedResponse.data['\$id']);
       setState(() {
         _urlErrorText = completeResponse.data['stdout'];
