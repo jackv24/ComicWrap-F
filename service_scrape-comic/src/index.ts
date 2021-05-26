@@ -8,6 +8,7 @@ admin.initializeApp({
 const db = admin.firestore();
 const runningImports = new Map<string, Promise<void>>();
 
+// TODO: Instead, respond directly to authorized endpoint calls
 // Respond to all comic doc changes
 db.collection('comics').onSnapshot((snapshot) => {
   snapshot.docChanges().forEach((value, index, array) => {

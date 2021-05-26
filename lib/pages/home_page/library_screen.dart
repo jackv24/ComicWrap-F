@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
 import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/material.dart';
@@ -51,94 +52,78 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: 120.0,
-            flexibleSpace: const FlexibleSpaceBar(
-              title: Text('Library'),
+    return HomePageScreen(
+      title: Text('Library'),
+      appBarActions: [
+        IconButton(
+            icon: Icon(
+              Icons.library_add,
+              color: Theme.of(context).primaryIconTheme.color,
             ),
-            actions: [
-              IconButton(
-                  icon: Icon(
-                    Icons.library_add,
-                    color: Theme.of(context).primaryIconTheme.color,
-                  ),
-                  onPressed: () => _onAddPressed(context)),
-            ],
-            leading: IconButton(
-                icon: Icon(
-                  Icons.menu,
-                  color: Theme.of(context).primaryIconTheme.color,
-                ),
-                onPressed: () {}),
-          ),
-          StreamBuilder<QuerySnapshot>(
-            stream: _userComicsSubject.stream,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return SliverToBoxAdapter(
-                  child: Text('Error reading user comics stream'),
-                );
-              }
+            onPressed: () => _onAddPressed(context)),
+      ],
+      bodySliver: StreamBuilder<QuerySnapshot>(
+        stream: _userComicsSubject.stream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return SliverToBoxAdapter(
+              child: Text('Error reading user comics stream'),
+            );
+          }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SliverToBoxAdapter(
-                  child: Text("Loading user comics stream..."),
-                );
-              }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return SliverToBoxAdapter(
+              child: Text("Loading user comics stream..."),
+            );
+          }
 
-              final userComicDocs = snapshot.data!.docs;
-              if (userComicDocs.length == 0) {
-                return SliverToBoxAdapter(
-                  child: Text('User has no library!'),
-                );
-              }
+          final userComicDocs = snapshot.data!.docs;
+          if (userComicDocs.length == 0) {
+            return SliverToBoxAdapter(
+              child: Text('User has no library!'),
+            );
+          }
 
-              return SliverPadding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 150.0,
-                    mainAxisSpacing: 12.0,
-                    crossAxisSpacing: 12.0,
-                    childAspectRatio: 0.54,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final userComic = userComicDocs[index];
-                      final userComicData = userComic.data()!;
-                      final DocumentReference? sharedComic =
-                          userComicData['sharedDoc'];
+          return SliverPadding(
+            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 150.0,
+                mainAxisSpacing: 12.0,
+                crossAxisSpacing: 12.0,
+                childAspectRatio: 0.54,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final userComic = userComicDocs[index];
+                  final userComicData = userComic.data()!;
+                  final DocumentReference? sharedComic =
+                      userComicData['sharedDoc'];
 
-                      Widget comicWidget;
-                      try {
-                        comicWidget = ComicInfoCard(sharedComic);
-                      } catch (e) {
-                        comicWidget = Text('ERROR: ${e.toString()}');
-                      }
-                      return AnimationConfiguration.staggeredGrid(
-                        position: index,
-                        columnCount: 3,
-                        duration: Duration(milliseconds: 200),
-                        delay: Duration(milliseconds: 50),
-                        child: ScaleAnimation(
-                          scale: 0.85,
-                          child: FadeInAnimation(
-                            child: comicWidget,
-                          ),
-                        ),
-                      );
-                    },
-                    childCount: userComicDocs.length,
-                  ),
-                ),
-              );
-            },
-          )
-        ],
+                  Widget comicWidget;
+                  try {
+                    comicWidget = ComicInfoCard(sharedComic);
+                  } catch (e) {
+                    comicWidget = Text('ERROR: ${e.toString()}');
+                  }
+                  return AnimationConfiguration.staggeredGrid(
+                    position: index,
+                    columnCount: 3,
+                    duration: Duration(milliseconds: 200),
+                    delay: Duration(milliseconds: 50),
+                    child: ScaleAnimation(
+                      scale: 0.85,
+                      child: FadeInAnimation(
+                        child: comicWidget,
+                      ),
+                    ),
+                  );
+                },
+                childCount: userComicDocs.length,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

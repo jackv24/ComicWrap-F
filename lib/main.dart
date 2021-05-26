@@ -113,7 +113,7 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
             title: 'ComicWrap',
             theme: ThemeData(
-              primarySwatch: Colors.pink,
+              primaryColor: Colors.white,
               visualDensity: VisualDensity.adaptivePlatformDensity,
             ),
             home: homeWidget);
