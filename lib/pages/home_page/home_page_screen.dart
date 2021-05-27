@@ -22,6 +22,7 @@ class HomePageScreen extends StatelessWidget {
             expandedHeight: 120.0,
             flexibleSpace: FlexibleSpaceBar(
               title: title,
+              titlePadding: EdgeInsets.only(left: 16, bottom: 16),
             ),
             actions: appBarActions,
           ),

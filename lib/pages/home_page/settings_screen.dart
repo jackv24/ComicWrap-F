@@ -11,13 +11,11 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  Stream<User?>? authStateChanges;
+  late Stream<User?> _authStream;
 
   @override
   void initState() {
-    firebaseInit!.then((value) {
-      authStateChanges = FirebaseAuth.instance.authStateChanges();
-    });
+    _authStream = getAuthStream();
 
     super.initState();
   }
@@ -32,7 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           delegate: SliverChildListDelegate.fixed([
             // Sign-in UI
             StreamBuilder<User?>(
-              stream: authStateChanges,
+              stream: _authStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
                   var user = snapshot.data;
@@ -40,11 +38,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     return Text('Waiting for sign in...');
                   } else {
                     if (user.isAnonymous) {
-                      return ListView(
-                        shrinkWrap: true,
+                      return Column(
                         children: [
-                          Text("You're an anonymous user. "
-                              "Sign in to make sure you don't lose your data!"),
+                          Padding(
+                            padding: EdgeInsets.only(bottom: 16),
+                            child: Text("You're an anonymous user. "
+                                "Sign in to make sure you don't lose your data!"),
+                          ),
                           SignInButton(Buttons.Email, onPressed: () {
                             linkEmailAuth(context);
                           }),

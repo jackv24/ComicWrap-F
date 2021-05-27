@@ -20,7 +20,7 @@ Stream<DocumentSnapshot> getUserStream() {
 
     // NOTE: All this is probably very wrong, but I am confused :(
     // Depends on firebase core to be initialised
-    firebaseInit!.then((firebaseApp) {
+    firebaseInit.then((firebaseApp) {
       // Respond to user auth changes
       FirebaseAuth.instance.authStateChanges().listen((user) {
         if (user == null) return;

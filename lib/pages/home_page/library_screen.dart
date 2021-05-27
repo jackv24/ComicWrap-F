@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
+import 'package:comicwrap_f/pages/home_page/settings_screen.dart';
 import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:rxdart/rxdart.dart';
@@ -58,9 +60,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
         IconButton(
             icon: Icon(
               Icons.library_add,
-              color: Theme.of(context).primaryIconTheme.color,
             ),
             onPressed: () => _onAddPressed(context)),
+        IconButton(
+            icon: Icon(
+              Icons.settings_rounded,
+            ),
+            onPressed: () => _onSettingsPressed(context)),
       ],
       bodySliver: StreamBuilder<QuerySnapshot>(
         stream: _userComicsSubject.stream,
@@ -144,6 +150,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
         });
       },
     );
+  }
+
+  void _onSettingsPressed(BuildContext context) {
+    Navigator.push(context, CupertinoPageRoute(
+      builder: (context) {
+        return SettingsScreen();
+      },
+    ));
   }
 }
 
