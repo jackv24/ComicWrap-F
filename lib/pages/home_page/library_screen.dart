@@ -141,16 +141,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AddComicDialog(() async {
-          HttpsCallable callable =
-              FirebaseFunctions.instance.httpsCallable('startComicScrape');
-          final HttpsCallableResult<dynamic> result =
-              await callable('https://www.goodbyetohalos.com/');
-          print(result.data);
-
-          // No errors! :D
-          return null;
-        });
+        return AddComicDialog();
       },
     );
   }
@@ -165,9 +156,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 }
 
 class AddComicDialog extends StatefulWidget {
-  final Future<String?> Function() onAdded;
-
-  AddComicDialog(this.onAdded, {Key? key}) : super(key: key);
+  AddComicDialog({Key? key}) : super(key: key);
 
   @override
   _AddComicDialogState createState() => _AddComicDialogState();

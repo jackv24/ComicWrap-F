@@ -25,6 +25,16 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
   }
 
   @override
+  void didUpdateWidget(covariant ComicInfoCard oldWidget) {
+    // Make sure we refresh properly when user comic list changes
+    if (widget.userComic != oldWidget.userComic) {
+      docStream = widget.userComic.sharedDoc.snapshots();
+    }
+
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot<SharedComicModel>>(
       stream: docStream,

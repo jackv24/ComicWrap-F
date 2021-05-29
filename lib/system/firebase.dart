@@ -35,6 +35,7 @@ Stream<User?> getAuthStream() {
             Settings(host: host + ':8080', sslEnabled: false);
         FirebaseFunctions.instance
             .useFunctionsEmulator(origin: 'http://$host:5001');
+        FirebaseAuth.instance.useEmulator('http://$host:9099');
       }
 
       // Start listening to auth changes here (build shouldn't have side effects)
