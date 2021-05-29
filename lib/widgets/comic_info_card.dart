@@ -1,31 +1,32 @@
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:comicwrap_f/pages/comic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class ComicInfoCard extends StatefulWidget {
-  final DocumentReference? docRef;
+  final UserComicModel userComic;
 
-  const ComicInfoCard(this.docRef, {Key? key}) : super(key: key);
+  const ComicInfoCard({Key? key, required this.userComic}) : super(key: key);
 
   @override
   _ComicInfoCardState createState() => _ComicInfoCardState();
 }
 
 class _ComicInfoCardState extends State<ComicInfoCard> {
-  Stream<DocumentSnapshot>? docStream;
+  Stream<DocumentSnapshot<SharedComicModel>>? docStream;
 
   @override
   void initState() {
-    docStream = widget.docRef!.snapshots();
+    docStream = widget.userComic.sharedDoc.snapshots();
 
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot>(
+    return StreamBuilder<DocumentSnapshot<SharedComicModel>>(
       stream: docStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) return Text('Error');
@@ -35,13 +36,13 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
         }
 
         var data = snapshot.data!.data()!;
-        String? coverImageUrl = data['coverImageUrl'];
+        var coverImageUrl = data.coverImageUrl;
 
         // If cover url is relative, make it absolute
         if (coverImageUrl != null && !coverImageUrl.startsWith('http')) {
-          String? scrapeUrl = data['scrapeUrl'];
-          if (scrapeUrl?.isNotEmpty ?? false) {
-            coverImageUrl = scrapeUrl! + coverImageUrl;
+          final scrapeUrl = data.scrapeUrl;
+          if (scrapeUrl.isNotEmpty) {
+            coverImageUrl = scrapeUrl + coverImageUrl;
           }
         }
 
@@ -63,19 +64,19 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
                     );
                   },
                   openBuilder: (context, closeFunc) =>
-                      ComicPage(snapshot.data, coverImageUrl),
+                      ComicPage(snapshot.data!),
                 ),
               ),
             ),
             SizedBox(height: 5.0),
             Text(
-              data['name'] ?? snapshot.data!.id,
+              data.name ?? snapshot.data!.id,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.subtitle1,
             ),
             SizedBox(height: 2.0),
             Text(
-              '3 days ago',
+              widget.userComic.lastReadTime?.toString() ?? 'never',
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.subtitle2,
             ),

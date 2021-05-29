@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,17 +10,16 @@ import 'comic_web_page.dart';
 const listItemHeight = 50.0;
 
 class ComicPage extends StatefulWidget {
-  final DocumentSnapshot? doc;
-  final String? coverImageUrl;
+  final DocumentSnapshot<SharedComicModel> sharedComicSnapshot;
 
-  const ComicPage(this.doc, this.coverImageUrl, {Key? key}) : super(key: key);
+  const ComicPage(this.sharedComicSnapshot, {Key? key}) : super(key: key);
 
   @override
   _ComicPageState createState() => _ComicPageState();
 }
 
 class _PagePair {
-  final DocumentSnapshot sharedPage;
+  final DocumentSnapshot<SharedComicPageModel> sharedPage;
   final Future<bool?> userPageIsReadFuture;
 
   const _PagePair(this.sharedPage, this.userPageIsReadFuture);
@@ -44,16 +44,21 @@ class _ComicPageState extends State<ComicPage> {
 
   Future<LazyBox<bool>>? _pageReadBoxFuture;
 
-  late Query _pagesQuery;
+  late Query<SharedComicPageModel> _pagesQuery;
 
   @override
   void initState() {
     _scrollController = ScrollController();
 
-    _pageReadBoxFuture = Hive.openLazyBox<bool>(widget.doc!.id);
+    _pageReadBoxFuture = Hive.openLazyBox<bool>(widget.sharedComicSnapshot.id);
 
-    _pagesQuery = widget.doc!.reference
+    _pagesQuery = widget.sharedComicSnapshot.reference
         .collection('pages')
+        .withConverter<SharedComicPageModel>(
+          fromFirestore: (snapshot, _) =>
+              SharedComicPageModel.fromJson(snapshot.data()!),
+          toFirestore: (comic, _) => comic.toJson(),
+        )
         .orderBy('index', descending: true);
 
     // Scrollview won't build if we don't have any pages
@@ -71,7 +76,7 @@ class _ComicPageState extends State<ComicPage> {
 
   @override
   Widget build(BuildContext context) {
-    final doc = widget.doc!;
+    final doc = widget.sharedComicSnapshot;
     final data = doc.data()!;
 
     _scrollController!.addListener(() {
@@ -96,7 +101,14 @@ class _ComicPageState extends State<ComicPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(data['name'] ?? doc.id),
+        title: Text(data.name ?? doc.id),
+        actions: [
+          IconButton(
+              icon: Icon(
+                Icons.more_horiz,
+              ),
+              onPressed: () {/* TODO */})
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -108,7 +120,7 @@ class _ComicPageState extends State<ComicPage> {
                 Container(
                   width: 300,
                   alignment: AlignmentDirectional.topStart,
-                  child: ComicInfoSection(widget.coverImageUrl),
+                  child: ComicInfoSection(data.coverImageUrl),
                 ),
                 // Page List
                 Expanded(
@@ -124,7 +136,7 @@ class _ComicPageState extends State<ComicPage> {
                   Container(
                     height: 200,
                     alignment: AlignmentDirectional.topStart,
-                    child: ComicInfoSection(widget.coverImageUrl),
+                    child: ComicInfoSection(data.coverImageUrl),
                   ),
                   // Page List
                   Expanded(
@@ -178,7 +190,7 @@ class _ComicPageState extends State<ComicPage> {
   Widget _listItemBuilder(BuildContext context, int index) {
     final page = _pages[index];
     final data = page.sharedPage.data()!;
-    final title = data['text'] ?? '!!Page $index!!';
+    final title = data.text;
 
     // Wait to get read state of pages
     return FutureBuilder<bool?>(
@@ -202,13 +214,13 @@ class _ComicPageState extends State<ComicPage> {
           onTap: () {
             Navigator.of(context)
                 .push(MaterialPageRoute(
-              builder: (context) =>
-                  ComicWebPage(widget.doc, page.sharedPage, _pageReadBoxFuture),
+              builder: (context) => ComicWebPage(widget.sharedComicSnapshot,
+                  page.sharedPage, _pageReadBoxFuture),
             ))
                 .then((value) {
-              if (value is DocumentSnapshot) {
+              if (value is DocumentSnapshot<SharedComicPageModel>) {
                 final pageData = value.data();
-                final pageTitle = pageData != null ? pageData['text'] : '';
+                final pageTitle = pageData?.text ?? '';
                 print('Web Page popped on "$pageTitle" document');
                 _centerPagesOn(value);
               } else {
@@ -331,18 +343,20 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  void _centerPagesOn(DocumentSnapshot centreDoc) async {
+  void _centerPagesOn(DocumentSnapshot<SharedComicPageModel> centreDoc) async {
     _pages.clear();
     _pages.add(_PagePair(centreDoc, _getIsUserPageRead(centreDoc)));
     _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
   }
 
-  Future<bool?> _getIsUserPageRead(DocumentSnapshot pageDoc) {
+  Future<bool?> _getIsUserPageRead(
+      DocumentSnapshot<SharedComicPageModel> pageDoc) {
     // Start read user doc state here so we only do it once
     return _pageReadBoxFuture!.then((box) => box.get(pageDoc.id));
   }
 
-  void _addPagesToEnd(List<QueryDocumentSnapshot> docs, int limit) {
+  void _addPagesToEnd(
+      List<QueryDocumentSnapshot<SharedComicPageModel>> docs, int limit) {
     // Add to end of list
     _pages.addAll(docs.map((e) => _PagePair(e, _getIsUserPageRead(e))));
 
@@ -352,7 +366,8 @@ class _ComicPageState extends State<ComicPage> {
     }
   }
 
-  void _addPagesToStart(List<QueryDocumentSnapshot> docs, int limit) {
+  void _addPagesToStart(
+      List<QueryDocumentSnapshot<SharedComicPageModel>> docs, int limit) {
     // Insert at start of list
     _pages.insertAll(0, docs.map((e) => _PagePair(e, _getIsUserPageRead(e))));
 

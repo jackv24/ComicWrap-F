@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
 import 'package:comicwrap_f/pages/home_page/settings_screen.dart';
 import 'package:comicwrap_f/system/database.dart';
@@ -19,13 +20,13 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  late BehaviorSubject<QuerySnapshot> _userComicsSubject;
+  late BehaviorSubject<QuerySnapshot<UserComicModel>> _userComicsSubject;
   StreamSubscription? _userDocComicsSub;
 
   @override
   void initState() {
     // Keep latest event for build
-    _userComicsSubject = BehaviorSubject<QuerySnapshot>();
+    _userComicsSubject = BehaviorSubject<QuerySnapshot<UserComicModel>>();
 
     // User can change through authentication
     getUserStream().listen((userDocSnapshot) async {
@@ -35,6 +36,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
       // If user changes sub to new user comics collection
       _userDocComicsSub = userDocSnapshot.reference
           .collection('comics')
+          .withConverter<UserComicModel>(
+            fromFirestore: (snapshot, _) =>
+                UserComicModel.fromJson(snapshot.data()!),
+            toFirestore: (comic, _) => comic.toJson(),
+          )
           .orderBy('lastReadTime', descending: true)
           .snapshots()
           .listen((comicsCollectionSnap) {
@@ -68,7 +74,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             onPressed: () => _onSettingsPressed(context)),
       ],
-      bodySliver: StreamBuilder<QuerySnapshot>(
+      bodySliver: StreamBuilder<QuerySnapshot<UserComicModel>>(
         stream: _userComicsSubject.stream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -101,14 +107,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final userComic = userComicDocs[index];
-                  final userComicData = userComic.data()!;
-                  final DocumentReference? sharedComic =
-                      userComicData['sharedDoc'];
+                  final userComic = userComicDocs[index].data();
 
                   Widget comicWidget;
                   try {
-                    comicWidget = ComicInfoCard(sharedComic);
+                    comicWidget = ComicInfoCard(userComic: userComic);
                   } catch (e) {
                     comicWidget = Text('ERROR: ${e.toString()}');
                   }
