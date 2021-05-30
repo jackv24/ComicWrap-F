@@ -1,4 +1,3 @@
-import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:comicwrap_f/pages/comic_page.dart';
@@ -72,17 +71,13 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
                 elevation: 5.0,
                 borderRadius: BorderRadius.all(Radius.circular(12.0)),
                 clipBehavior: Clip.antiAlias,
-                child: OpenContainer(
-                  closedBuilder: (context, openFunc) {
-                    return CardImageButton(
-                      coverImageUrl: coverImageUrl,
-                      onTap: () => openFunc(),
-                    );
-                  },
-                  openBuilder: (context, closeFunc) => ComicPage(
-                    userComicSnapshot: widget.userComicSnapshot,
-                    sharedComicSnapshot: snapshotData,
-                  ),
+                child: CardImageButton(
+                  coverImageUrl: coverImageUrl,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => ComicPage(
+                            userComicSnapshot: widget.userComicSnapshot,
+                            sharedComicSnapshot: snapshotData,
+                          ))),
                 ),
               ),
             ),
