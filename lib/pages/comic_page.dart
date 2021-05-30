@@ -3,6 +3,7 @@ import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hive/hive.dart';
 
 import 'comic_web_page.dart';
@@ -10,9 +11,14 @@ import 'comic_web_page.dart';
 const listItemHeight = 50.0;
 
 class ComicPage extends StatefulWidget {
+  final DocumentSnapshot<UserComicModel> userComicSnapshot;
   final DocumentSnapshot<SharedComicModel> sharedComicSnapshot;
 
-  const ComicPage(this.sharedComicSnapshot, {Key? key}) : super(key: key);
+  const ComicPage(
+      {Key? key,
+      required this.userComicSnapshot,
+      required this.sharedComicSnapshot})
+      : super(key: key);
 
   @override
   _ComicPageState createState() => _ComicPageState();
@@ -31,6 +37,13 @@ enum _ScrollDirection {
   up,
 }
 
+class _FunctionListItem {
+  final String text;
+  final Future Function(BuildContext) onSelected;
+
+  const _FunctionListItem(this.text, this.onSelected);
+}
+
 class _ComicPageState extends State<ComicPage> {
   final int _initialDocLimit = 30;
   final int _moreDocLimit = 10;
@@ -45,6 +58,21 @@ class _ComicPageState extends State<ComicPage> {
   Future<LazyBox<bool>>? _pageReadBoxFuture;
 
   late Query<SharedComicPageModel> _pagesQuery;
+
+  // Lazy init so we can access widget inside
+  late var _moreOptions = [
+    _FunctionListItem('Delete', (context) async {
+      EasyLoading.instance
+        ..userInteractions = false
+        ..maskType = EasyLoadingMaskType.black;
+      EasyLoading.show();
+      await widget.userComicSnapshot.reference.delete();
+      EasyLoading.dismiss();
+
+      // This comic has now been removed, so close it's page
+      Navigator.of(context).pop();
+    }),
+  ];
 
   @override
   void initState() {
@@ -103,11 +131,21 @@ class _ComicPageState extends State<ComicPage> {
       appBar: AppBar(
         title: Text(data.name ?? doc.id),
         actions: [
-          IconButton(
-              icon: Icon(
-                Icons.more_horiz,
-              ),
-              onPressed: () {/* TODO */})
+          PopupMenuButton(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(Icons.more_horiz),
+            ),
+            itemBuilder: (context) {
+              return List.generate(_moreOptions.length, (index) {
+                return PopupMenuItem(
+                  value: index,
+                  child: Text(_moreOptions[index].text),
+                );
+              });
+            },
+            onSelected: (int index) => _moreOptions[index].onSelected(context),
+          ),
         ],
       ),
       body: LayoutBuilder(

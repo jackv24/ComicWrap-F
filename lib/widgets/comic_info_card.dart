@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class ComicInfoCard extends StatefulWidget {
-  final UserComicModel userComic;
+  final DocumentSnapshot<UserComicModel> userComicSnapshot;
 
-  const ComicInfoCard({Key? key, required this.userComic}) : super(key: key);
+  const ComicInfoCard({Key? key, required this.userComicSnapshot})
+      : super(key: key);
 
   @override
   _ComicInfoCardState createState() => _ComicInfoCardState();
@@ -19,7 +20,7 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
 
   @override
   void initState() {
-    docStream = widget.userComic.sharedDoc.snapshots();
+    docStream = widget.userComicSnapshot.data()!.sharedDoc.snapshots();
 
     super.initState();
   }
@@ -27,8 +28,8 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
   @override
   void didUpdateWidget(covariant ComicInfoCard oldWidget) {
     // Make sure we refresh properly when user comic list changes
-    if (widget.userComic != oldWidget.userComic) {
-      docStream = widget.userComic.sharedDoc.snapshots();
+    if (widget.userComicSnapshot != oldWidget.userComicSnapshot) {
+      docStream = widget.userComicSnapshot.data()!.sharedDoc.snapshots();
     }
 
     super.didUpdateWidget(oldWidget);
@@ -42,10 +43,15 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
         if (snapshot.hasError) return Text('Error');
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Text("Loading...");
+          return Text('Loading...');
         }
 
-        var data = snapshot.data!.data()!;
+        final snapshotData = snapshot.data;
+        if (snapshotData == null) return Text('Snapshot data is null');
+
+        final data = snapshotData.data();
+        if (data == null) return Text('Comic data is null');
+
         var coverImageUrl = data.coverImageUrl;
 
         // If cover url is relative, make it absolute
@@ -73,8 +79,10 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
                       onTap: () => openFunc(),
                     );
                   },
-                  openBuilder: (context, closeFunc) =>
-                      ComicPage(snapshot.data!),
+                  openBuilder: (context, closeFunc) => ComicPage(
+                    userComicSnapshot: widget.userComicSnapshot,
+                    sharedComicSnapshot: snapshotData,
+                  ),
                 ),
               ),
             ),
@@ -86,7 +94,8 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
             ),
             SizedBox(height: 2.0),
             Text(
-              widget.userComic.lastReadTime?.toString() ?? 'never',
+              widget.userComicSnapshot.data()!.lastReadTime?.toString() ??
+                  'never',
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.subtitle2,
             ),

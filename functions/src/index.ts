@@ -9,7 +9,7 @@ admin.initializeApp();
 const db = admin.firestore();
 
 // Kicks off scraping comic by writing a skeleton doc
-export const startComicScrape = functions.https
+export const addUserComic = functions.https
     .onCall(async (data, context) => {
       if (!context.auth) {
         throw new functions.https.HttpsError(

@@ -107,11 +107,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final userComic = userComicDocs[index].data();
-
                   Widget comicWidget;
                   try {
-                    comicWidget = ComicInfoCard(userComic: userComic);
+                    comicWidget = ComicInfoCard(
+                      userComicSnapshot: userComicDocs[index],
+                    );
                   } catch (e) {
                     comicWidget = Text('ERROR: ${e.toString()}');
                   }
@@ -213,7 +213,7 @@ class _AddComicDialogState extends State<AddComicDialog> {
     });
 
     HttpsCallable callable =
-        FirebaseFunctions.instance.httpsCallable('startComicScrape');
+        FirebaseFunctions.instance.httpsCallable('addUserComic');
 
     try {
       final HttpsCallableResult<dynamic> result = await callable(_url.text);

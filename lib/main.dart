@@ -4,6 +4,7 @@ import 'package:comicwrap_f/system/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -66,12 +67,14 @@ class _MyAppState extends State<MyApp> {
         }
 
         return MaterialApp(
-            title: 'ComicWrap',
-            theme: ThemeData(
-              primaryColor: Colors.white,
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-            ),
-            home: homeWidget);
+          title: 'ComicWrap',
+          theme: ThemeData(
+            primaryColor: Colors.white,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          home: homeWidget,
+          builder: EasyLoading.init(),
+        );
       },
     );
   }
