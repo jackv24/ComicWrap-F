@@ -24,6 +24,8 @@ There are a few parts to the whole system:
 
 ## Setup
 
+To run the Firebase emulators with test data, run `run_emulators.sh`. The test user can be logged in with email: `test@test.com` and pass: `test1234`.
+
 ### Flutter
 
 - Create a Firebase project
