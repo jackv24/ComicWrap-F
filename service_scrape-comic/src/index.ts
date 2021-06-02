@@ -5,179 +5,180 @@ import {OAuth2Client} from 'google-auth-library';
 
 import * as scraper from './comic-scraper';
 
-// admin.initializeApp({
-//   credential: admin.credential.applicationDefault()
-// });
+if (process.env.LOCAL_SERVICE) {
+  process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
+  process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
+}
 
-// const db = admin.firestore();
-// const runningImports = new Map<string, Promise<void>>();
+admin.initializeApp({
+  credential: admin.credential.applicationDefault()
+});
 
-// TODO: Instead, respond directly to authorized endpoint calls
-// Respond to all comic doc changes
-// db.collection('comics').onSnapshot((snapshot) => {
-//   snapshot.docChanges().forEach((value, index, array) => {
-//     const doc = value.doc;
-//     const shouldImport = value.doc.get('shouldImport');
-//     const isImporting = value.doc.get('isImporting');
-    
-//     // Don't do anything if import is not queued, or is already running
-//     if (!shouldImport || isImporting) return;
+const db = admin.firestore();
+const runningImports = new Map<string, Promise<void>>();
 
-//     // In case isImporting is false despite an import promise running
-//     if (runningImports.has(doc.ref.path)) return;
+async function startComicImport(comicDocName: string) {
+  const doc = await db.collection('comics').doc(comicDocName).get();
+  if (!doc.exists) return 'doc-does-not-exist';
 
-//     // Create import promise
-//     const promise = importComic(doc)
-//       .catch(async (reason) => {
-//         const e = String(reason);
-//         console.log(`Error importing ${doc.id}: ${e}`);
+  const isImporting = doc.get('isImporting');
+  if (isImporting) return 'already-importing';
 
-//         // Write error to database for later inspection
-//         await doc.ref.update({
-//           'importError': e
-//         });
-//       })
-//       .finally(async () => {
-//         // Mark importing as finished
-//         await doc.ref.update({
-//           'shouldImport': false,
-//           'isImporting': false
-//         });
+  // In case isImporting is false despite an import promise running
+  if (runningImports.has(doc.ref.path)) return 'promise-exists';
 
-//         // Remove from running map now that it's finished
-//         runningImports.delete(doc.ref.path);
-//       });
+  // Create import promise
+  const promise = importComic(doc)
+    .catch(async (reason) => {
+      const e = String(reason);
+      console.log(`Error importing ${doc.id}: ${e}`);
 
-//     runningImports.set(doc.ref.path, promise);
-//   });
-// });
+      // Write error to database for later inspection
+      await doc.ref.update({
+        'importError': e
+      });
+    })
+    .finally(async () => {
+      // Mark importing as finished
+      await doc.ref.update({
+        'isImporting': false
+      });
 
-// async function importComic(snapshot: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>) {
-//   const scrapeUrl = snapshot.get('scrapeUrl');
-//   const collection = snapshot.ref.collection('pages');
+      // Remove from running map now that it's finished
+      runningImports.delete(doc.ref.path);
+    });
 
-//   // Mark comic as importing so we don't run multiple at once
-//   await snapshot.ref.update({
-//     'isImporting': true,
-//     // Clear previous error to avoid confusion
-//     'importError': ''
-//   })
+  runningImports.set(doc.ref.path, promise);
 
-//   // TODO: Replace index with scrape time?
-//   let pageCount = 0;
+  return 'success';
+}
 
-//   let foundComicName = false;
-//   let coverImageUrl: string | null = null;
-//   let foundGoodCover = false;
+async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>) {
+  const scrapeUrl = snapshot.get('scrapeUrl');
+  const collection = snapshot.ref.collection('pages');
 
-//   // Scrape pages, saving as we go
-//   await scraper.scrapeComicPages(
-//       scrapeUrl, async (page) => {
-//         let pageTitle = page.text;
+  // Mark comic as importing so we don't run multiple at once
+  await snapshot.ref.update({
+    'isImporting': true,
+    // Clear previous error to avoid confusion
+    'importError': ''
+  })
 
-//         if (page.wasCrawled) {
-//           // Crawled page titles would contain the comic name also
-//           const splitTitle = separatePageTitle(pageTitle);
-//           pageTitle = splitTitle.pageTitle;
+  // TODO: Replace index with scrape time?
+  let pageCount = 0;
 
-//           // Set comic name if it hasn't been set already
-//           if (!foundComicName && splitTitle.comicTitle) {
-//             foundComicName = true;
-//             await snapshot.ref.set(
-//                 {name: splitTitle.comicTitle},
-//                 {merge: true},
-//             );
-//           }
-//         }
+  let foundComicName = false;
+  let coverImageUrl: string | null = null;
+  let foundGoodCover = false;
 
-//         // Completely stop searching for cover if we found a "good" one
-//         if (!foundGoodCover) {
-//           // Prefer images from pages more likely to contain a cover image
-//           const lcPageTitle = pageTitle.toLowerCase();
-//           const couldBeCover = lcPageTitle.includes('cover') ||
-//               lcPageTitle.includes('title') ||
-//               lcPageTitle.includes('promo');
+  // Scrape pages, saving as we go
+  await scraper.scrapeComicPages(
+      scrapeUrl, async (page) => {
+        let pageTitle = page.text;
 
-//           // Try extract cover image from page (not every page)
-//           if (!coverImageUrl || couldBeCover) {
-//             const pageUrl = constructPageUrl(snapshot.id, page.docName);
-//             const imageUrl = await scraper.findImageUrlForPage(pageUrl);
-//             if (imageUrl) {
-//               coverImageUrl = imageUrl;
+        if (page.wasCrawled) {
+          // Crawled page titles would contain the comic name also
+          const splitTitle = separatePageTitle(pageTitle);
+          pageTitle = splitTitle.pageTitle;
 
-//               // Can completely stop searching when we find a good candidate
-//               if (couldBeCover) foundGoodCover = true;
+          // Set comic name if it hasn't been set already
+          if (!foundComicName && splitTitle.comicTitle) {
+            foundComicName = true;
+            await snapshot.ref.set(
+                {name: splitTitle.comicTitle},
+                {merge: true},
+            );
+          }
+        }
 
-//               console.log('Found cover image: ' + pageUrl);
+        // Completely stop searching for cover if we found a "good" one
+        if (!foundGoodCover) {
+          // Prefer images from pages more likely to contain a cover image
+          const lcPageTitle = pageTitle.toLowerCase();
+          const couldBeCover = lcPageTitle.includes('cover') ||
+              lcPageTitle.includes('title') ||
+              lcPageTitle.includes('promo');
 
-//               // Update image immediately since crawling may take a while
-//               await snapshot.ref.set(
-//                   {coverImageUrl: coverImageUrl},
-//                   {merge: true},
-//               );
-//             }
-//           }
-//         }
+          // Try extract cover image from page (not every page)
+          if (!coverImageUrl || couldBeCover) {
+            const pageUrl = constructPageUrl(snapshot.id, page.docName);
+            const imageUrl = await scraper.findImageUrlForPage(pageUrl);
+            if (imageUrl) {
+              coverImageUrl = imageUrl;
 
-//         // Write document
-//         await collection.doc(page.docName).create({
-//           index: pageCount,
-//           text: pageTitle,
-//         });
+              // Can completely stop searching when we find a good candidate
+              if (couldBeCover) foundGoodCover = true;
 
-//         pageCount++;
+              console.log('Found cover image: ' + pageUrl);
 
-//         // Canceled comic importing by manually changing database field
-//         const shouldContinue = (await snapshot.ref.get()).get('shouldImport');
-//         if (!shouldContinue) {
-//           console.log('Canceled importing at page: ' + page.docName);
-//           return scraper.FoundPageResult.Cancel;
-//         }
+              // Update image immediately since crawling may take a while
+              await snapshot.ref.set(
+                  {coverImageUrl: coverImageUrl},
+                  {merge: true},
+              );
+            }
+          }
+        }
 
-//         return scraper.FoundPageResult.Success;
-//       });
+        // Write document
+        await collection.doc(page.docName).create({
+          index: pageCount,
+          text: pageTitle,
+        });
 
-//   // If name wasn't found, load a page and get name from there
-//   if (!foundComicName) {
-//     const page = await scraper.scrapePage(scrapeUrl);
-//     if (page.title) {
-//       const splitTitle = separatePageTitle(page.title);
-//       await snapshot.ref.set(
-//           {name: splitTitle.comicTitle},
-//           {merge: true},
-//       );
-//     }
-//   }
+        pageCount++;
 
-//   return;
-// }
+        // Canceled comic importing by manually changing database field
+        const shouldContinue = (await snapshot.ref.get()).get('isImporting');
+        if (!shouldContinue) {
+          console.log('Canceled importing at page: ' + page.docName);
+          return scraper.FoundPageResult.Cancel;
+        }
 
-// function constructPageUrl(comicDocName: string, pageDocName: string) {
-//   const pageSubUrl = pageDocName.replace(/ /g, '/');
-//   return `https://${comicDocName}/${pageSubUrl}`;
-// }
+        return scraper.FoundPageResult.Success;
+      });
 
-// function separatePageTitle(pageTitle: string) {
-//   const split = pageTitle.split('-');
-//   if (split.length < 2) {
-//     return {
-//       comicTitle: null,
-//       pageTitle: pageTitle,
-//     };
-//   }
+  // If name wasn't found, load a page and get name from there
+  if (!foundComicName) {
+    const page = await scraper.scrapePage(scrapeUrl);
+    if (page.title) {
+      const splitTitle = separatePageTitle(page.title);
+      await snapshot.ref.set(
+          {name: splitTitle.comicTitle},
+          {merge: true},
+      );
+    }
+  }
 
-//   const remaining = split.slice(1);
+  return;
+}
 
-//   return {
-//     comicTitle: split[0].trim(),
-//     pageTitle: remaining.join('-').trim(),
-//   };
-// }
+function constructPageUrl(comicDocName: string, pageDocName: string) {
+  const pageSubUrl = pageDocName.replace(/ /g, '/');
+  return `https://${comicDocName}/${pageSubUrl}`;
+}
+
+function separatePageTitle(pageTitle: string) {
+  const split = pageTitle.split('-');
+  if (split.length < 2) {
+    return {
+      comicTitle: null,
+      pageTitle: pageTitle,
+    };
+  }
+
+  const remaining = split.slice(1);
+
+  return {
+    comicTitle: split[0].trim(),
+    pageTitle: remaining.join('-').trim(),
+  };
+}
 
 const app = express();
 const oAuth2Client = new OAuth2Client();
 
-// Cache externall fetched information for future invocations
+// Cache externally fetched information for future invocations
 let aud: string;
 
 async function audience() {
@@ -214,11 +215,9 @@ async function validateAssertation(assertion: string) {
   };
 }
 
-app.get('/', async (req, res) => {
-  console.log('Received GET');
-
+async function getEmail(req: any) {
   const assertion = req.header('X-Goog-IAP-JWT-Assertion');
-  let email: string = 'None';
+  let email: string | undefined;
   try {
     const info = await validateAssertation(assertion!);
     email = info!.email!;
@@ -226,11 +225,30 @@ app.get('/', async (req, res) => {
     console.log(error);
   }
 
+  return email;
+}
+
+app.get('/', async (req, res) => {
+  const email = await getEmail(req);
   res.status(200).send(`Hello ${email}!`).end();
 });
 
+app.get('/startimport/:comicDocName', async (req, res) => {
+  // Make sure we're properly authenticated
+  if (!process.env.LOCAL_SERVICE) {
+    const email = await getEmail(req);
+    if (!email) {
+      res.status(401).send();
+      return;
+    }
+  }
+
+  const result = await startComicImport(req.params.comicDocName);
+  res.status(200).send(result);
+});
+
 // Start the server
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
   console.log('Press Ctrl+C to quit.');

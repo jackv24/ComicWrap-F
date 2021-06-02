@@ -9,6 +9,37 @@ import {GoogleAuth} from 'google-auth-library';
 admin.initializeApp();
 const db = admin.firestore();
 
+const iapUrl = 'https://comicwrap.uc.r.appspot.com/';
+// eslint-disable-next-line max-len
+const targetAudience = '259253169335-0hfak0b08mibpkugruu3f9tquakrun2g.apps.googleusercontent.com';
+const auth = new GoogleAuth();
+
+// From: https://cloud.google.com/iap/docs/authentication-howto#iap_make_request-nodejs
+async function appRequest(route: string) {
+  let url = iapUrl;
+
+  if (process.env.LOCAL_SERVICE) {
+    url = 'http://localhost:8081';
+  }
+
+  console.info(`request IAP ${url} with target audience ${targetAudience}`);
+  const client = await auth.getIdTokenClient(targetAudience);
+
+  // Remove trailing slash (route will have leading slash)
+  if (url.endsWith('/')) {
+    url = url.substr(0, url.length - 1);
+  }
+
+  // Make sure route has leading slash
+  if (!route.startsWith('/')) {
+    route = '/' + route;
+  }
+
+  const res = await client.request({url: url + route});
+  console.info(res.data);
+  return res.data;
+}
+
 // Kicks off scraping comic by writing a skeleton doc
 export const addUserComic = functions.https
     .onCall(async (data, context) => {
@@ -66,30 +97,10 @@ export const addUserComic = functions.https
       await sharedComicRef.create({
         name: hostName,
         scrapeUrl: inputUrl,
-        // Import job will be picked up by reading this field
-        shouldImport: true,
       });
 
+      const result = appRequest('/startimport/' + hostName);
+
       // Return the name of the new document while import is being triggered
-      return hostName;
-    });
-
-const iapUrl = 'https://comicwrap.uc.r.appspot.com/';
-// eslint-disable-next-line max-len
-const targetAudience = '259253169335-0hfak0b08mibpkugruu3f9tquakrun2g.apps.googleusercontent.com';
-const auth = new GoogleAuth();
-
-// From: https://cloud.google.com/iap/docs/authentication-howto#iap_make_request-nodejs
-async function request() {
-  console.info(`request IAP ${url} with target audience ${targetAudience}`);
-  const client = await auth.getIdTokenClient(targetAudience);
-  const res = await client.request({url: iapUrl});
-  console.info(res.data);
-  return res.data;
-}
-
-export const testAppEngine = functions.https.onRequest(
-    async (req, resp) => {
-      const data = await request();
-      resp.status(200).send(`Proxied: ${data}`).end();
+      return result;
     });
