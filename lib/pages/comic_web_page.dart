@@ -10,7 +10,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 class ComicWebPage extends StatefulWidget {
   final DocumentSnapshot<SharedComicModel> comicDoc;
   final DocumentSnapshot<SharedComicPageModel> pageDoc;
-  final Future<LazyBox<bool>>? pageReadBoxFuture;
+  final Future<LazyBox<bool>> pageReadBoxFuture;
 
   const ComicWebPage(this.comicDoc, this.pageDoc, this.pageReadBoxFuture,
       {Key? key})
@@ -21,7 +21,6 @@ class ComicWebPage extends StatefulWidget {
 }
 
 class _ComicWebPageState extends State<ComicWebPage> {
-  StreamSubscription<DocumentSnapshot<SharedComicPageModel>>? _getNewPageSub;
   DocumentSnapshot<SharedComicPageModel>? _newPage;
 
   String? _initialUrl;
@@ -37,13 +36,6 @@ class _ComicWebPageState extends State<ComicWebPage> {
     _initialUrl = rootUrl + pagePath;
 
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    _getNewPageSub?.cancel();
-
-    super.dispose();
   }
 
   @override
@@ -67,9 +59,6 @@ class _ComicWebPageState extends State<ComicWebPage> {
           initialUrl: _initialUrl,
           javascriptMode: JavascriptMode.unrestricted,
           onPageStarted: (currentPage) {
-            // We no longer need the data from the previous new page
-            _getNewPageSub?.cancel();
-
             final pageId = currentPage.split('/').skip(3).join(' ');
             if (_newPage != null && pageId == _newPage!.id) {
               // Don't trigger rebuild if we haven't changed page
@@ -77,10 +66,13 @@ class _ComicWebPageState extends State<ComicWebPage> {
               return;
             } else {
               print('Navigating to page: ' + pageId);
+              setState(() {
+                _newPage = null;
+              });
             }
 
-            // Get data for the new page
-            _getNewPageSub = widget.comicDoc.reference
+            // Get data for the new page (don't wait)
+            widget.comicDoc.reference
                 .collection('pages')
                 .withConverter<SharedComicPageModel>(
                   fromFirestore: (snapshot, _) =>
@@ -89,11 +81,10 @@ class _ComicWebPageState extends State<ComicWebPage> {
                 )
                 .doc(pageId)
                 .get()
-                .asStream()
-                .listen((event) {
+                .then((value) {
               // Update page display
               setState(() {
-                _newPage = event;
+                _newPage = value;
                 print('Got data for page: ' + pageId);
               });
 
@@ -107,7 +98,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
   }
 
   void _markPageRead(DocumentSnapshot doc) async {
-    final box = await widget.pageReadBoxFuture!;
+    final box = await widget.pageReadBoxFuture;
     return box.put(doc.id, true);
   }
 }

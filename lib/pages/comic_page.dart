@@ -55,7 +55,7 @@ class _ComicPageState extends State<ComicPage> {
   bool _isLoadingDown = false;
   bool _isLoadingUp = false;
 
-  Future<LazyBox<bool>>? _pageReadBoxFuture;
+  late Future<LazyBox<bool>> _pageReadBoxFuture;
 
   late Query<SharedComicPageModel> _pagesQuery;
 
@@ -97,7 +97,7 @@ class _ComicPageState extends State<ComicPage> {
 
   @override
   void dispose() {
-    _pageReadBoxFuture!.then((value) => value.close());
+    _pageReadBoxFuture.then((value) => value.close());
 
     super.dispose();
   }
@@ -390,7 +390,7 @@ class _ComicPageState extends State<ComicPage> {
   Future<bool?> _getIsUserPageRead(
       DocumentSnapshot<SharedComicPageModel> pageDoc) {
     // Start read user doc state here so we only do it once
-    return _pageReadBoxFuture!.then((box) => box.get(pageDoc.id));
+    return _pageReadBoxFuture.then((box) => box.get(pageDoc.id));
   }
 
   void _addPagesToEnd(

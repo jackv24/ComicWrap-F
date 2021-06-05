@@ -61,6 +61,21 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
           }
         }
 
+        // Convert last read time to appropriate text display
+        final lastReadTime = widget.userComicSnapshot.data()!.lastReadTime;
+        String readText;
+        if (lastReadTime != null) {
+          final days = DateTime.now().difference(lastReadTime.toDate()).inDays;
+          if (days == 0) {
+            readText = 'today';
+          } else {
+            final daysText = days > 1 ? 'days' : 'day';
+            readText = '$days $daysText ago';
+          }
+        } else {
+          readText = 'never';
+        }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -89,8 +104,7 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
             ),
             SizedBox(height: 2.0),
             Text(
-              widget.userComicSnapshot.data()!.lastReadTime?.toString() ??
-                  'never',
+              readText,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.subtitle2,
             ),
