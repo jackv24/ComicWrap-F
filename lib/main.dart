@@ -29,6 +29,11 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     _authStream = getAuthStream();
 
+    // Setup global style for loading blocker
+    EasyLoading.instance
+      ..userInteractions = false
+      ..maskType = EasyLoadingMaskType.black;
+
     super.initState();
   }
 

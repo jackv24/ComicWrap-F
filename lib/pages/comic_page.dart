@@ -62,9 +62,6 @@ class _ComicPageState extends State<ComicPage> {
   // Lazy init so we can access widget inside
   late var _moreOptions = [
     _FunctionListItem('Delete', (context) async {
-      EasyLoading.instance
-        ..userInteractions = false
-        ..maskType = EasyLoadingMaskType.black;
       EasyLoading.show();
       await widget.userComicSnapshot.reference.delete();
       EasyLoading.dismiss();
@@ -252,8 +249,12 @@ class _ComicPageState extends State<ComicPage> {
           onTap: () {
             Navigator.of(context)
                 .push(MaterialPageRoute(
-              builder: (context) => ComicWebPage(widget.sharedComicSnapshot,
-                  page.sharedPage, _pageReadBoxFuture),
+              builder: (context) => ComicWebPage(
+                userComicDoc: widget.userComicSnapshot,
+                sharedComicDoc: widget.sharedComicSnapshot,
+                initialPageDoc: page.sharedPage,
+                pageReadBoxFuture: _pageReadBoxFuture,
+              ),
             ))
                 .then((value) {
               if (value is DocumentSnapshot<SharedComicPageModel>) {

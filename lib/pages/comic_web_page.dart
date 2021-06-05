@@ -3,17 +3,23 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hive/hive.dart';
 import 'package:universal_io/io.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ComicWebPage extends StatefulWidget {
-  final DocumentSnapshot<SharedComicModel> comicDoc;
-  final DocumentSnapshot<SharedComicPageModel> pageDoc;
+  final DocumentSnapshot<UserComicModel> userComicDoc;
+  final DocumentSnapshot<SharedComicModel> sharedComicDoc;
+  final DocumentSnapshot<SharedComicPageModel> initialPageDoc;
   final Future<LazyBox<bool>> pageReadBoxFuture;
 
-  const ComicWebPage(this.comicDoc, this.pageDoc, this.pageReadBoxFuture,
-      {Key? key})
+  const ComicWebPage(
+      {required this.userComicDoc,
+      required this.sharedComicDoc,
+      required this.initialPageDoc,
+      required this.pageReadBoxFuture,
+      Key? key})
       : super(key: key);
 
   @override
@@ -31,8 +37,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
 
     // Construct url from comic and page ID
-    final rootUrl = 'https://${widget.comicDoc.id}/';
-    final pagePath = widget.pageDoc.id.trim().replaceAll(' ', '/');
+    final rootUrl = 'https://${widget.sharedComicDoc.id}/';
+    final pagePath = widget.initialPageDoc.id.trim().replaceAll(' ', '/');
     _initialUrl = rootUrl + pagePath;
 
     super.initState();
@@ -49,6 +55,12 @@ class _ComicWebPageState extends State<ComicWebPage> {
       ),
       body: WillPopScope(
         onWillPop: () async {
+          EasyLoading.show();
+          // Update read time when exiting, to avoid many doc updates while binge-reading
+          await widget.userComicDoc.reference
+              .update({'lastReadTime': Timestamp.now()});
+          EasyLoading.dismiss();
+
           // Pop with value of current page
           Navigator.of(context).pop(_newPage);
 
@@ -72,7 +84,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
             }
 
             // Get data for the new page (don't wait)
-            widget.comicDoc.reference
+            widget.sharedComicDoc.reference
                 .collection('pages')
                 .withConverter<SharedComicPageModel>(
                   fromFirestore: (snapshot, _) =>
