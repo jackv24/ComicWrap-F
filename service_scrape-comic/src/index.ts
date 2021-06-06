@@ -64,9 +64,6 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
     'importError': ''
   })
 
-  // TODO: Replace index with scrape time?
-  let pageCount = 0;
-
   let foundComicName = false;
   let coverImageUrl: string | null = null;
   let foundGoodCover = false;
@@ -122,11 +119,9 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
 
         // Write document
         await collection.doc(page.docName).create({
-          index: pageCount,
+          scrapeTime: admin.firestore.Timestamp.now(),
           text: pageTitle,
         });
-
-        pageCount++;
 
         // Canceled comic importing by manually changing database field
         const shouldContinue = (await snapshot.ref.get()).get('isImporting');

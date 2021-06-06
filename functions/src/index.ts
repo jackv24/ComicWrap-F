@@ -3,7 +3,6 @@ import * as admin from 'firebase-admin';
 import * as url from 'url';
 import * as helper from './helper';
 import urlExist = require('url-exist');
-import {firestore} from 'firebase-admin';
 import {GoogleAuth} from 'google-auth-library';
 
 admin.initializeApp();
@@ -86,7 +85,6 @@ export const addUserComic = functions.https
       userComicRef.create({
         // For easy access, even though doc names are the same
         sharedDoc: sharedComicRef,
-        lastReadTime: firestore.Timestamp.now(),
       });
 
       // Don't do anything more if document exists, just return the name

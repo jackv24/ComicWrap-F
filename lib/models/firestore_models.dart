@@ -58,13 +58,17 @@ class SharedComicModel {
 
 @JsonSerializable()
 class SharedComicPageModel {
-  final int index;
   final String text;
 
-  SharedComicPageModel({required this.index, required this.text});
+  // Type not supported by code generator
+  @JsonKey(ignore: true)
+  late Timestamp? scrapeTime;
+
+  SharedComicPageModel({required this.text});
 
   factory SharedComicPageModel.fromJson(Map<String, dynamic> json) =>
-      _$SharedComicPageModelFromJson(json);
+      _$SharedComicPageModelFromJson(json)..scrapeTime = json['scrapeTime'];
 
-  Map<String, dynamic> toJson() => _$SharedComicPageModelToJson(this);
+  Map<String, dynamic> toJson() =>
+      _$SharedComicPageModelToJson(this)..['scrapeTime'] = scrapeTime;
 }

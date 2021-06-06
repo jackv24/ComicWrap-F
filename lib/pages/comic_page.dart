@@ -84,7 +84,7 @@ class _ComicPageState extends State<ComicPage> {
               SharedComicPageModel.fromJson(snapshot.data()!),
           toFirestore: (comic, _) => comic.toJson(),
         )
-        .orderBy('index', descending: true);
+        .orderBy('scrapeTime', descending: true);
 
     // Scrollview won't build if we don't have any pages
     _getPages(_ScrollDirection.none);

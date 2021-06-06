@@ -10,7 +10,6 @@ import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:rxdart/rxdart.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({Key? key}) : super(key: key);
@@ -20,14 +19,11 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  late BehaviorSubject<QuerySnapshot<UserComicModel>> _userComicsSubject;
   StreamSubscription? _userDocComicsSub;
+  List<QueryDocumentSnapshot<UserComicModel>>? _userComics;
 
   @override
   void initState() {
-    // Keep latest event for build
-    _userComicsSubject = BehaviorSubject<QuerySnapshot<UserComicModel>>();
-
     // User can change through authentication
     getUserStream().listen((userDocSnapshot) async {
       // Cancel previous stream sub before subbing to new one
@@ -41,10 +37,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 UserComicModel.fromJson(snapshot.data()!),
             toFirestore: (comic, _) => comic.toJson(),
           )
-          .orderBy('lastReadTime', descending: true)
           .snapshots()
           .listen((comicsCollectionSnap) {
-        _userComicsSubject.add(comicsCollectionSnap);
+        // Manually sort documents
+        final docs = comicsCollectionSnap.docs;
+        docs.sort((a, b) {
+          // Never read sort first
+          final aData = a.data();
+          if (aData.lastReadTime == null) return 1;
+
+          final bData = b.data();
+          if (bData.lastReadTime == null) return -1;
+
+          // Reverse order by read time
+          return aData.lastReadTime!.compareTo(bData.lastReadTime!) * -1;
+        });
+
+        // Update now that docs are sorted
+        setState(() {
+          _userComics = docs;
+        });
       });
     });
 
@@ -74,65 +86,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             onPressed: () => _onSettingsPressed(context)),
       ],
-      bodySliver: StreamBuilder<QuerySnapshot<UserComicModel>>(
-        stream: _userComicsSubject.stream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return SliverToBoxAdapter(
-              child: Text('Error reading user comics stream'),
-            );
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return SliverToBoxAdapter(
-              child: Text("Loading user comics stream..."),
-            );
-          }
-
-          final userComicDocs = snapshot.data!.docs;
-          if (userComicDocs.length == 0) {
-            return SliverToBoxAdapter(
-              child: Text('User has no library!'),
-            );
-          }
-
-          return SliverPadding(
-            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 150.0,
-                mainAxisSpacing: 12.0,
-                crossAxisSpacing: 12.0,
-                childAspectRatio: 0.54,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  Widget comicWidget;
-                  try {
-                    comicWidget = ComicInfoCard(
-                      userComicSnapshot: userComicDocs[index],
-                    );
-                  } catch (e) {
-                    comicWidget = Text('ERROR: ${e.toString()}');
-                  }
-                  return AnimationConfiguration.staggeredGrid(
-                    position: index,
-                    columnCount: 3,
-                    duration: Duration(milliseconds: 200),
-                    delay: Duration(milliseconds: 50),
-                    child: ScaleAnimation(
-                      scale: 0.85,
-                      child: FadeInAnimation(
-                        child: comicWidget,
-                      ),
-                    ),
-                  );
-                },
-                childCount: userComicDocs.length,
-              ),
-            ),
-          );
-        },
+      bodySliver: SliverPadding(
+        padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+        sliver: _getBodySliver(context),
       ),
     );
   }
@@ -152,6 +108,54 @@ class _LibraryScreenState extends State<LibraryScreen> {
         return SettingsScreen();
       },
     ));
+  }
+
+  Widget _getBodySliver(BuildContext context) {
+    if (_userComics == null) {
+      return SliverToBoxAdapter(
+        child: Text("Loading user comics..."),
+      );
+    }
+
+    if (_userComics!.length == 0) {
+      return SliverToBoxAdapter(
+        child: Text("User has no comics."),
+      );
+    }
+
+    return SliverGrid(
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 150.0,
+        mainAxisSpacing: 12.0,
+        crossAxisSpacing: 12.0,
+        childAspectRatio: 0.54,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          Widget comicWidget;
+          try {
+            comicWidget = ComicInfoCard(
+              userComicSnapshot: _userComics![index],
+            );
+          } catch (e) {
+            comicWidget = Text('ERROR: ${e.toString()}');
+          }
+          return AnimationConfiguration.staggeredGrid(
+            position: index,
+            columnCount: 3,
+            duration: Duration(milliseconds: 200),
+            delay: Duration(milliseconds: 50),
+            child: ScaleAnimation(
+              scale: 0.85,
+              child: FadeInAnimation(
+                child: comicWidget,
+              ),
+            ),
+          );
+        },
+        childCount: _userComics!.length,
+      ),
+    );
   }
 }
 
