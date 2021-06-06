@@ -1,2 +1,2 @@
 #!/bin/sh
-firebase emulators:start --import emulator_data
+LOCAL_SERVICE=1 firebase emulators:start --import emulator_data
