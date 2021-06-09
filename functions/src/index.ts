@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as url from 'url';
 import * as helper from './helper';
-import urlExist = require('url-exist');
+import urlExist from 'url-exist';
 import {GoogleAuth} from 'google-auth-library';
 
 admin.initializeApp();
