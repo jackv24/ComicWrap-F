@@ -3,15 +3,16 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'firestore_models.g.dart';
 
+typedef Json = Map<String, dynamic>;
+
 class _SharedComicModelDocumentReferenceConverter
     implements
         JsonConverter<DocumentReference<SharedComicModel>,
-            DocumentReference<Map<String, dynamic>>> {
+            DocumentReference<Json>> {
   const _SharedComicModelDocumentReferenceConverter();
 
   @override
-  DocumentReference<SharedComicModel> fromJson(
-          DocumentReference<Map<String, dynamic>> json) =>
+  DocumentReference<SharedComicModel> fromJson(DocumentReference<Json> json) =>
       json.withConverter(
         fromFirestore: (snapshot, _) =>
             SharedComicModel.fromJson(snapshot.data()!),
@@ -19,8 +20,7 @@ class _SharedComicModelDocumentReferenceConverter
       );
 
   @override
-  DocumentReference<Map<String, dynamic>> toJson(
-          DocumentReference<SharedComicModel> data) =>
+  DocumentReference<Json> toJson(DocumentReference<SharedComicModel> data) =>
       FirebaseFirestore.instance.doc(data.path);
 }
 
@@ -35,10 +35,10 @@ class UserComicModel {
 
   UserComicModel({required this.sharedDoc, this.lastReadTime});
 
-  factory UserComicModel.fromJson(Map<String, dynamic> json) =>
+  factory UserComicModel.fromJson(Json json) =>
       _$UserComicModelFromJson(json)..lastReadTime = json['lastReadTime'];
 
-  Map<String, dynamic> toJson() =>
+  Json toJson() =>
       _$UserComicModelToJson(this)..['lastReadTime'] = lastReadTime;
 }
 
@@ -50,10 +50,10 @@ class SharedComicModel {
 
   SharedComicModel({this.name, this.coverImageUrl, required this.scrapeUrl});
 
-  factory SharedComicModel.fromJson(Map<String, dynamic> json) =>
+  factory SharedComicModel.fromJson(Json json) =>
       _$SharedComicModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SharedComicModelToJson(this);
+  Json toJson() => _$SharedComicModelToJson(this);
 }
 
 @JsonSerializable()
@@ -66,9 +66,9 @@ class SharedComicPageModel {
 
   SharedComicPageModel({required this.text});
 
-  factory SharedComicPageModel.fromJson(Map<String, dynamic> json) =>
+  factory SharedComicPageModel.fromJson(Json json) =>
       _$SharedComicPageModelFromJson(json)..scrapeTime = json['scrapeTime'];
 
-  Map<String, dynamic> toJson() =>
+  Json toJson() =>
       _$SharedComicPageModelToJson(this)..['scrapeTime'] = scrapeTime;
 }
