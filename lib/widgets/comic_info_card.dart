@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:comicwrap_f/pages/comic_page.dart';
+import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
@@ -61,21 +62,6 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
           }
         }
 
-        // Convert last read time to appropriate text display
-        final lastReadTime = widget.userComicSnapshot.data()!.lastReadTime;
-        String readText;
-        if (lastReadTime != null) {
-          final days = DateTime.now().difference(lastReadTime.toDate()).inDays;
-          if (days == 0) {
-            readText = 'today';
-          } else {
-            final daysText = days > 1 ? 'days' : 'day';
-            readText = '$days $daysText ago';
-          }
-        } else {
-          readText = 'never';
-        }
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -103,11 +89,15 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
               style: Theme.of(context).textTheme.subtitle1,
             ),
             SizedBox(height: 2.0),
-            Text(
-              readText,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.subtitle2,
-            ),
+            TimeAgoText(
+                time: widget.userComicSnapshot.data()!.lastReadTime?.toDate(),
+                builder: (text) {
+                  return Text(
+                    text,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.subtitle2,
+                  );
+                }),
           ],
         );
       },
