@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:comicwrap_f/pages/comic_page.dart';
@@ -119,12 +121,13 @@ class CardImageButton extends StatefulWidget {
 class _CardImageButtonState extends State<CardImageButton> {
   FileInfo? _cachedImage;
   DownloadProgress? _imageDownloadProgress;
+  StreamSubscription<FileResponse>? _imageDownloadSub;
 
   @override
   void initState() {
     // Stream for cached cover image
     if (widget.coverImageUrl != null) {
-      DefaultCacheManager()
+      _imageDownloadSub = DefaultCacheManager()
           .getImageFile(widget.coverImageUrl!, withProgress: true)
           .listen((fileResponse) {
         if (fileResponse is FileInfo) {
@@ -141,6 +144,13 @@ class _CardImageButtonState extends State<CardImageButton> {
     }
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _imageDownloadSub?.cancel();
+
+    super.dispose();
   }
 
   @override

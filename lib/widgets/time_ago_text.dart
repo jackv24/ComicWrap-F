@@ -15,7 +15,7 @@ class TimeAgoText extends StatefulWidget {
 }
 
 class _TimeAgoTextState extends State<TimeAgoText> {
-  late Timer? _timer;
+  Timer? _timer;
   late String _text;
 
   @override
