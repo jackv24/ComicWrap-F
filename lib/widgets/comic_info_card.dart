@@ -123,8 +123,7 @@ class _CardImageButtonState extends State<CardImageButton> {
   DownloadProgress? _imageDownloadProgress;
   StreamSubscription<FileResponse>? _imageDownloadSub;
 
-  @override
-  void initState() {
+  void _subImageDownload() {
     // Stream for cached cover image
     if (widget.coverImageUrl != null) {
       _imageDownloadSub = DefaultCacheManager()
@@ -142,8 +141,23 @@ class _CardImageButtonState extends State<CardImageButton> {
         }
       });
     }
+  }
 
+  @override
+  void initState() {
     super.initState();
+
+    _subImageDownload();
+  }
+
+  @override
+  void didUpdateWidget(covariant CardImageButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.coverImageUrl != oldWidget.coverImageUrl) {
+      _imageDownloadSub?.cancel();
+      _subImageDownload();
+    }
   }
 
   @override

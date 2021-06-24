@@ -461,7 +461,7 @@ class _ComicInfoSectionState extends State<ComicInfoSection> {
   @override
   void dispose() {
     _userComicSubject.close();
-    _sharedComicStreamSub!.cancel();
+    _sharedComicStreamSub?.cancel();
     _sharedComicSubject.close();
 
     super.dispose();
