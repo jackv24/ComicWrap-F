@@ -58,7 +58,6 @@ class _ComicPageState extends State<ComicPage> {
   bool _isLoadingUp = false;
 
   late Future<LazyBox<bool>> _pageReadBoxFuture;
-
   late Query<SharedComicPageModel> _pagesQuery;
 
   // Lazy init so we can access widget inside
@@ -75,6 +74,8 @@ class _ComicPageState extends State<ComicPage> {
 
   @override
   void initState() {
+    super.initState();
+
     _scrollController = ScrollController();
 
     _pageReadBoxFuture = Hive.openLazyBox<bool>(widget.sharedComicSnapshot.id);
@@ -88,10 +89,17 @@ class _ComicPageState extends State<ComicPage> {
         )
         .orderBy('scrapeTime', descending: true);
 
-    // Scrollview won't build if we don't have any pages
-    _getPages(_ScrollDirection.none);
-
-    super.initState();
+    // Load initial pages for scrollview
+    final currentPageRef = widget.userComicSnapshot.data()!.currentPage;
+    if (currentPageRef != null) {
+      // Centre on current page
+      currentPageRef.get().then((snapshot) {
+        _centerPagesOn(snapshot);
+      });
+    } else {
+      // Start at top if no current page
+      _getPages(_ScrollDirection.none);
+    }
   }
 
   @override
@@ -145,6 +153,11 @@ class _ComicPageState extends State<ComicPage> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
+          final comicInfo = ComicInfoSection(
+            userComicRef: widget.userComicSnapshot.reference,
+            onCurrentPressed: _openWebPage,
+          );
+
           // Draw extra info as side bar on large screens
           if (constraints.maxWidth > 600) {
             return Row(
@@ -153,9 +166,7 @@ class _ComicPageState extends State<ComicPage> {
                 Container(
                   width: 300,
                   alignment: AlignmentDirectional.topStart,
-                  child: ComicInfoSection(
-                    userComicRef: widget.userComicSnapshot.reference,
-                  ),
+                  child: comicInfo,
                 ),
                 // Page List
                 Expanded(
@@ -171,9 +182,7 @@ class _ComicPageState extends State<ComicPage> {
                   Container(
                     height: 200,
                     alignment: AlignmentDirectional.topStart,
-                    child: ComicInfoSection(
-                      userComicRef: widget.userComicSnapshot.reference,
-                    ),
+                    child: comicInfo,
                   ),
                   // Page List
                   Expanded(
@@ -248,30 +257,32 @@ class _ComicPageState extends State<ComicPage> {
         return ListTile(
           title: Text(title, style: textStyle),
           trailing: trailing,
-          onTap: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(
-              builder: (context) => ComicWebPage(
-                userComicDoc: widget.userComicSnapshot,
-                sharedComicDoc: widget.sharedComicSnapshot,
-                initialPageDoc: page.sharedPage,
-                pageReadBoxFuture: _pageReadBoxFuture,
-              ),
-            ))
-                .then((value) {
-              if (value is DocumentSnapshot<SharedComicPageModel>) {
-                final pageData = value.data();
-                final pageTitle = pageData?.text ?? '';
-                print('Web Page popped on "$pageTitle" document');
-                _centerPagesOn(value);
-              } else {
-                print('Web Page popped without DocumentSnapshot!');
-              }
-            });
-          },
+          onTap: () => _openWebPage(page.sharedPage),
         );
       },
     );
+  }
+
+  void _openWebPage(DocumentSnapshot<SharedComicPageModel> sharedPage) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(
+      builder: (context) => ComicWebPage(
+        userComicDoc: widget.userComicSnapshot,
+        sharedComicDoc: widget.sharedComicSnapshot,
+        initialPageDoc: sharedPage,
+        pageReadBoxFuture: _pageReadBoxFuture,
+      ),
+    ))
+        .then((value) {
+      if (value is DocumentSnapshot<SharedComicPageModel>) {
+        final pageData = value.data();
+        final pageTitle = pageData?.text ?? '';
+        print('Web Page popped on "$pageTitle" document');
+        _centerPagesOn(value);
+      } else {
+        print('Web Page popped without DocumentSnapshot!');
+      }
+    });
   }
 
   void _getPages(_ScrollDirection scrollDir,

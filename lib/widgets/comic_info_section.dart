@@ -9,16 +9,16 @@ import 'package:rxdart/rxdart.dart';
 
 class ComicInfoSection extends StatefulWidget {
   final DocumentReference<UserComicModel> userComicRef;
-  final Function()? onCurrentPressed;
-  final Function()? onFirstPressed;
-  final Function()? onLastPressed;
+  final void Function(DocumentSnapshot<SharedComicPageModel>)? onCurrentPressed;
+  final void Function()? onFirstPressed;
+  final void Function()? onLastPressed;
 
   const ComicInfoSection(
       {Key? key,
       required this.userComicRef,
-      void Function()? this.onCurrentPressed,
-      void Function()? this.onFirstPressed,
-      void Function()? this.onLastPressed})
+      this.onCurrentPressed,
+      this.onFirstPressed,
+      this.onLastPressed})
       : super(key: key);
 
   @override
@@ -30,16 +30,19 @@ class _ComicInfoSectionState extends State<ComicInfoSection> {
   StreamSubscription<DocumentSnapshot<SharedComicModel>>? _sharedComicStreamSub;
   late BehaviorSubject<DocumentSnapshot<SharedComicModel>> _sharedComicSubject;
 
+  Future<DocumentSnapshot<SharedComicPageModel>>? _sharedComicPageFuture;
+
   @override
   void initState() {
     _userComicSubject = BehaviorSubject<DocumentSnapshot<UserComicModel>>();
     _sharedComicSubject = BehaviorSubject<DocumentSnapshot<SharedComicModel>>();
 
     widget.userComicRef.snapshots().listen((userComicSnapshot) {
-      _sharedComicStreamSub?.cancel();
-
       _userComicSubject.add(userComicSnapshot);
 
+      _sharedComicPageFuture = userComicSnapshot.data()!.currentPage?.get();
+
+      _sharedComicStreamSub?.cancel();
       _sharedComicStreamSub = userComicSnapshot
           .data()!
           .sharedDoc
@@ -129,10 +132,22 @@ class _ComicInfoSectionState extends State<ComicInfoSection> {
                   style: Theme.of(context).textTheme.subtitle2,
                 ),
                 Spacer(),
-                ElevatedButton.icon(
-                    onPressed: widget.onCurrentPressed,
-                    icon: Icon(Icons.bookmark),
-                    label: Text('Current')),
+                FutureBuilder<DocumentSnapshot<SharedComicPageModel>>(
+                  future: _sharedComicPageFuture,
+                  builder: (context, snapshot) {
+                    return ElevatedButton.icon(
+                      onPressed:
+                          !snapshot.hasData || widget.onCurrentPressed == null
+                              ? null
+                              : () => widget.onCurrentPressed!(snapshot.data!),
+                      icon: Icon(Icons.bookmark),
+                      label: Text(
+                        snapshot.data?.data()!.text ?? 'No current page',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  },
+                ),
                 Row(
                   children: [
                     ElevatedButton.icon(
