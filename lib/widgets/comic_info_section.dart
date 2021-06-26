@@ -93,77 +93,81 @@ class _ComicInfoSectionState extends State<ComicInfoSection> {
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 12, top: 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                StreamBuilder<DocumentSnapshot<SharedComicModel>>(
-                  stream: _sharedComicSubject.stream,
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) return Text('Loading...');
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(left: 12, right: 12, top: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  StreamBuilder<DocumentSnapshot<SharedComicModel>>(
+                    stream: _sharedComicSubject.stream,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return Text('Loading...');
 
-                    return Text(
-                      snapshot.data!.data()!.name ?? snapshot.data!.id,
-                      style: Theme.of(context).textTheme.headline5,
-                    );
-                  },
-                ),
-                SizedBox(height: 4),
-                StreamBuilder<DocumentSnapshot<UserComicModel>>(
-                  stream: _userComicSubject.stream,
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) return Text('Loading...');
+                      return Text(
+                        snapshot.data!.data()!.name ?? snapshot.data!.id,
+                        style: Theme.of(context).textTheme.headline5,
+                      );
+                    },
+                  ),
+                  SizedBox(height: 4),
+                  StreamBuilder<DocumentSnapshot<UserComicModel>>(
+                    stream: _userComicSubject.stream,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return Text('Loading...');
 
-                    return TimeAgoText(
-                        time: snapshot.data!.data()!.lastReadTime?.toDate(),
-                        builder: (text) {
-                          return Text(
-                            'Read: $text',
+                      return TimeAgoText(
+                          time: snapshot.data!.data()!.lastReadTime?.toDate(),
+                          builder: (text) {
+                            return Text(
+                              'Read: $text',
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.subtitle2,
+                            );
+                          });
+                    },
+                  ),
+                  Text(
+                    'Updated: x days ago',
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.subtitle2,
+                  ),
+                  Spacer(),
+                  FutureBuilder<DocumentSnapshot<SharedComicPageModel>>(
+                    future: _sharedComicPageFuture,
+                    builder: (context, snapshot) {
+                      return ElevatedButton.icon(
+                        onPressed: !snapshot.hasData ||
+                                widget.onCurrentPressed == null
+                            ? null
+                            : () => widget.onCurrentPressed!(snapshot.data!),
+                        icon: Icon(Icons.bookmark),
+                        label: Flexible(
+                          child: Text(
+                            snapshot.data?.data()!.text ?? 'No current page',
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.subtitle2,
-                          );
-                        });
-                  },
-                ),
-                Text(
-                  'Updated: x days ago',
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.subtitle2,
-                ),
-                Spacer(),
-                FutureBuilder<DocumentSnapshot<SharedComicPageModel>>(
-                  future: _sharedComicPageFuture,
-                  builder: (context, snapshot) {
-                    return ElevatedButton.icon(
-                      onPressed:
-                          !snapshot.hasData || widget.onCurrentPressed == null
-                              ? null
-                              : () => widget.onCurrentPressed!(snapshot.data!),
-                      icon: Icon(Icons.bookmark),
-                      label: Text(
-                        snapshot.data?.data()!.text ?? 'No current page',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  },
-                ),
-                Row(
-                  children: [
-                    ElevatedButton.icon(
-                        onPressed: widget.onFirstPressed,
-                        icon: Icon(Icons.first_page),
-                        label: Text('First')),
-                    SizedBox(width: 12),
-                    ElevatedButton.icon(
-                        onPressed: widget.onLastPressed,
-                        icon: Icon(Icons.last_page),
-                        label: Text('Last'))
-                  ],
-                )
-              ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                          onPressed: widget.onFirstPressed,
+                          icon: Icon(Icons.first_page),
+                          label: Text('First')),
+                      SizedBox(width: 12),
+                      ElevatedButton.icon(
+                          onPressed: widget.onLastPressed,
+                          icon: Icon(Icons.last_page),
+                          label: Text('Last'))
+                    ],
+                  )
+                ],
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
