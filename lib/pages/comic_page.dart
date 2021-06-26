@@ -58,7 +58,15 @@ class _ComicPageState extends State<ComicPage> {
   bool _isLoadingUp = false;
 
   late Future<LazyBox<bool>> _pageReadBoxFuture;
-  late Query<SharedComicPageModel> _pagesQuery;
+
+  late final Query<SharedComicPageModel> _basePagesQuery = widget
+      .sharedComicSnapshot.reference
+      .collection('pages')
+      .withConverter<SharedComicPageModel>(
+        fromFirestore: (snapshot, _) =>
+            SharedComicPageModel.fromJson(snapshot.data()!),
+        toFirestore: (comic, _) => comic.toJson(),
+      );
 
   // Lazy init so we can access widget inside
   late var _moreOptions = [
@@ -77,17 +85,7 @@ class _ComicPageState extends State<ComicPage> {
     super.initState();
 
     _scrollController = ScrollController();
-
     _pageReadBoxFuture = Hive.openLazyBox<bool>(widget.sharedComicSnapshot.id);
-
-    _pagesQuery = widget.sharedComicSnapshot.reference
-        .collection('pages')
-        .withConverter<SharedComicPageModel>(
-          fromFirestore: (snapshot, _) =>
-              SharedComicPageModel.fromJson(snapshot.data()!),
-          toFirestore: (comic, _) => comic.toJson(),
-        )
-        .orderBy('scrapeTime', descending: true);
 
     // Load initial pages for scrollview
     final currentPageRef = widget.userComicSnapshot.data()!.currentPage;
@@ -156,6 +154,10 @@ class _ComicPageState extends State<ComicPage> {
           final comicInfo = ComicInfoSection(
             userComicRef: widget.userComicSnapshot.reference,
             onCurrentPressed: _openWebPage,
+            onFirstPressed:
+                _pages.length > 0 ? () => _openFirstWebPage(false) : null,
+            onLastPressed:
+                _pages.length > 0 ? () => _openFirstWebPage(true) : null,
           );
 
           // Draw extra info as side bar on large screens
@@ -285,6 +287,21 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
+  void _openFirstWebPage(bool descending) async {
+    EasyLoading.show();
+
+    final snapshot = await _basePagesQuery
+        .orderBy('scrapeTime', descending: descending)
+        .limit(1)
+        .get();
+
+    EasyLoading.dismiss();
+
+    if (snapshot.docs.length > 0) {
+      _openWebPage(snapshot.docs[0]);
+    }
+  }
+
   void _getPages(_ScrollDirection scrollDir,
       {DocumentSnapshot? centredOnDoc}) async {
     if (_isLoadingUp || _isLoadingDown) {
@@ -310,6 +327,8 @@ class _ComicPageState extends State<ComicPage> {
 
     print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
+    final pagesQuery = _basePagesQuery.orderBy('scrapeTime', descending: true);
+
     switch (scrollDir) {
       case _ScrollDirection.none:
         setState(() {
@@ -322,7 +341,7 @@ class _ComicPageState extends State<ComicPage> {
           final halfDocLimit = (_initialDocLimit / 2).round();
 
           // Get page above top
-          final upQuerySnapshot = await _pagesQuery
+          final upQuerySnapshot = await pagesQuery
               .endBeforeDocument(_pages.first.sharedPage)
               .limitToLast(halfDocLimit)
               .get();
@@ -333,7 +352,7 @@ class _ComicPageState extends State<ComicPage> {
           if (upDocsLeft > 0) downDocLimit += upDocsLeft;
 
           // Get pages below bottom
-          final downQuerySnapshot = await _pagesQuery
+          final downQuerySnapshot = await pagesQuery
               .startAfterDocument(_pages.last.sharedPage)
               .limit(downDocLimit)
               .get();
@@ -347,7 +366,7 @@ class _ComicPageState extends State<ComicPage> {
               .jumpTo(upQuerySnapshot.docs.length * listItemHeight);
         } else {
           // Start from top of list
-          final querySnapshot = await _pagesQuery.limit(_initialDocLimit).get();
+          final querySnapshot = await pagesQuery.limit(_initialDocLimit).get();
           _addPagesToEnd(querySnapshot.docs, _initialDocLimit);
         }
         break;
@@ -359,7 +378,7 @@ class _ComicPageState extends State<ComicPage> {
           });
 
           // Get more pages from last until limit
-          final querySnapshot = await _pagesQuery
+          final querySnapshot = await pagesQuery
               .startAfterDocument(_pages.last.sharedPage)
               .limit(_moreDocLimit)
               .get();
@@ -375,7 +394,7 @@ class _ComicPageState extends State<ComicPage> {
           });
 
           // Get more pages from limit until first
-          final querySnapshot = await _pagesQuery
+          final querySnapshot = await pagesQuery
               .endBeforeDocument(_pages.first.sharedPage)
               .limitToLast(_moreDocLimit)
               .get();
