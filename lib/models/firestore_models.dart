@@ -24,6 +24,18 @@ class _SharedComicModelDocumentReferenceConverter
       FirebaseFirestore.instance.doc(data.path);
 }
 
+DocumentReference<SharedComicPageModel>? sharedComicPageFromJson(
+        DocumentReference<Json>? json) =>
+    json?.withConverter(
+      fromFirestore: (snapshot, _) =>
+          SharedComicPageModel.fromJson(snapshot.data()!),
+      toFirestore: (data, _) => data.toJson(),
+    );
+
+DocumentReference<Json>? sharedComicPageToJson(
+        DocumentReference<SharedComicPageModel>? data) =>
+    data != null ? FirebaseFirestore.instance.doc(data.path) : null;
+
 @JsonSerializable()
 @_SharedComicModelDocumentReferenceConverter()
 class UserComicModel {
@@ -33,7 +45,11 @@ class UserComicModel {
   @JsonKey(ignore: true)
   late Timestamp? lastReadTime;
 
-  UserComicModel({required this.sharedDoc, this.lastReadTime});
+  @JsonKey(fromJson: sharedComicPageFromJson, toJson: sharedComicPageToJson)
+  final DocumentReference<SharedComicPageModel>? currentPage;
+
+  UserComicModel(
+      {required this.sharedDoc, this.lastReadTime, this.currentPage});
 
   factory UserComicModel.fromJson(Json json) =>
       _$UserComicModelFromJson(json)..lastReadTime = json['lastReadTime'];
