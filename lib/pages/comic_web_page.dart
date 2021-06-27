@@ -1,10 +1,7 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:hive/hive.dart';
 import 'package:universal_io/io.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -12,13 +9,11 @@ class ComicWebPage extends StatefulWidget {
   final DocumentSnapshot<UserComicModel> userComicDoc;
   final DocumentSnapshot<SharedComicModel> sharedComicDoc;
   final DocumentSnapshot<SharedComicPageModel> initialPageDoc;
-  final Future<LazyBox<bool>> pageReadBoxFuture;
 
   const ComicWebPage(
       {required this.userComicDoc,
       required this.sharedComicDoc,
       required this.initialPageDoc,
-      required this.pageReadBoxFuture,
       Key? key})
       : super(key: key);
 
@@ -144,9 +139,5 @@ class _ComicWebPageState extends State<ComicWebPage> {
         }
       }
     }
-
-    // Record read status in local DB
-    final box = await widget.pageReadBoxFuture;
-    return box.put(doc.id, true);
   }
 }
