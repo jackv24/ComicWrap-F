@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore_models.dart';
@@ -138,11 +139,11 @@ class _ComicPageState extends State<ComicPage> {
         builder: (context, constraints) {
           final comicInfo = ComicInfoSection(
             userComicRef: widget.userComicSnapshot.reference,
-            onCurrentPressed: _openWebPage,
+            onCurrentPressed: _centerPagesOn,
             onFirstPressed:
-                _pages.length > 0 ? () => _openFirstWebPage(false) : null,
+                _pages.length > 0 ? () => _goToEndPage(false) : null,
             onLastPressed:
-                _pages.length > 0 ? () => _openFirstWebPage(true) : null,
+                _pages.length > 0 ? () => _goToEndPage(true) : null,
           );
 
           // Draw extra info as side bar on large screens
@@ -280,7 +281,7 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  void _openFirstWebPage(bool descending) async {
+  void _goToEndPage(bool descending) async {
     EasyLoading.show();
 
     final snapshot = await _basePagesQuery
@@ -288,14 +289,14 @@ class _ComicPageState extends State<ComicPage> {
         .limit(1)
         .get();
 
-    EasyLoading.dismiss();
-
     if (snapshot.docs.length > 0) {
-      _openWebPage(snapshot.docs[0]);
+      await _centerPagesOn(snapshot.docs[0]);
     }
+
+    EasyLoading.dismiss();
   }
 
-  void _getPages(_ScrollDirection scrollDir,
+  Future<void> _getPages(_ScrollDirection scrollDir,
       {DocumentSnapshot? centredOnDoc}) async {
     if (_isLoadingUp || _isLoadingDown) {
       return;
@@ -335,7 +336,7 @@ class _ComicPageState extends State<ComicPage> {
 
           // Get page above top
           final upQuerySnapshot = await pagesQuery
-              .endBeforeDocument(_pages.first)
+              .endBeforeDocument(centredOnDoc)
               .limitToLast(halfDocLimit)
               .get();
 
@@ -346,7 +347,7 @@ class _ComicPageState extends State<ComicPage> {
 
           // Get pages below bottom
           final downQuerySnapshot = await pagesQuery
-              .startAfterDocument(_pages.last)
+              .startAfterDocument(centredOnDoc)
               .limit(downDocLimit)
               .get();
 
@@ -355,8 +356,10 @@ class _ComicPageState extends State<ComicPage> {
           _addPagesToEnd(downQuerySnapshot.docs, downDocLimit);
 
           // Jump to position centred
-          _scrollController!
-              .jumpTo(upQuerySnapshot.docs.length * listItemHeight);
+          WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+            _scrollController!
+                .jumpTo(max(upQuerySnapshot.docs.length - 1, 0) * listItemHeight);
+          });
         } else {
           // Start from top of list
           final querySnapshot = await pagesQuery.limit(_initialDocLimit).get();
@@ -407,10 +410,9 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  void _centerPagesOn(DocumentSnapshot<SharedComicPageModel> centreDoc) async {
+  Future<void> _centerPagesOn(DocumentSnapshot<SharedComicPageModel> centreDoc) async {
     _pages.clear();
-    _pages.add(centreDoc);
-    _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
+    await _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
   }
 
   void _addPagesToEnd(
