@@ -61,6 +61,8 @@ class _ComicPageState extends State<ComicPage> {
         toFirestore: (comic, _) => comic.toJson(),
       );
 
+  TapDownDetails? _listTapDownDetails;
+
   // Lazy init so we can access widget inside
   late var _moreOptions = [
     _FunctionListItem('Delete', (context) async {
@@ -249,10 +251,22 @@ class _ComicPageState extends State<ComicPage> {
         // Different appearance for read pages
         final textStyle = isRead ? TextStyle(color: Colors.grey) : null;
 
-        return ListTile(
-          title: Text(title, style: textStyle),
-          trailing: trailing,
-          onTap: () => _openWebPage(page),
+        return GestureDetector(
+          onTapDown: (details) => _listTapDownDetails = details,
+          child: ListTile(
+            title: Text(title, style: textStyle),
+            trailing: trailing,
+            onTap: () => _openWebPage(page),
+            onLongPress: () async {
+              final offset = _listTapDownDetails!.globalPosition;
+              final val = await showMenu(context: context,
+                  position: RelativeRect.fromLTRB(offset.dx, offset.dy, 0, 0),
+                  items: [
+                    PopupMenuItem(value:page, child: Text('Set Bookmark'))
+                  ]);
+              if (val != null) _setPageAsCurrent(val);
+            },
+          ),
         );
       },
     );
@@ -435,5 +449,20 @@ class _ComicPageState extends State<ComicPage> {
     if (docs.length < limit) {
       _hasMoreUp = false;
     }
+  }
+
+  void _setPageAsCurrent(DocumentSnapshot<SharedComicPageModel> page) async {
+    EasyLoading.show();
+
+    await widget.userComicSnapshot.reference.update({
+      'currentPage': sharedComicPageToJson(page.reference)
+    });
+
+    // Reflect updated value in UI (assumes above update worked)
+    setState(() {
+      _currentPageFuture = Future.value(page);
+    });
+
+    EasyLoading.dismiss();
   }
 }
