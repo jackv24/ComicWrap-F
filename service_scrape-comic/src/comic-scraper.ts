@@ -2,6 +2,8 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import * as url from 'url';
 
+import * as helper from './helper';
+
 type CheerioRoot = ReturnType<typeof cheerio.load>;
 
 export type ReturnPage = {
@@ -22,11 +24,20 @@ export enum FoundPageResult {
   Cancel
 }
 
+export type ComicInfo = {
+  id: string,
+  scrapeUrl: string,
+}
+
 export async function scrapeComicPages(
-    pageUrl: string,
+    comicDoc: ComicInfo,
+    lastPageId: string | null,
     onPageFound: (page: ReturnPage) => Promise<FoundPageResult>
 ) {
-  await tryScrapeComicPages(pageUrl, async (foundPage) => {
+  // Don't re-save previous pages before last page
+  let startKeepingPages = lastPageId === null;
+
+  await tryScrapeComicPages(comicDoc, lastPageId, async (foundPage) => {
     // Don't save pages without a link
     if (!foundPage.link) return FoundPageResult.Skipped;
 
@@ -34,8 +45,18 @@ export async function scrapeComicPages(
     const pageNameSource = parsedUrl.pathname ?? foundPage.link;
 
     // Use page link as document name, since index could change
-    // Replace invalid characters with rarely used alternatives
+    // Replace slash characters with spaces
     const docName = pageNameSource.replace(/\//g, ' ').trim();
+
+    if (!startKeepingPages) {
+      // We've reached the last saved page, now we can start saving new pages
+      if (docName === lastPageId) startKeepingPages = true;
+
+      // Skip this page, we'll start saving from after this point
+      return FoundPageResult.Skipped;      
+    }
+
+    console.log('Returning page: ' + docName);
 
     const returnPage = {
       text: foundPage.text,
@@ -51,11 +72,12 @@ export async function scrapeComicPages(
 }
 
 async function tryScrapeComicPages(
-    pageUrl: string,
+    comicDoc: ComicInfo,
+    lastPageId: string | null,
     onPageFound: (page: FoundPage) => Promise<FoundPageResult>
 ) {
   // Attempt the quick method first
-  const pagesFromSimple = await scrapeComicPagesSimple(pageUrl);
+  const pagesFromSimple = await scrapeComicPagesSimple(comicDoc.scrapeUrl);
   if (pagesFromSimple && pagesFromSimple.length > 0) {
     // All pages are found in one go so we'll just loop them
     for (const page of pagesFromSimple) {
@@ -65,7 +87,12 @@ async function tryScrapeComicPages(
   }
 
   // Quick method failed, try crawling (slow & expensive)
-  await scrapeViaCrawling(pageUrl, onPageFound);
+  if (lastPageId) {
+    const pageUrl = helper.constructPageUrl(comicDoc.id, lastPageId);
+    await scrapeFromViaCrawling(pageUrl, onPageFound);
+  } else {
+    await scrapeNewViaCrawling(comicDoc.scrapeUrl, onPageFound);
+  }
   return;
 }
 
@@ -120,9 +147,9 @@ async function getArchivePageUrl(currentPageHtml: string) {
   return null;
 }
 
-async function scrapeViaCrawling(
-    startPageUrl: string,
-    onPageFound: (page: FoundPage) => Promise<FoundPageResult>
+async function scrapeNewViaCrawling(
+  startPageUrl: string,
+  onPageFound: (page: FoundPage) => Promise<FoundPageResult>
 ) {
   // Start from the first page so we can just go until we reach the end
   const startHtml = (await axios.get(startPageUrl)).data;
@@ -132,8 +159,15 @@ async function scrapeViaCrawling(
   // Cancel if we couldn't find a link to the first page
   if (!firstNav) return null;
 
-  // Loop from start until there is no "next" page
-  let currentPage = await scrapePage(firstNav);
+  await scrapeFromViaCrawling(firstNav, onPageFound);
+}
+
+async function scrapeFromViaCrawling(
+    startPageUrl: string,
+    onPageFound: (page: FoundPage) => Promise<FoundPageResult>
+) {
+  // Loop until there is no "next" page
+  let currentPage = await scrapePage(startPageUrl);
   while (currentPage) {
     // We only need to keep some of the data
     const foundPage = {

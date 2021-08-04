@@ -4,6 +4,8 @@ import * as metadata from 'gcp-metadata';
 import {OAuth2Client} from 'google-auth-library';
 
 import * as scraper from './comic-scraper';
+import * as helper from './helper';
+import { Response } from 'express-serve-static-core';
 
 if (process.env.LOCAL_SERVICE) {
   process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
@@ -54,7 +56,7 @@ async function startComicImport(comicDocName: string) {
 }
 
 async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>) {
-  const scrapeUrl = snapshot.get('scrapeUrl');
+  const scrapeUrl: string = snapshot.get('scrapeUrl');
   const collection = snapshot.ref.collection('pages');
 
   // Mark comic as importing so we don't run multiple at once
@@ -64,13 +66,23 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
     'importError': ''
   })
 
-  let foundComicName = false;
-  let coverImageUrl: string | null = null;
-  let foundGoodCover = false;
+  let foundComicName: boolean = snapshot.get('name') !== null;
+  let coverImageUrl: string | null = snapshot.get('coverImageUrl');
+
+  // Assume if it already has a cover image that it's "good"
+  let foundGoodCover: boolean = coverImageUrl !== null;
+
+  let lastPageQuery = await collection.orderBy('scrapeTime', 'desc').limit(1).get();
+  let lastPage = lastPageQuery.docs.length > 0 ? lastPageQuery.docs[0] : null;
+
+  let comicInfo: scraper.ComicInfo = {
+    id: snapshot.id,
+    scrapeUrl: scrapeUrl,
+  };
 
   // Scrape pages, saving as we go
   await scraper.scrapeComicPages(
-      scrapeUrl, async (page) => {
+      comicInfo, lastPage?.id ?? null, async (page) => {
         let pageTitle = page.text;
 
         if (page.wasCrawled) {
@@ -98,7 +110,7 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
 
           // Try extract cover image from page (not every page)
           if (!coverImageUrl || couldBeCover) {
-            const pageUrl = constructPageUrl(snapshot.id, page.docName);
+            const pageUrl = helper.constructPageUrl(snapshot.id, page.docName);
             const imageUrl = await scraper.findImageUrlForPage(pageUrl);
             if (imageUrl) {
               coverImageUrl = imageUrl;
@@ -146,11 +158,6 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
   }
 
   return;
-}
-
-function constructPageUrl(comicDocName: string, pageDocName: string) {
-  const pageSubUrl = pageDocName.replace(/ /g, '/');
-  return `https://${comicDocName}/${pageSubUrl}`;
 }
 
 function separatePageTitle(pageTitle: string) {
@@ -223,23 +230,47 @@ async function getEmail(req: any) {
   return email;
 }
 
-app.get('/', async (req, res) => {
-  const email = await getEmail(req);
-  res.status(200).send(`Hello ${email}!`).end();
-});
-
-app.get('/startimport/:comicDocName', async (req, res) => {
+async function validateAuthenticated(req: any, res: Response<any, Record<string, any>, number>) {
   // Make sure we're properly authenticated
   if (!process.env.LOCAL_SERVICE) {
     const email = await getEmail(req);
     if (!email) {
       res.status(401).send();
-      return;
+      return false;
     }
   }
 
+  return true;
+}
+
+app.get('/', async (req, res) => {
+  const email = await getEmail(req);
+  res.status(200).send(`Hello ${email}!`).end();
+});
+
+app.get('/startImport/:comicDocName', async (req, res) => {
+  if (!validateAuthenticated(req, res)) return;
+
   const result = await startComicImport(req.params.comicDocName);
   res.status(200).send(result);
+});
+
+app.get('/updateAll/', async (req, res) => {
+  if (!validateAuthenticated(req, res)) return;
+
+  const comicsInfo = [];
+  const comics = await db.collection('comics').get();
+
+  // Kick off imports for all existing comics
+  for (const comic of comics.docs) {
+    comicsInfo.push({
+      id: comic.id,
+      result: await startComicImport(comic.id),
+    });
+  }
+
+  // Return strcture describing import start results, for inspection
+  res.status(200).send(comicsInfo);
 });
 
 // Start the server

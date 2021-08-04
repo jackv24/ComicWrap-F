@@ -2,7 +2,6 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as url from 'url';
 import * as helper from './helper';
-import urlExist from 'url-exist';
 import {GoogleAuth} from 'google-auth-library';
 
 admin.initializeApp();
@@ -69,12 +68,12 @@ export const addUserComic = functions.https
       }
 
       // Actually ping url and see if it exists
-      if ((await urlExist(inputUrl)) == false) {
-        throw new functions.https.HttpsError(
-            'invalid-argument',
-            'URL does not exist'
-        );
-      }
+      // if ((await urlExist(inputUrl)) == false) {
+      //   throw new functions.https.HttpsError(
+      //       'invalid-argument',
+      //       'URL does not exist'
+      //   );
+      // }
 
       // Reference to document of comic (existing or yet to be created below)
       const sharedComicRef = db.collection('comics').doc(hostName);
@@ -97,8 +96,14 @@ export const addUserComic = functions.https
         scrapeUrl: inputUrl,
       });
 
-      const result = appRequest('/startimport/' + hostName);
+      const result = appRequest('/startImport/' + hostName);
 
       // Return the name of the new document while import is being triggered
       return result;
+    });
+
+export const updateExistingComics = functions.pubsub
+    .schedule('every 5 hours').onRun(async () => {
+      const result = appRequest('/updateAll/');
+      console.info(result);
     });

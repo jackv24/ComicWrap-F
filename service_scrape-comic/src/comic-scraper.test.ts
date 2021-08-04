@@ -49,8 +49,13 @@ describe('comic-scraper', () => {
     describe('www.goodbyetohalos.com', () => {
       it('finds page list from archive', async () => {
         // Execute
+        let comicInfo: scraper.ComicInfo = {
+          id: 'www.goodbyetohalos.com',
+          scrapeUrl: 'https://www.goodbyetohalos.com/comic/archive',
+        };
+        
         const pages: scraper.ReturnPage[] = [];
-        await scraper.scrapeComicPages('https://www.goodbyetohalos.com/comic/archive', async (page) => {
+        await scraper.scrapeComicPages(comicInfo, null, async (page) => {
           pages.push(page);
           return scraper.FoundPageResult.Success;
         });
@@ -65,8 +70,13 @@ describe('comic-scraper', () => {
 
       it('finds page list from non-archive', async () => {
         // Execute
+        let comicInfo: scraper.ComicInfo = {
+          id: 'www.goodbyetohalos.com',
+          scrapeUrl: 'https://www.goodbyetohalos.com/',
+        };
+
         const pages: scraper.ReturnPage[] = [];
-        await scraper.scrapeComicPages('https://www.goodbyetohalos.com/', async (page) => {
+        await scraper.scrapeComicPages(comicInfo, null, async (page) => {
           pages.push(page);
           return scraper.FoundPageResult.Success;
         });
@@ -83,8 +93,13 @@ describe('comic-scraper', () => {
     describe('www.peritale.com', () => {
       it('finds page list from archive', async () => {
         // Execute
+        let comicInfo: scraper.ComicInfo = {
+          id: 'www.peritale.com',
+          scrapeUrl: 'https://www.peritale.com/comic/archive',
+        };
+
         const pages: scraper.ReturnPage[] = [];
-        await scraper.scrapeComicPages('https://www.peritale.com/comic/archive', async (page) => {
+        await scraper.scrapeComicPages(comicInfo, null, async (page) => {
           pages.push(page);
           return scraper.FoundPageResult.Success;
         });
@@ -99,8 +114,13 @@ describe('comic-scraper', () => {
 
       it('finds page list from non-archive', async () => {
         // Execute
+        let comicInfo: scraper.ComicInfo = {
+          id: 'www.peritale.com',
+          scrapeUrl: 'https://www.peritale.com/',
+        };
+
         const pages: scraper.ReturnPage[] = [];
-        await scraper.scrapeComicPages('https://www.peritale.com/', async (page) => {
+        await scraper.scrapeComicPages(comicInfo, null, async (page) => {
           pages.push(page);
           return scraper.FoundPageResult.Success;
         });
@@ -117,8 +137,13 @@ describe('comic-scraper', () => {
     describe('www.misfile.com', () => {
       it('finds pages', async () => {
         // Execute
+        let comicInfo: scraper.ComicInfo = {
+          id: 'www.misfile.com',
+          scrapeUrl: 'https://www.misfile.com/',
+        };
+
         const pages: scraper.ReturnPage[] = [];
-        await scraper.scrapeComicPages('https://www.misfile.com/', async (page) => {
+        await scraper.scrapeComicPages(comicInfo, null, async (page) => {
           pages.push(page);
           return scraper.FoundPageResult.Success;
         });
@@ -153,8 +178,13 @@ describe('comic-scraper', () => {
     describe('killsixbilliondemons.com', () => {
       it('finds pages', async () => {
         // Execute
+        let comicInfo: scraper.ComicInfo = {
+          id: 'killsixbilliondemons.com',
+          scrapeUrl: 'https://killsixbilliondemons.com/',
+        };
+
         const pages: scraper.ReturnPage[] = [];
-        await scraper.scrapeComicPages('https://killsixbilliondemons.com/', async (page) => {
+        await scraper.scrapeComicPages(comicInfo, null, async (page) => {
           pages.push(page);
           return scraper.FoundPageResult.Success;
         });
@@ -184,8 +214,13 @@ describe('comic-scraper', () => {
       describe('croakingbound.com', () => {
         it('finds pages', async () => {
           // Execute
+          let comicInfo: scraper.ComicInfo = {
+            id: 'croakingbound.com',
+            scrapeUrl: 'https://croakingbound.com/',
+          };
+
           const pages: scraper.ReturnPage[] = [];
-          await scraper.scrapeComicPages('https://croakingbound.com/', async (page) => {
+          await scraper.scrapeComicPages(comicInfo, null, async (page) => {
             pages.push(page);
             return scraper.FoundPageResult.Success;
           });
