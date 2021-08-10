@@ -24,7 +24,13 @@ There are a few parts to the whole system:
 
 ## Setup
 
-To run the Firebase emulators with test data, run `run_emulators.sh`. The test user can be logged in with email: `test@test.com` and pass: `test1234`.
+### Firebase Functions/Emulators
+
+To run the Firebase emulators with test data, cd into the `functions` directory (then make sure to `npm install` and `npm run build` first if you haven't) and run `npm run serve-all`. The test user can be logged in with email: `test@test.com` and pass: `test1234`.
+
+### Comic Scraping Service
+
+
 
 ### Flutter
 

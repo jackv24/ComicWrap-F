@@ -4,7 +4,7 @@
     "lint": "eslint --ext .js,.ts .",
     "build": "rm -rf lib && tsc",
     "serve": "firebase emulators:start --only functions",
-    "serve-all": "LOCAL_SERVICE=1 firebase emulators:start",
+    "serve-all": "LOCAL_SERVICE=1 firebase emulators:start --import ../emulator_data",
     "shell": "firebase functions:shell",
     "shell-debug": "firebase functions:shell --inspect-functions",
     "start": "npm run shell",

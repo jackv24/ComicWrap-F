@@ -29,26 +29,46 @@ class _ComicInfoSectionState extends State<ComicInfoSection> {
   late BehaviorSubject<DocumentSnapshot<UserComicModel>> _userComicSubject;
   StreamSubscription<DocumentSnapshot<SharedComicModel>>? _sharedComicStreamSub;
   late BehaviorSubject<DocumentSnapshot<SharedComicModel>> _sharedComicSubject;
-
   Future<DocumentSnapshot<SharedComicPageModel>>? _sharedComicPageFuture;
+  StreamSubscription<QuerySnapshot<SharedComicPageModel>>? _newestPageStreamSub;
+  late BehaviorSubject<DocumentSnapshot<SharedComicPageModel>?>
+      _newestPageSubject;
 
   @override
   void initState() {
     _userComicSubject = BehaviorSubject<DocumentSnapshot<UserComicModel>>();
     _sharedComicSubject = BehaviorSubject<DocumentSnapshot<SharedComicModel>>();
+    _newestPageSubject =
+        BehaviorSubject<DocumentSnapshot<SharedComicPageModel>?>.seeded(null);
 
     widget.userComicRef.snapshots().listen((userComicSnapshot) {
       _userComicSubject.add(userComicSnapshot);
 
       _sharedComicPageFuture = userComicSnapshot.data()!.currentPage?.get();
 
+      final sharedDocRef = userComicSnapshot.data()!.sharedDoc;
+
       _sharedComicStreamSub?.cancel();
-      _sharedComicStreamSub = userComicSnapshot
-          .data()!
-          .sharedDoc
-          .snapshots()
-          .listen((sharedComicSnapshot) {
+      _sharedComicStreamSub =
+          sharedDocRef.snapshots().listen((sharedComicSnapshot) {
         _sharedComicSubject.add(sharedComicSnapshot);
+      });
+
+      _newestPageStreamSub?.cancel();
+      _newestPageStreamSub = sharedDocRef
+          .collection('pages')
+          .withConverter<SharedComicPageModel>(
+            fromFirestore: (snapshot, _) =>
+                SharedComicPageModel.fromJson(snapshot.data()!),
+            toFirestore: (comic, _) => comic.toJson(),
+          )
+          .orderBy('scrapeTime', descending: true)
+          .limit(1)
+          .snapshots()
+          .listen((newestPageSnapshot) {
+        _newestPageSubject.add(newestPageSnapshot.docs.length > 0
+            ? newestPageSnapshot.docs[0]
+            : null);
       });
     });
 
@@ -60,6 +80,8 @@ class _ComicInfoSectionState extends State<ComicInfoSection> {
     _userComicSubject.close();
     _sharedComicStreamSub?.cancel();
     _sharedComicSubject.close();
+    _newestPageStreamSub?.cancel();
+    _newestPageSubject.close();
 
     super.dispose();
   }
@@ -128,15 +150,22 @@ class _ComicInfoSectionState extends State<ComicInfoSection> {
                           });
                     },
                   ),
-                  TimeAgoText(
-                      time: null,
-                      builder: (text) {
-                        return Text(
-                          'Updated: $text',
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.subtitle2,
-                        );
-                      }),
+                  StreamBuilder<DocumentSnapshot<SharedComicPageModel>?>(
+                    stream: _newestPageSubject.stream,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return Text('Loading...');
+
+                      return TimeAgoText(
+                          time: snapshot.data!.data()?.scrapeTime?.toDate(),
+                          builder: (text) {
+                            return Text(
+                              'Updated: $text',
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.subtitle2,
+                            );
+                          });
+                    },
+                  ),
                   Spacer(),
                   FutureBuilder<DocumentSnapshot<SharedComicPageModel>>(
                     future: _sharedComicPageFuture,
