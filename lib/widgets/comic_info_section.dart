@@ -46,7 +46,14 @@ class _ComicInfoSectionState extends State<ComicInfoSection> {
 
       _sharedComicPageFuture = userComicSnapshot.data()!.currentPage?.get();
 
-      final sharedDocRef = userComicSnapshot.data()!.sharedDoc;
+      final sharedDocRef = FirebaseFirestore.instance
+          .collection('comics')
+          .withConverter<SharedComicModel>(
+            fromFirestore: (snapshot, _) =>
+                SharedComicModel.fromJson(snapshot.data()!),
+            toFirestore: (comic, _) => comic.toJson(),
+          )
+          .doc(userComicSnapshot.id);
 
       _sharedComicStreamSub?.cancel();
       _sharedComicStreamSub =

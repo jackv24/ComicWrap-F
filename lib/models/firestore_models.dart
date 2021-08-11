@@ -39,8 +39,6 @@ DocumentReference<Json>? sharedComicPageToJson(
 @JsonSerializable()
 @_SharedComicModelDocumentReferenceConverter()
 class UserComicModel {
-  final DocumentReference<SharedComicModel> sharedDoc;
-
   // Type not supported by code generator
   @JsonKey(ignore: true)
   late Timestamp? lastReadTime;
@@ -48,8 +46,7 @@ class UserComicModel {
   @JsonKey(fromJson: sharedComicPageFromJson, toJson: sharedComicPageToJson)
   final DocumentReference<SharedComicPageModel>? currentPage;
 
-  UserComicModel(
-      {required this.sharedDoc, this.lastReadTime, this.currentPage});
+  UserComicModel({this.lastReadTime, this.currentPage});
 
   factory UserComicModel.fromJson(Json json) =>
       _$UserComicModelFromJson(json)..lastReadTime = json['lastReadTime'];

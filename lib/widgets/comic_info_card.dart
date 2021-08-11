@@ -22,7 +22,7 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
 
   @override
   void initState() {
-    docStream = widget.userComicSnapshot.data()!.sharedDoc.snapshots();
+    _getNewDocStream();
 
     super.initState();
   }
@@ -31,10 +31,22 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
   void didUpdateWidget(covariant ComicInfoCard oldWidget) {
     // Make sure we refresh properly when user comic list changes
     if (widget.userComicSnapshot != oldWidget.userComicSnapshot) {
-      docStream = widget.userComicSnapshot.data()!.sharedDoc.snapshots();
+      _getNewDocStream();
     }
 
     super.didUpdateWidget(oldWidget);
+  }
+
+  void _getNewDocStream() {
+    docStream = FirebaseFirestore.instance
+        .collection('comics')
+        .withConverter<SharedComicModel>(
+          fromFirestore: (snapshot, _) =>
+              SharedComicModel.fromJson(snapshot.data()!),
+          toFirestore: (comic, _) => comic.toJson(),
+        )
+        .doc(widget.userComicSnapshot.id)
+        .snapshots();
   }
 
   @override
