@@ -59,7 +59,7 @@ export const addUserComic = functions.https
       const inputUrl = helper.getValidUrl(data);
 
       const parsedUrl = url.parse(inputUrl);
-      const hostName = parsedUrl.hostname;
+      let hostName = parsedUrl.hostname;
       if (!hostName) {
         throw new functions.https.HttpsError(
             'invalid-argument',
@@ -76,7 +76,24 @@ export const addUserComic = functions.https
       // }
 
       // Reference to document of comic (existing or yet to be created below)
-      const sharedComicRef = db.collection('comics').doc(hostName);
+      let sharedComicRef = db.collection('comics').doc(hostName);
+
+      // If comic doesn't already exist, check alternate hostnames
+      if (!(await sharedComicRef.get()).exists) {
+        // Check with or without beginning 'www.'
+        let altHostName;
+        if (hostName.startsWith('www.')) {
+          altHostName = hostName.substr(4);
+        } else {
+          altHostName = 'www.' + hostName;
+        }
+
+        // Use alternate hostname if it already exists
+        if ((await db.collection('comics').doc(altHostName).get()).exists) {
+          sharedComicRef = db.collection('comics').doc(altHostName);
+          hostName = altHostName;
+        }
+      }
 
       // Add comic to calling user's library
       const userDocRef = db.collection('users').doc(context.auth.uid);
