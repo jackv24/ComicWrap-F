@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:comicwrap_f/models/firestore_models.dart';
+import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
 import 'package:comicwrap_f/pages/home_page/settings_screen.dart';
 import 'package:comicwrap_f/system/database.dart';

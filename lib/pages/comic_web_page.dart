@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:comicwrap_f/models/firestore_models.dart';
+import 'package:comicwrap_f/models/firestore/shared_comic.dart';
+import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
+import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:universal_io/io.dart';

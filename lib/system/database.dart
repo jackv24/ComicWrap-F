@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:comicwrap_f/models/firestore_models.dart';
+import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/system/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

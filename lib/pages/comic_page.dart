@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:comicwrap_f/models/firestore_models.dart';
+import 'package:comicwrap_f/models/firestore/shared_comic.dart';
+import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
+import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/widgets/comic_info_section.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -144,8 +146,7 @@ class _ComicPageState extends State<ComicPage> {
             onCurrentPressed: _centerPagesOn,
             onFirstPressed:
                 _pages.length > 0 ? () => _goToEndPage(false) : null,
-            onLastPressed:
-                _pages.length > 0 ? () => _goToEndPage(true) : null,
+            onLastPressed: _pages.length > 0 ? () => _goToEndPage(true) : null,
           );
 
           // Draw extra info as side bar on large screens
@@ -259,10 +260,11 @@ class _ComicPageState extends State<ComicPage> {
             onTap: () => _openWebPage(page),
             onLongPress: () async {
               final offset = _listTapDownDetails!.globalPosition;
-              final val = await showMenu(context: context,
+              final val = await showMenu(
+                  context: context,
                   position: RelativeRect.fromLTRB(offset.dx, offset.dy, 0, 0),
                   items: [
-                    PopupMenuItem(value:page, child: Text('Set Bookmark'))
+                    PopupMenuItem(value: page, child: Text('Set Bookmark'))
                   ]);
               if (val != null) _setPageAsCurrent(val);
             },
@@ -371,8 +373,8 @@ class _ComicPageState extends State<ComicPage> {
 
           // Jump to position centred
           WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-            _scrollController!
-                .jumpTo(max(upQuerySnapshot.docs.length - 1, 0) * listItemHeight);
+            _scrollController!.jumpTo(
+                max(upQuerySnapshot.docs.length - 1, 0) * listItemHeight);
           });
         } else {
           // Start from top of list
@@ -424,7 +426,8 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  Future<void> _centerPagesOn(DocumentSnapshot<SharedComicPageModel> centreDoc) async {
+  Future<void> _centerPagesOn(
+      DocumentSnapshot<SharedComicPageModel> centreDoc) async {
     _pages.clear();
     await _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
   }
@@ -454,9 +457,8 @@ class _ComicPageState extends State<ComicPage> {
   void _setPageAsCurrent(DocumentSnapshot<SharedComicPageModel> page) async {
     EasyLoading.show();
 
-    await widget.userComicSnapshot.reference.update({
-      'currentPage': sharedComicPageToJson(page.reference)
-    });
+    await widget.userComicSnapshot.reference
+        .update({'currentPage': sharedComicPageToJson(page.reference)});
 
     // Reflect updated value in UI (assumes above update worked)
     setState(() {

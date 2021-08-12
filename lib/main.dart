@@ -51,8 +51,8 @@ class _MyAppState extends State<MyApp> {
             // User auth
             data: (app) => Consumer(
               builder: (context, watch, child) {
-                final asyncUser = watch(userDocChangesProvider);
-                return asyncUser.when(
+                final asyncUserDoc = watch(userDocChangesProvider);
+                return asyncUserDoc.when(
                   loading: () => _getScaffold(Text('Signing in...')),
                   error: (err, stack) => _getScaffold(Text('Error signing in')),
                   data: (user) => LibraryScreen(key: _homePageKey),
