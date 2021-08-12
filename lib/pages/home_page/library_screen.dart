@@ -9,69 +9,33 @@ import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
-class LibraryScreen extends StatefulWidget {
+class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({Key? key}) : super(key: key);
 
   @override
-  _LibraryScreenState createState() => _LibraryScreenState();
-}
+  Widget build(BuildContext context, ScopedReader watch) {
+    final asyncComicsList = watch(userComicsListProvider);
+    final comicsListWidget = asyncComicsList.when(
+      loading: () => SliverToBoxAdapter(
+        child: Text("Loading user comics..."),
+      ),
+      error: (err, stack) => SliverToBoxAdapter(
+        child: Text("Error loading user comics."),
+      ),
+      data: (comicsList) {
+        if (comicsList == null) {
+          return SliverToBoxAdapter(
+            child: Text("User is not signed in (no comics list found)."),
+          );
+        }
 
-class _LibraryScreenState extends State<LibraryScreen> {
-  StreamSubscription? _userDocComicsSub;
-  List<QueryDocumentSnapshot<UserComicModel>>? _userComics;
+        return _getBodySliver(context, comicsList);
+      },
+    );
 
-  @override
-  void initState() {
-    // User can change through authentication
-    getUserStream().listen((userDocSnapshot) async {
-      // Cancel previous stream sub before subbing to new one
-      _userDocComicsSub?.cancel();
-
-      // If user changes sub to new user comics collection
-      _userDocComicsSub = userDocSnapshot.reference
-          .collection('comics')
-          .withConverter<UserComicModel>(
-            fromFirestore: (snapshot, _) =>
-                UserComicModel.fromJson(snapshot.data()!),
-            toFirestore: (comic, _) => comic.toJson(),
-          )
-          .snapshots()
-          .listen((comicsCollectionSnap) {
-        // Manually sort documents
-        final docs = comicsCollectionSnap.docs;
-        docs.sort((a, b) {
-          // Never read sort first
-          final aData = a.data();
-          if (aData.lastReadTime == null) return -1;
-
-          final bData = b.data();
-          if (bData.lastReadTime == null) return 1;
-
-          // Reverse order by read time
-          return aData.lastReadTime!.compareTo(bData.lastReadTime!) * -1;
-        });
-
-        // Update now that docs are sorted
-        setState(() {
-          _userComics = docs;
-        });
-      });
-    });
-
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _userDocComicsSub?.cancel();
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return HomePageScreen(
       title: Text('Library'),
       appBarActions: [
@@ -88,7 +52,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ],
       bodySliver: SliverPadding(
         padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-        sliver: _getBodySliver(context),
+        sliver: comicsListWidget,
       ),
     );
   }
@@ -110,14 +74,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
     ));
   }
 
-  Widget _getBodySliver(BuildContext context) {
-    if (_userComics == null) {
-      return SliverToBoxAdapter(
-        child: Text("Loading user comics..."),
-      );
-    }
-
-    if (_userComics!.length == 0) {
+  Widget _getBodySliver(
+      BuildContext context, List<DocumentSnapshot<UserComicModel>> userComics) {
+    if (userComics.length == 0) {
       return SliverToBoxAdapter(
         child: Text("User has no comics."),
       );
@@ -135,7 +94,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Widget comicWidget;
           try {
             comicWidget = ComicInfoCard(
-              userComicSnapshot: _userComics![index],
+              userComicSnapshot: userComics[index],
             );
           } catch (e) {
             comicWidget = Text('ERROR: ${e.toString()}');
@@ -153,7 +112,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           );
         },
-        childCount: _userComics!.length,
+        childCount: userComics.length,
       ),
     );
   }

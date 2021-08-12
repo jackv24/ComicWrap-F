@@ -4,25 +4,31 @@ import 'package:comicwrap_f/system/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'firebase.dart';
 
-bool _isChangingAuth = false;
-bool get isChangingAuth => _isChangingAuth;
+final userChangesProvider = StreamProvider<User?>((ref) {
+  // Firebase needs to be initialised before we can use it
+  return ref.watch(firebaseProvider).when(
+        data: (firebaseApp) => FirebaseAuth.instance.authStateChanges(),
+        loading: () => Stream.empty(),
+        error: (err, stack) => Stream.value(null),
+      );
+});
 
 Future<void> startAuth() async {
-  await firebaseInit;
   await FirebaseAuth.instance.signInAnonymously();
 }
 
 Future<void> linkGoogleAuth(BuildContext context) async {
-  _isChangingAuth = true;
+  //_isChangingAuth = true;
 
   // Google auth flow
   final googleUser = await GoogleSignIn().signIn();
   if (googleUser == null) {
-    _isChangingAuth = false;
+    //_isChangingAuth = false;
     return;
   }
 
@@ -95,42 +101,43 @@ Future<bool> _promptSignIn(
     BuildContext context, AuthCredential signInCredential) async {
   // Show dialog to choose whether to cancel or just sign in
   final discardExisting = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Error!'),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: [
-              Text('That account is already linked!'
-                  ' Do you want to sign into it instead?'
-                  ' (will lose existing data)'),
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error!'),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: [
+                  Text('That account is already linked!'
+                      ' Do you want to sign into it instead?'
+                      ' (will lose existing data)'),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text('Sign In'),
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+              ),
+              TextButton(
+                child: Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+              ),
             ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Sign In'),
-            onPressed: () {
-              Navigator.of(context).pop(true);
-            },
-          ),
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
-          ),
-        ],
-      );
-    },
-  ) ?? false;
+          );
+        },
+      ) ??
+      false;
 
   try {
     if (discardExisting) {
       // In case it wasn't set already
-      _isChangingAuth = true;
+      //_isChangingAuth = true;
 
       // Delete anonymous account
       await deleteUserData();
@@ -140,7 +147,7 @@ Future<bool> _promptSignIn(
       await FirebaseAuth.instance.signInWithCredential(signInCredential);
     }
   } finally {
-    _isChangingAuth = false;
+    //_isChangingAuth = false;
   }
 
   return discardExisting;

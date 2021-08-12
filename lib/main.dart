@@ -1,14 +1,15 @@
 import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
 import 'package:comicwrap_f/pages/home_page/library_screen.dart';
+import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/system/firebase.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+  runApp(ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -20,12 +21,9 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _homePageKey = GlobalKey();
-  late Stream<User?> _authStream;
 
   @override
   void initState() {
-    _authStream = getAuthStream();
-
     // Setup global style for loading blocker
     EasyLoading.instance
       ..userInteractions = false
@@ -36,48 +34,35 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Firebase init state
-    return FutureBuilder(
-      future: firebaseInit,
-      builder: (context, snapshot) {
-        Widget homeWidget;
-        if (snapshot.connectionState != ConnectionState.done) {
-          // Show messages for initializing Firebase
-          if (snapshot.hasError) {
-            homeWidget = _getScaffold(Text('Failed to initialize Firebase.'));
-          } else {
-            homeWidget = _getScaffold(Text('Initializing Firebase...'));
-          }
-        } else {
-          // Firebase auth state
-          homeWidget = StreamBuilder<User?>(
-            stream: _authStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.active) {
-                var user = snapshot.data;
-                if (user == null) {
-                  // Firebase sign in state
-                  return _getScaffold(Text('Signing in...'));
-                } else {
-                  return LibraryScreen(key: _homePageKey);
-                }
-              } else {
-                return _getScaffold(Text('Waiting for auth connection...'));
-              }
-            },
+    return MaterialApp(
+      title: 'ComicWrap',
+      theme: ThemeData(
+        primaryColor: Colors.white,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      // Firebase init
+      home: Consumer(
+        builder: (context, watch, child) {
+          final asyncApp = watch(firebaseProvider);
+          return asyncApp.when(
+            loading: () => _getScaffold(Text('Initializing Firebase...')),
+            error: (err, stack) =>
+                _getScaffold(Text('Failed to initialize Firebase.')),
+            // User auth
+            data: (app) => Consumer(
+              builder: (context, watch, child) {
+                final asyncUser = watch(userDocChangesProvider);
+                return asyncUser.when(
+                  loading: () => _getScaffold(Text('Signing in...')),
+                  error: (err, stack) => _getScaffold(Text('Error signing in')),
+                  data: (user) => LibraryScreen(key: _homePageKey),
+                );
+              },
+            ),
           );
-        }
-
-        return MaterialApp(
-          title: 'ComicWrap',
-          theme: ThemeData(
-            primaryColor: Colors.white,
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-          ),
-          home: homeWidget,
-          builder: EasyLoading.init(),
-        );
-      },
+        },
+      ),
+      builder: EasyLoading.init(),
     );
   }
 
