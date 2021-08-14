@@ -6,6 +6,7 @@ import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
 import 'package:comicwrap_f/pages/home_page/settings_screen.dart';
 import 'package:comicwrap_f/system/database.dart';
+import 'package:comicwrap_f/system/firebase.dart';
 import 'package:comicwrap_f/widgets/comic_info_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -156,7 +157,7 @@ class _AddComicDialogState extends State<AddComicDialog> {
         actions: <Widget>[
           TextButton(
             child: Text('Add'),
-            onPressed: _preventPop ? null : () => _submit(),
+            onPressed: _preventPop ? null : () => _submit(context),
           ),
           TextButton(
             child: Text('Cancel'),
@@ -168,15 +169,24 @@ class _AddComicDialogState extends State<AddComicDialog> {
     );
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(BuildContext context) async {
     // Clear previous error while waiting
     setState(() {
       _urlErrorText = null;
       _preventPop = true;
     });
 
-    HttpsCallable callable =
-        FirebaseFunctions.instance.httpsCallable('addUserComic');
+    final functions =
+        ProviderScope.containerOf(context).read(functionsProvider);
+    if (functions == null) {
+      setState(() {
+        _urlErrorText = 'Error: could not get instance of FirebaseFunctions.';
+        _preventPop = false;
+      });
+      return;
+    }
+
+    final callable = functions.httpsCallable('addUserComic');
 
     try {
       final HttpsCallableResult<dynamic> result = await callable(_url.text);

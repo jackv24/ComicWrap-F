@@ -7,8 +7,9 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ScopedReader watch) {
-    // Sign-in UI
     final asyncUser = watch(userChangesProvider);
+
+    // Sign-in UI
     final userAuthWidget = asyncUser.when(
       loading: () => Text('Waiting for sign in...'),
       error: (err, stack) => Text('Error signing in.'),

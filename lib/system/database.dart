@@ -1,27 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/models/firestore/user.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/system/auth.dart';
+import 'package:comicwrap_f/system/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final userDocChangesProvider = StreamProvider<DocumentSnapshot?>((ref) {
+final userDocChangesProvider =
+    StreamProvider<DocumentSnapshot<UserModel>?>((ref) {
   final asyncUser = ref.watch(userChangesProvider);
   return asyncUser.when(
     loading: () => Stream.empty(),
     error: (err, stack) => Stream.error(err, stack),
-    data: (user) => user != null
-        ? FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .snapshots()
-        : Stream.value(null),
+    data: (user) {
+      if (user == null) return Stream.value(null);
+
+      final firestore = ref.watch(firestoreProvider);
+      if (firestore == null) return Stream.value(null);
+
+      return firestore
+          .collection('users')
+          .withConverter<UserModel>(
+            fromFirestore: (snapshot, _) =>
+                UserModel.fromJson(snapshot.data()!),
+            toFirestore: (comic, _) => comic.toJson(),
+          )
+          .doc(user.uid)
+          .snapshots();
+    },
   );
 });
 
-Future<void> deleteUserData() async {
-  // TODO: use riverpod
-  User currentUser = FirebaseAuth.instance.currentUser!;
-  CollectionReference users = FirebaseFirestore.instance.collection('users');
+Future<void> deleteUserData(
+    FirebaseAuth auth, FirebaseFirestore firestore) async {
+  final currentUser = auth.currentUser!;
+  final users = firestore.collection('users');
 
   await users.doc(currentUser.uid).delete();
 

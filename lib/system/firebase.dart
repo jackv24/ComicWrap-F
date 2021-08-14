@@ -6,22 +6,42 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const bool USE_EMULATORS = bool.fromEnvironment('USE_EMULATORS');
+final _host =
+    defaultTargetPlatform == TargetPlatform.android ? '10.0.2.2' : 'localhost';
 
 final firebaseProvider = FutureProvider<FirebaseApp>((ref) async {
-  final firebaseApp = await Firebase.initializeApp();
+  return await Firebase.initializeApp();
+});
 
-  // Setup connection to emulators if desired
+final firestoreProvider = Provider<FirebaseFirestore?>((ref) {
+  final app = ref.watch(firebaseProvider).data?.value;
+  if (app == null) return null;
+
+  final firestore = FirebaseFirestore.instance;
   if (USE_EMULATORS) {
-    final host = defaultTargetPlatform == TargetPlatform.android
-        ? '10.0.2.2'
-        : 'localhost';
-
-    FirebaseFirestore.instance.settings =
-        Settings(host: host + ':8080', sslEnabled: false);
-    FirebaseFunctions.instance
-        .useFunctionsEmulator(origin: 'http://$host:5001');
-    FirebaseAuth.instance.useEmulator('http://$host:9099');
+    firestore.settings = Settings(host: _host + ':8080', sslEnabled: false);
   }
+  return firestore;
+});
 
-  return firebaseApp;
+final functionsProvider = Provider<FirebaseFunctions?>((ref) {
+  final app = ref.watch(firebaseProvider).data?.value;
+  if (app == null) return null;
+
+  final functions = FirebaseFunctions.instance;
+  if (USE_EMULATORS) {
+    functions.useFunctionsEmulator(origin: 'http://$_host:5001');
+  }
+  return functions;
+});
+
+final authProvider = FutureProvider<FirebaseAuth?>((ref) async {
+  final app = ref.watch(firebaseProvider).data?.value;
+  if (app == null) return null;
+
+  final auth = FirebaseAuth.instance;
+  if (USE_EMULATORS) {
+    await auth.useEmulator('http://$_host:9099');
+  }
+  return auth;
 });
