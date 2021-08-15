@@ -1,6 +1,7 @@
 import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
 import 'package:comicwrap_f/system/auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 
@@ -14,25 +15,25 @@ class SettingsScreen extends ConsumerWidget {
       loading: () => Text('Waiting for sign in...'),
       error: (err, stack) => Text('Error signing in.'),
       data: (user) {
-        final String? userHintText;
+        final String userHintText;
+        final List<Widget> signInWidgets;
         if (user == null) {
-          userHintText =
-              'User is null - there should always be a user, even if anonymous!';
-        } else if (user.isAnonymous) {
-          userHintText =
-              'You\'re an anonymous user. Sign in to make sure you don\'t lose your data!';
+          userHintText = 'Not signed in. Please sign in below:';
+          signInWidgets = [
+            SignInButton(Buttons.Email,
+                onPressed: () => _futureBlocked(linkEmailAuth(context))),
+            SignInButton(Buttons.Google,
+                onPressed: () => _futureBlocked(linkGoogleAuth(context))),
+          ];
         } else {
           userHintText = 'You\'re signed in as a full user!';
+          signInWidgets = [
+            TextButton(
+              onPressed: () => _futureBlocked(signOut(context)),
+              child: Text('Sign Out'),
+            ),
+          ];
         }
-
-        final signInButtons = [
-          SignInButton(Buttons.Email, onPressed: () {
-            linkEmailAuth(context);
-          }),
-          SignInButton(Buttons.Google, onPressed: () {
-            linkGoogleAuth(context);
-          }),
-        ];
 
         return Column(
           children: [
@@ -40,21 +41,7 @@ class SettingsScreen extends ConsumerWidget {
               padding: EdgeInsets.only(bottom: 16),
               child: Text(userHintText),
             ),
-            if (user == null || user.isAnonymous) ...signInButtons,
-            if (user == null)
-              ElevatedButton.icon(
-                  onPressed: () {
-                    signInAnon(context);
-                  },
-                  icon: Icon(Icons.person),
-                  label: Text('Anonymous')),
-            if (user != null)
-              TextButton(
-                onPressed: () {
-                  signOut(context);
-                },
-                child: Text('Sign Out'),
-              ),
+            ...signInWidgets,
           ],
         );
       },
@@ -71,5 +58,11 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _futureBlocked(Future future) async {
+    EasyLoading.show();
+    await future;
+    EasyLoading.dismiss();
   }
 }
