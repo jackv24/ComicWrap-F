@@ -4,6 +4,7 @@ import 'package:comicwrap_f/system/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -36,18 +37,23 @@ Future<void> linkGoogleAuth(BuildContext context) async {
   }
 
   final googleAuth = await googleUser.authentication;
-  final googleCredential = GoogleAuthProvider.credential(
+  final credential = GoogleAuthProvider.credential(
     accessToken: googleAuth.accessToken,
     idToken: googleAuth.idToken,
   );
 
   try {
-    await auth.currentUser!.linkWithCredential(googleCredential);
+    final currentUser = auth.currentUser;
+    if (currentUser == null) {
+      await auth.signInWithCredential(credential);
+    } else {
+      await currentUser.linkWithCredential(credential);
+    }
   } on FirebaseAuthException catch (e) {
     print('Account link failed with error code: ${e.code}');
     // Account is already linked to another user
     if (e.code == 'credential-already-in-use') {
-      _promptSignIn(context, auth, googleCredential);
+      _promptSignIn(context, auth, credential);
       return;
     }
   }
@@ -91,8 +97,13 @@ Future<void> linkEmailAuth(BuildContext context) async {
           credential = EmailAuthProvider.credential(
               email: authDetails.email, password: authDetails.pass);
 
-          // Link email account to existing anonymous account
-          await auth.currentUser!.linkWithCredential(credential);
+          final currentUser = auth.currentUser;
+          if (currentUser == null) {
+            await auth.signInWithCredential(credential);
+          } else {
+            // Link email account to existing anonymous account
+            await currentUser.linkWithCredential(credential);
+          }
         } on FirebaseAuthException catch (e) {
           print('Account link failed with error code: ${e.code}');
           // Return error back to dialog to display to user
@@ -333,4 +344,30 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
     // Close dialog if there were no errors
     Navigator.of(context).pop();
   }
+}
+
+Future<void> signInAnon(BuildContext context) async {
+  final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
+  final auth = asyncAuth.data?.value;
+  if (auth == null) {
+    // TODO: Show error? (standardise)
+    return;
+  }
+
+  EasyLoading.show();
+  await auth.signInAnonymously();
+  EasyLoading.dismiss();
+}
+
+Future<void> signOut(BuildContext context) async {
+  final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
+  final auth = asyncAuth.data?.value;
+  if (auth == null) {
+    // TODO: Show error?
+    return;
+  }
+
+  EasyLoading.show();
+  await auth.signOut();
+  EasyLoading.dismiss();
 }
