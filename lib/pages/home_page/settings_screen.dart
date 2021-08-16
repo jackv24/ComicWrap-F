@@ -21,7 +21,7 @@ class SettingsScreen extends ConsumerWidget {
           userHintText = 'Not signed in. Please sign in below:';
           signInWidgets = [
             SignInButton(Buttons.Email,
-                onPressed: () => _futureBlocked(linkEmailAuth(context))),
+                onPressed: () => linkEmailAuth(context)),
             SignInButton(Buttons.Google,
                 onPressed: () => _futureBlocked(linkGoogleAuth(context))),
           ];
