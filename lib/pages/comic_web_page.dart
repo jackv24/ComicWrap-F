@@ -29,6 +29,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
   DocumentSnapshot<SharedComicPageModel>? _currentPage;
 
   String? _initialUrl;
+  int _progress = 0;
 
   @override
   void initState() {
@@ -52,68 +53,82 @@ class _ComicWebPageState extends State<ComicWebPage> {
       appBar: AppBar(
         title: Text(pageTitle),
       ),
-      body: WillPopScope(
-        onWillPop: () async {
-          EasyLoading.show();
-          // Update read stats when exiting, to avoid many doc updates while binge-reading
-          if (_currentPage != null) {
-            await widget.userComicDoc.reference.update({
-              'lastReadTime': Timestamp.now(),
-              'currentPage': sharedComicPageToJson(_currentPage!.reference),
-            });
-          } else {
-            // Don't set currentPage reference if it's null
-            await widget.userComicDoc.reference.update({
-              'lastReadTime': Timestamp.now(),
-            });
-          }
-          EasyLoading.dismiss();
+      body: Stack(
+        children: [
+          WillPopScope(
+            onWillPop: () async {
+              EasyLoading.show();
+              // Update read stats when exiting, to avoid many doc updates while binge-reading
+              if (_currentPage != null) {
+                await widget.userComicDoc.reference.update({
+                  'lastReadTime': Timestamp.now(),
+                  'currentPage': sharedComicPageToJson(_currentPage!.reference),
+                });
+              } else {
+                // Don't set currentPage reference if it's null
+                await widget.userComicDoc.reference.update({
+                  'lastReadTime': Timestamp.now(),
+                });
+              }
+              EasyLoading.dismiss();
 
-          // Pop with value of current page
-          Navigator.of(context).pop(_newValidPage);
+              // Pop with value of current page
+              Navigator.of(context).pop(_newValidPage);
 
-          // We manually handle popping above
-          return false;
-        },
-        child: WebView(
-          initialUrl: _initialUrl,
-          javascriptMode: JavascriptMode.unrestricted,
-          onPageStarted: (currentPage) {
-            final pageId = currentPage.split('/').skip(3).join(' ');
-            if (_newPage != null && pageId == _newPage!.id) {
-              // Don't trigger rebuild if we haven't changed page
-              print('Already on page: ' + pageId);
-              return;
-            } else {
-              print('Navigating to page: ' + pageId);
-              setState(() {
-                _newPage = null;
-              });
-            }
+              // We manually handle popping above
+              return false;
+            },
+            child: WebView(
+              initialUrl: _initialUrl,
+              javascriptMode: JavascriptMode.unrestricted,
+              onPageStarted: (currentPage) {
+                final pageId = currentPage.split('/').skip(3).join(' ');
+                if (_newPage != null && pageId == _newPage!.id) {
+                  // Don't trigger rebuild if we haven't changed page
+                  print('Already on page: ' + pageId);
+                  return;
+                } else {
+                  print('Navigating to page: ' + pageId);
+                  setState(() {
+                    _newPage = null;
+                  });
+                }
 
-            // Get data for the new page (don't wait)
-            widget.sharedComicDoc.reference
-                .collection('pages')
-                .withConverter<SharedComicPageModel>(
-                  fromFirestore: (snapshot, _) =>
-                      SharedComicPageModel.fromJson(snapshot.data()!),
-                  toFirestore: (comic, _) => comic.toJson(),
-                )
-                .doc(pageId)
-                .get()
-                .then((value) {
-              // Update page display
-              setState(() {
-                _newPage = value;
-                _newValidPage = value;
-                print('Got data for page: ' + pageId);
-              });
+                // Get data for the new page (don't wait)
+                widget.sharedComicDoc.reference
+                    .collection('pages')
+                    .withConverter<SharedComicPageModel>(
+                      fromFirestore: (snapshot, _) =>
+                          SharedComicPageModel.fromJson(snapshot.data()!),
+                      toFirestore: (comic, _) => comic.toJson(),
+                    )
+                    .doc(pageId)
+                    .get()
+                    .then((value) {
+                  // Update page display
+                  setState(() {
+                    _newPage = value;
+                    _newValidPage = value;
+                    print('Got data for page: ' + pageId);
+                  });
 
-              // Don't need to wait for this, just let it happen whenever
-              _markPageRead(_newPage!);
-            });
-          },
-        ),
+                  // Don't need to wait for this, just let it happen whenever
+                  _markPageRead(_newPage!);
+                });
+              },
+              onProgress: (progress) {
+                setState(() {
+                  _progress = progress;
+                });
+              },
+            ),
+          ),
+          if (_progress < 100)
+            LinearProgressIndicator(
+              value: _progress / 100,
+              minHeight: 6.0,
+            ),
+        ],
       ),
     );
   }
