@@ -237,9 +237,6 @@ class _ComicPageState extends State<ComicPage> {
         if (snapshot.hasError) {
           trailing = Icon(Icons.error);
         }
-        if (snapshot.connectionState != ConnectionState.done) {
-          trailing = Icon(Icons.refresh);
-        }
 
         final currentPageTime = snapshot.data?.data()!.scrapeTime;
         final isRead;
