@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
@@ -12,11 +14,10 @@ class ComicWebPage extends StatefulWidget {
   final DocumentSnapshot<SharedComicModel> sharedComicDoc;
   final DocumentSnapshot<SharedComicPageModel> initialPageDoc;
 
-  const ComicWebPage(
-      {required this.userComicDoc,
-      required this.sharedComicDoc,
-      required this.initialPageDoc,
-      Key? key})
+  const ComicWebPage({required this.userComicDoc,
+    required this.sharedComicDoc,
+    required this.initialPageDoc,
+    Key? key})
       : super(key: key);
 
   @override
@@ -30,6 +31,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
   String? _initialUrl;
   int _progress = 0;
+  final Completer<WebViewController> _webViewController =
+      Completer<WebViewController>();
 
   @override
   void initState() {
@@ -52,6 +55,22 @@ class _ComicWebPageState extends State<ComicWebPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(pageTitle),
+        actions: [
+          // Refresh button
+          FutureBuilder<WebViewController>(
+            future: _webViewController.future,
+            builder: (context, snapshot) {
+              return IconButton(
+                icon: Icon(Icons.refresh),
+                onPressed: !snapshot.hasData
+                    ? null
+                    : () async {
+                        await snapshot.data!.reload();
+                      },
+              );
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -81,6 +100,9 @@ class _ComicWebPageState extends State<ComicWebPage> {
             child: WebView(
               initialUrl: _initialUrl,
               javascriptMode: JavascriptMode.unrestricted,
+              onWebViewCreated: (webViewController) {
+                _webViewController.complete(webViewController);
+              },
               onPageStarted: (currentPage) {
                 final pageId = currentPage.split('/').skip(3).join(' ');
                 if (_newPage != null && pageId == _newPage!.id) {
@@ -98,10 +120,10 @@ class _ComicWebPageState extends State<ComicWebPage> {
                 widget.sharedComicDoc.reference
                     .collection('pages')
                     .withConverter<SharedComicPageModel>(
-                      fromFirestore: (snapshot, _) =>
-                          SharedComicPageModel.fromJson(snapshot.data()!),
-                      toFirestore: (comic, _) => comic.toJson(),
-                    )
+                  fromFirestore: (snapshot, _) =>
+                      SharedComicPageModel.fromJson(snapshot.data()!),
+                  toFirestore: (comic, _) => comic.toJson(),
+                )
                     .doc(pageId)
                     .get()
                     .then((value) {
