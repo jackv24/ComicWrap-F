@@ -6,6 +6,7 @@ import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:rxdart/subjects.dart';
 import 'package:universal_io/io.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -14,10 +15,11 @@ class ComicWebPage extends StatefulWidget {
   final DocumentSnapshot<SharedComicModel> sharedComicDoc;
   final DocumentSnapshot<SharedComicPageModel> initialPageDoc;
 
-  const ComicWebPage({required this.userComicDoc,
-    required this.sharedComicDoc,
-    required this.initialPageDoc,
-    Key? key})
+  const ComicWebPage(
+      {required this.userComicDoc,
+      required this.sharedComicDoc,
+      required this.initialPageDoc,
+      Key? key})
       : super(key: key);
 
   @override
@@ -30,12 +32,15 @@ class _ComicWebPageState extends State<ComicWebPage> {
   DocumentSnapshot<SharedComicPageModel>? _currentPage;
 
   String? _initialUrl;
-  int _progress = 0;
   final Completer<WebViewController> _webViewController =
       Completer<WebViewController>();
 
+  late final BehaviorSubject<int> _progressSubject;
+
   @override
   void initState() {
+    super.initState();
+
     // Enable hybrid composition on Android
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
 
@@ -44,7 +49,14 @@ class _ComicWebPageState extends State<ComicWebPage> {
     final pagePath = widget.initialPageDoc.id.trim().replaceAll(' ', '/');
     _initialUrl = rootUrl + pagePath;
 
-    super.initState();
+    _progressSubject = BehaviorSubject.seeded(0);
+  }
+
+  @override
+  void dispose() {
+    _progressSubject.close();
+
+    super.dispose();
   }
 
   @override
@@ -74,6 +86,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
       ),
       body: Stack(
         children: [
+          // WebView wrapper
           WillPopScope(
             onWillPop: () async {
               EasyLoading.show();
@@ -120,10 +133,10 @@ class _ComicWebPageState extends State<ComicWebPage> {
                 widget.sharedComicDoc.reference
                     .collection('pages')
                     .withConverter<SharedComicPageModel>(
-                  fromFirestore: (snapshot, _) =>
-                      SharedComicPageModel.fromJson(snapshot.data()!),
-                  toFirestore: (comic, _) => comic.toJson(),
-                )
+                      fromFirestore: (snapshot, _) =>
+                          SharedComicPageModel.fromJson(snapshot.data()!),
+                      toFirestore: (comic, _) => comic.toJson(),
+                    )
                     .doc(pageId)
                     .get()
                     .then((value) {
@@ -138,18 +151,24 @@ class _ComicWebPageState extends State<ComicWebPage> {
                   _markPageRead(_newPage!);
                 });
               },
-              onProgress: (progress) {
-                setState(() {
-                  _progress = progress;
-                });
-              },
+              onProgress: (progress) => _progressSubject.add(progress),
             ),
           ),
-          if (_progress < 100)
-            LinearProgressIndicator(
-              value: _progress / 100,
-              minHeight: 6.0,
-            ),
+          // Loading progress bar
+          StreamBuilder<int>(
+            stream: _progressSubject.stream,
+            builder: (context, snapshot) {
+              final value = snapshot.data ?? 0;
+              // Loading indicator only visible while still loading
+              return Visibility(
+                visible: value < 100,
+                child: LinearProgressIndicator(
+                  value: value / 100.0,
+                  minHeight: 6.0,
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
