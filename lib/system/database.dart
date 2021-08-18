@@ -3,7 +3,6 @@ import 'package:comicwrap_f/models/firestore/user.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/system/auth.dart';
 import 'package:comicwrap_f/system/firebase.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final userDocChangesProvider =
@@ -30,16 +29,6 @@ final userDocChangesProvider =
     },
   );
 });
-
-Future<void> deleteUserData(
-    FirebaseAuth auth, FirebaseFirestore firestore) async {
-  final currentUser = auth.currentUser!;
-  final users = firestore.collection('users');
-
-  await users.doc(currentUser.uid).delete();
-
-  print('Delete user data');
-}
 
 final userComicsListProvider =
     StreamProvider<List<DocumentSnapshot<UserComicModel>>?>((ref) {

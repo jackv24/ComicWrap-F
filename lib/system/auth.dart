@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:comicwrap_f/system/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +33,7 @@ Future<void> linkGoogleAuth(BuildContext context) async {
     // Google auth flow
     googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) {
-      //_isChangingAuth = false;
+      // Google sign in was canceled
       return;
     }
   } on PlatformException catch (e) {
@@ -49,22 +48,10 @@ Future<void> linkGoogleAuth(BuildContext context) async {
   );
 
   try {
-    final currentUser = auth.currentUser;
-    if (currentUser == null) {
-      await auth.signInWithCredential(credential);
-    } else {
-      await currentUser.linkWithCredential(credential);
-    }
+    await auth.signInWithCredential(credential);
   } on FirebaseAuthException catch (e) {
-    print('Account link failed with error code: ${e.code}');
-    // Account is already linked to another user
-    if (e.code == 'credential-already-in-use') {
-      _promptSignIn(context, auth, credential);
-      return;
-    }
+    print('Firebase google auth failed with error code: ${e.code}');
   }
-
-  print("Linked google account");
 }
 
 class EmailAuthDetails {
@@ -86,7 +73,7 @@ Future<void> linkEmailAuth(BuildContext context) async {
     context: context,
     builder: (context) {
       return EmailLoginDialog((authDetails) async {
-        // Firebase just given unknown error if any details are empty
+        // Firebase just gives unknown error if any details are empty
         if (authDetails.email.isEmpty) {
           if (authDetails.pass.isEmpty) {
             return 'empty-auth';
@@ -97,22 +84,12 @@ Future<void> linkEmailAuth(BuildContext context) async {
           return 'empty-pass';
         }
 
-        AuthCredential credential;
         try {
-          // Create account for auth details
-          credential = EmailAuthProvider.credential(
-              email: authDetails.email, password: authDetails.pass);
-
-          final currentUser = auth.currentUser;
-          if (currentUser == null) {
-            await auth.signInWithCredential(credential);
-          } else {
-            // Link email account to existing anonymous account
-            await currentUser.linkWithCredential(credential);
-          }
+          await auth.signInWithCredential(EmailAuthProvider.credential(
+              email: authDetails.email, password: authDetails.pass));
         } on FirebaseAuthException catch (e) {
           print('Account link failed with error code: ${e.code}');
-          // Return error back to dialog to display to user
+          // Return error back to dialog to handle
           return e.code;
         }
         // No errors! :D
@@ -120,69 +97,6 @@ Future<void> linkEmailAuth(BuildContext context) async {
       });
     },
   );
-}
-
-Future<bool> _promptSignIn(BuildContext context, FirebaseAuth auth,
-    AuthCredential signInCredential) async {
-  // Show dialog to choose whether to cancel or just sign in
-  final discardExisting = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Error!'),
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: [
-                  Text('That account is already linked!'
-                      ' Do you want to sign into it instead?'
-                      ' (will lose existing data)'),
-                ],
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: Text('Sign In'),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
-              ),
-              TextButton(
-                child: Text('Cancel'),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-              ),
-            ],
-          );
-        },
-      ) ??
-      false;
-
-  try {
-    if (discardExisting) {
-      // In case it wasn't set already
-      //_isChangingAuth = true;
-
-      final firestore =
-          ProviderScope.containerOf(context).read(firestoreProvider);
-      if (firestore == null) {
-        // TODO: Show error?
-        return false;
-      }
-
-      // Delete anonymous account
-      await deleteUserData(auth, firestore);
-      await auth.currentUser!.delete();
-
-      // Sign in with authenticated account
-      await auth.signInWithCredential(signInCredential);
-    }
-  } finally {
-    //_isChangingAuth = false;
-  }
-
-  return discardExisting;
 }
 
 class EmailLoginDialog extends StatefulWidget {
@@ -274,81 +188,49 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
     });
 
     switch (errorCode) {
-      case 'invalid-email':
-        setState(() {
-          _emailErrorText = errorCode;
-        });
-        return;
-
-      case 'weak-password':
-        setState(() {
-          _passErrorText = errorCode;
-        });
-        return;
-
       case 'empty-auth':
         setState(() {
           _emailErrorText = 'Required';
           _passErrorText = 'Required';
         });
-        return;
+        break;
 
       case 'empty-email':
         setState(() {
           _emailErrorText = 'Required';
         });
-        return;
+        break;
 
       case 'empty-pass':
         setState(() {
           _passErrorText = 'Required';
         });
-        return;
+        break;
 
-      case 'email-already-in-use':
-        final credential = EmailAuthProvider.credential(
-            email: _email.text, password: _pass.text);
-
+      case 'user-not-found':
         setState(() {
-          _preventPop = true;
+          _emailErrorText = 'Email is not registered';
         });
+        break;
 
-        final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-        final auth = asyncAuth.data?.value;
-        if (auth == null) {
-          // TODO: Show error?
-          return;
-        }
-
-        bool signedIn = false;
-        try {
-          signedIn = await _promptSignIn(context, auth, credential);
-        } on FirebaseAuthException catch (e) {
-          print('Email sign in failed with error code: ${e.code}');
-          switch (e.code) {
-            case 'wrong-password':
-              // TODO: Find a way to not delete anon user before signing in
-              await auth.signInAnonymously();
-
-              setState(() {
-                _passErrorText = e.code;
-              });
-              break;
-          }
-        }
-
+      case 'wrong-password':
         setState(() {
-          _preventPop = false;
+          _passErrorText = 'Wrong password';
         });
+        break;
 
-        // Don't close login dialog if we didn't sign in
-        if (!signedIn) return;
+      case null:
+        // Close dialog if there were no errors
+        Navigator.of(context).pop();
+        break;
 
+      default:
+        // Unhandled error, just show code
+        setState(() {
+          _emailErrorText = errorCode;
+        });
         break;
     }
-
-    // Close dialog if there were no errors
-    Navigator.of(context).pop();
   }
 }
 
