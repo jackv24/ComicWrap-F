@@ -6,6 +6,7 @@ platform :android do
     upload_to_play_store(
         track: 'internal',
         aab: '../build/app/outputs/bundle/release/app-release.aab',
+        release_status: "draft",
         json_key_data: ENV['FASTLANE_SERVICE_ACCOUNT_KEY']
         )
   end
