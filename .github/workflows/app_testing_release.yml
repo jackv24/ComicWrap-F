@@ -32,13 +32,19 @@ jobs:
 #        run: flutter test
 
       - name: Secret google-services.json to file
-        run: echo ${{ secrets.GOOGLE_SERVICES_ANDROID }} > android/app/google-services.json
+        run: echo $GOOGLE_SERVICES_ANDROID > android/app/google-services.json
+        env:
+          GOOGLE_SERVICES_ANDROID: ${{ secrets.GOOGLE_SERVICES_ANDROID }}
 
       - name: Decode Play Store Upload Key to Keyfile
-        run: echo ${{ secrets.PLAY_STORE_UPLOAD_KEY }} | base64 --decode > android/upload-keystore.jks
+        run: echo $PLAY_STORE_UPLOAD_KEY | base64 --decode > android/upload-keystore.jks
+        env:
+          PLAY_STORE_UPLOAD_KEY: ${{ secrets.PLAY_STORE_UPLOAD_KEY }}
 
       - name: Secret key.properties to file
-        run: echo ${{ secrets.ANDROID_KEY_PROPERTIES }} > android/key.properties
+        run: echo $ANDROID_KEY_PROPERTIES > android/key.properties
+        env:
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
 
       - name: Build AppBundle
         run: flutter build appbundle -v --build-name=${GITHUB_REF/\/refs\/tags\/v} --build-number=${{github.run_number}}
