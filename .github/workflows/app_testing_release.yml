@@ -37,7 +37,7 @@ jobs:
           GOOGLE_SERVICES_ANDROID: ${{ secrets.GOOGLE_SERVICES_ANDROID }}
 
       - name: Decode Play Store Upload Key to Keyfile
-        run: echo $PLAY_STORE_UPLOAD_KEY | base64 --decode > android/upload-keystore.jks
+        run: echo $PLAY_STORE_UPLOAD_KEY | base64 --decode > android/app/upload-keystore.jks
         env:
           PLAY_STORE_UPLOAD_KEY: ${{ secrets.PLAY_STORE_UPLOAD_KEY }}
 
