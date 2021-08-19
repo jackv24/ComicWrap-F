@@ -54,7 +54,7 @@ jobs:
 #        run: flutter test
 
       - name: Build AppBundle
-        run: flutter build appbundle -v --build-name=${GITHUB_REF/\/refs\/tags\/v} --build-number=${{github.run_number}}
+        run: flutter build appbundle -v --build-name=${GITHUB_REF/refs\/tags\/v} --build-number=${{github.run_number}}
 
       - run: bundle exec fastlane internal
         env:
