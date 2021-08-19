@@ -32,7 +32,7 @@ jobs:
 #        run: flutter test
 
       - name: Secret google-services.json to file
-        run: echo $GOOGLE_SERVICES_ANDROID > android/app/google-services.json
+        run: echo $GOOGLE_SERVICES_ANDROID | base64 --decode > android/app/google-services.json
         env:
           GOOGLE_SERVICES_ANDROID: ${{ secrets.GOOGLE_SERVICES_ANDROID }}
 
@@ -42,7 +42,7 @@ jobs:
           PLAY_STORE_UPLOAD_KEY: ${{ secrets.PLAY_STORE_UPLOAD_KEY }}
 
       - name: Secret key.properties to file
-        run: echo $ANDROID_KEY_PROPERTIES > android/key.properties
+        run: echo $ANDROID_KEY_PROPERTIES | base64 --decode > android/key.properties
         env:
           ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
 
