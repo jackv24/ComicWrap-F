@@ -1,0 +1,47 @@
+name: Build and release tagged version to Google Play Internal Testing
+
+# Controls when the action will run.
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  build_android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 12.x
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: 2.2.3
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Run Flutter Tests
+        run: flutter test
+
+      - name: Secret google-services.json to file
+        run: echo "$GOOGLE_SERVICES_ANDROID" > android/app/google-services.json
+
+      - name: Decode Play Store Upload Key to Keyfile
+        run: echo "$PLAY_STORE_UPLOAD_KEY" | base64 --decode > android/upload-keystore.jks
+
+      - name: Secret key.properties to file
+        run: echo "$ANDROID_KEY_PROPERTIES" > android/key.properties
+
+      - name: Build AppBundle
+        run: flutter build appbundle -v --build-name=${GITHUB_REF/\/refs\/tags\/v} --build-number=${{github.run_number}}
+
+      - name: Run Fastlane
+        uses: maierj/fastlane-action@v2.0.1
+        with:
+          lane: internal
+          subdirectory: android

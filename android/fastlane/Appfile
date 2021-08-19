@@ -1,2 +1,1 @@
-json_key_file("fastlane/fastlane-service-account-key.json")
 package_name("com.jackvine.comicwrapf")

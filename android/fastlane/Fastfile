@@ -3,10 +3,15 @@ default_platform(:android)
 platform :android do
   desc "Deploy a new version to the Google Play Internal Testing track"
   lane :internal do
-    sh "flutter build appbundle -v"
     upload_to_play_store(
         track: 'internal',
         aab: '../build/app/outputs/bundle/release/app-release.aab',
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        release_status: "draft",
+        version_code: flutter_version()["version_code"],
+        json_key_data: ENV['FASTLANE_SERVICE_ACCOUNT_KEY']
         )
   end
 end
