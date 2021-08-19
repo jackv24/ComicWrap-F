@@ -4,7 +4,7 @@ name: Test scrape-comic AppEngine Service
 on:
   push:
     tags-ignore:
-      - '*'  # Don't double-run when tagging for app release
+      - 'v*.*.*' # Don't double-run when tagging for app release
   pull_request:
     branches: [ main ]
 

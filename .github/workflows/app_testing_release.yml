@@ -4,7 +4,7 @@ name: Build and release tagged version to Google Play Internal Testing
 on:
   push:
     tags:
-      - v*.*.*
+      - 'v*.*.*'
 
 jobs:
   build_android:
@@ -32,13 +32,13 @@ jobs:
 #        run: flutter test
 
       - name: Secret google-services.json to file
-        run: echo "$GOOGLE_SERVICES_ANDROID" > android/app/google-services.json
+        run: echo ${{ secrets.GOOGLE_SERVICES_ANDROID }} > android/app/google-services.json
 
       - name: Decode Play Store Upload Key to Keyfile
-        run: echo "$PLAY_STORE_UPLOAD_KEY" | base64 --decode > android/upload-keystore.jks
+        run: echo ${{ secrets.PLAY_STORE_UPLOAD_KEY }} | base64 --decode > android/upload-keystore.jks
 
       - name: Secret key.properties to file
-        run: echo "$ANDROID_KEY_PROPERTIES" > android/key.properties
+        run: echo ${{ secrets.ANDROID_KEY_PROPERTIES }} > android/key.properties
 
       - name: Build AppBundle
         run: flutter build appbundle -v --build-name=${GITHUB_REF/\/refs\/tags\/v} --build-number=${{github.run_number}}
@@ -48,3 +48,5 @@ jobs:
         with:
           lane: internal
           subdirectory: android
+        env:
+          FASTLANE_SERVICE_ACCOUNT_KEY: ${{ secrets.FASTLANE_SERVICE_ACCOUNT_KEY }}
