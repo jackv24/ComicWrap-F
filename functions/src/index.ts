@@ -17,7 +17,7 @@ async function appRequest(route: string) {
   let url = iapUrl;
 
   if (process.env.LOCAL_SERVICE) {
-    url = 'http://localhost:8081';
+    url = 'http://localhost:8091';
   }
 
   console.info(`request IAP ${url} with target audience ${targetAudience}`);

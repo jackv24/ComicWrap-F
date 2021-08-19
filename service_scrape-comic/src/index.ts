@@ -9,7 +9,7 @@ import { Response } from 'express-serve-static-core';
 
 if (process.env.LOCAL_SERVICE) {
   process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
-  process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
+  process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8090';
 }
 
 admin.initializeApp({
@@ -274,7 +274,7 @@ app.get('/updateAll/', async (req, res) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT || 8091;
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
   console.log('Press Ctrl+C to quit.');

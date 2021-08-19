@@ -19,7 +19,7 @@ final firestoreProvider = Provider<FirebaseFirestore?>((ref) {
 
   final firestore = FirebaseFirestore.instance;
   if (USE_EMULATORS) {
-    firestore.settings = Settings(host: _host + ':8080', sslEnabled: false);
+    firestore.settings = Settings(host: _host + ':8090', sslEnabled: false);
   }
   return firestore;
 });
