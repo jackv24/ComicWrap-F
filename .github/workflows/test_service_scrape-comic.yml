@@ -3,8 +3,7 @@ name: Test scrape-comic AppEngine Service
 # Controls when the action will run. 
 on:
   push:
-    tags-ignore:
-      - 'v*.*.*' # Don't double-run when tagging for app release
+
   pull_request:
     branches: [ main ]
 
