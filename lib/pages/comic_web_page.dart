@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:universal_io/io.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ComicWebPage extends StatefulWidget {
@@ -70,18 +71,35 @@ class _ComicWebPageState extends State<ComicWebPage> {
         actions: [
           // Refresh button
           FutureBuilder<WebViewController>(
-            future: _webViewController.future,
-            builder: (context, snapshot) {
-              return IconButton(
-                icon: Icon(Icons.refresh),
-                onPressed: !snapshot.hasData
-                    ? null
-                    : () async {
-                        await snapshot.data!.reload();
-                      },
-              );
-            },
-          ),
+              future: _webViewController.future,
+              builder: (context, snapshot) {
+                return IconButton(
+                  icon: Icon(Icons.refresh),
+                  onPressed: !snapshot.hasData
+                      ? null
+                      : () async {
+                          await snapshot.data!.reload();
+                        },
+                );
+              }),
+          // Open in browser button
+          FutureBuilder<WebViewController>(
+              future: _webViewController.future,
+              builder: (context, snapshot) {
+                return IconButton(
+                  icon: Icon(Icons.open_in_browser),
+                  onPressed: !snapshot.hasData
+                      ? null
+                      : () async {
+                          final url = await snapshot.data!.currentUrl();
+                          if (url != null && await canLaunch(url)) {
+                            await launch(url);
+                          } else {
+                            // TODO: Error popup?
+                          }
+                        },
+                );
+              }),
         ],
       ),
       body: Stack(
