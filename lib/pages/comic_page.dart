@@ -176,33 +176,35 @@ class _ComicPageState extends State<ComicPage> {
       elevation: 5,
       margin: EdgeInsetsDirectional.zero,
       shape: ContinuousRectangleBorder(),
-      child: Stack(
-        alignment: AlignmentDirectional.bottomCenter,
-        children: [
-          _pages.length == 0
-              ? Center(child: Text('No pages...'))
-              : ListView.builder(
-                  controller: _scrollController,
-                  itemCount: _pages.length,
-                  itemBuilder: _listItemBuilder,
-                  itemExtent: listItemHeight,
-                  padding: listPadding,
-                ),
-          _isLoadingDown
-              ? Container(
-                  padding: EdgeInsets.all(12),
-                  alignment: AlignmentDirectional.bottomCenter,
-                  child: CircularProgressIndicator(),
-                )
-              : Container(),
-          _isLoadingUp
-              ? Container(
-                  padding: EdgeInsets.all(12),
-                  alignment: AlignmentDirectional.topCenter,
-                  child: CircularProgressIndicator(),
-                )
-              : Container(),
-        ],
+      child: SafeArea(
+        child: Stack(
+          alignment: AlignmentDirectional.bottomCenter,
+          children: [
+            _pages.length == 0
+                ? Center(child: Text('No pages...'))
+                : ListView.builder(
+                    controller: _scrollController,
+                    itemCount: _pages.length,
+                    itemBuilder: _listItemBuilder,
+                    itemExtent: listItemHeight,
+                    padding: listPadding,
+                  ),
+            _isLoadingDown
+                ? Container(
+                    padding: EdgeInsets.all(12),
+                    alignment: AlignmentDirectional.bottomCenter,
+                    child: CircularProgressIndicator(),
+                  )
+                : Container(),
+            _isLoadingUp
+                ? Container(
+                    padding: EdgeInsets.all(12),
+                    alignment: AlignmentDirectional.topCenter,
+                    child: CircularProgressIndicator(),
+                  )
+                : Container(),
+          ],
+        ),
       ),
     );
   }
