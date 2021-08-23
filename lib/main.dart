@@ -1,4 +1,3 @@
-import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
 import 'package:comicwrap_f/pages/home_page/library_screen.dart';
 import 'package:comicwrap_f/system/database.dart';
 import 'package:comicwrap_f/system/firebase.dart';
@@ -20,8 +19,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final _homePageKey = GlobalKey();
-
   @override
   void initState() {
     // Setup global style for loading blocker
@@ -45,17 +42,17 @@ class _MyAppState extends State<MyApp> {
         builder: (context, watch, child) {
           final asyncApp = watch(firebaseProvider);
           return asyncApp.when(
-            loading: () => _getScaffold(Text('Initializing Firebase...')),
+            loading: () => _loadingScreen('Initializing Firebase...'),
             error: (err, stack) =>
-                _getScaffold(Text('Failed to initialize Firebase.')),
+                _loadingScreen('Failed to initialize Firebase.'),
             // User auth
             data: (app) => Consumer(
               builder: (context, watch, child) {
                 final asyncUserDoc = watch(userDocChangesProvider);
                 return asyncUserDoc.when(
-                  loading: () => _getScaffold(Text('Signing in...')),
-                  error: (err, stack) => _getScaffold(Text('Error signing in')),
-                  data: (user) => LibraryScreen(key: _homePageKey),
+                  loading: () => _loadingScreen('Signing in...'),
+                  error: (err, stack) => _loadingScreen('Error signing in'),
+                  data: (user) => LibraryScreen(),
                 );
               },
             ),
@@ -66,14 +63,21 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Widget _getScaffold(Widget body) {
-    return Stack(
-      children: [
-        LibraryScreen(key: _homePageKey),
-        HomePageScreen(
-            title: Text("ComicWrap"),
-            bodySliver: SliverToBoxAdapter(child: body)),
-      ],
+  Widget _loadingScreen(String infoText) {
+    return SafeArea(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: CircularProgressIndicator(),
+          ),
+          Text(
+            infoText,
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
+        ],
+      ),
     );
   }
 }
