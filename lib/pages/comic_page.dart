@@ -6,6 +6,7 @@ import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/widgets/comic_info_section.dart';
+import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -34,13 +35,6 @@ enum _ScrollDirection {
   up,
 }
 
-class _FunctionListItem {
-  final String text;
-  final Future Function(BuildContext) onSelected;
-
-  const _FunctionListItem(this.text, this.onSelected);
-}
-
 class _ComicPageState extends State<ComicPage> {
   final int _initialDocLimit = 30;
   final int _moreDocLimit = 10;
@@ -64,18 +58,6 @@ class _ComicPageState extends State<ComicPage> {
       );
 
   TapDownDetails? _listTapDownDetails;
-
-  // Lazy init so we can access widget inside
-  late var _moreOptions = [
-    _FunctionListItem('Delete', (context) async {
-      EasyLoading.show();
-      await widget.userComicSnapshot.reference.delete();
-      EasyLoading.dismiss();
-
-      // This comic has now been removed, so close it's page
-      Navigator.of(context).pop();
-    }),
-  ];
 
   @override
   void initState() {
@@ -122,21 +104,22 @@ class _ComicPageState extends State<ComicPage> {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          PopupMenuButton(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
-              child: Icon(Icons.more_horiz),
+          MoreActionButton(actions: [
+            FunctionListItem(
+              child: ListTile(
+                title: Text('Delete'),
+                trailing: Icon(Icons.delete),
+              ),
+              onSelected: (context) async {
+                EasyLoading.show();
+                await widget.userComicSnapshot.reference.delete();
+                EasyLoading.dismiss();
+
+                // This comic has now been removed, so close it's page
+                Navigator.of(context).pop();
+              },
             ),
-            itemBuilder: (context) {
-              return List.generate(_moreOptions.length, (index) {
-                return PopupMenuItem(
-                  value: index,
-                  child: Text(_moreOptions[index].text),
-                );
-              });
-            },
-            onSelected: (int index) => _moreOptions[index].onSelected(context),
-          ),
+          ]),
         ],
       ),
       body: LayoutBuilder(

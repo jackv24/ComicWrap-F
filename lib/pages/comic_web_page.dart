@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
+import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:rxdart/subjects.dart';
@@ -69,37 +70,42 @@ class _ComicWebPageState extends State<ComicWebPage> {
       appBar: AppBar(
         title: Text(pageTitle),
         actions: [
-          // Refresh button
           FutureBuilder<WebViewController>(
-              future: _webViewController.future,
-              builder: (context, snapshot) {
-                return IconButton(
-                  icon: Icon(Icons.refresh),
-                  onPressed: !snapshot.hasData
-                      ? null
-                      : () async {
-                          await snapshot.data!.reload();
-                        },
-                );
-              }),
-          // Open in browser button
-          FutureBuilder<WebViewController>(
-              future: _webViewController.future,
-              builder: (context, snapshot) {
-                return IconButton(
-                  icon: Icon(Icons.open_in_browser),
-                  onPressed: !snapshot.hasData
-                      ? null
-                      : () async {
-                          final url = await snapshot.data!.currentUrl();
-                          if (url != null && await canLaunch(url)) {
-                            await launch(url);
-                          } else {
-                            // TODO: Error popup?
-                          }
-                        },
-                );
-              }),
+            future: _webViewController.future,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Icon(Icons.more);
+              }
+
+              final controller = snapshot.data!;
+
+              return MoreActionButton(actions: [
+                FunctionListItem(
+                  child: ListTile(
+                    title: Text('Refresh'),
+                    trailing: Icon(Icons.refresh),
+                  ),
+                  onSelected: (context) async {
+                    await controller.reload();
+                  },
+                ),
+                FunctionListItem(
+                  child: ListTile(
+                    title: Text('Open Browser'),
+                    trailing: Icon(Icons.open_in_browser),
+                  ),
+                  onSelected: (context) async {
+                    final url = await snapshot.data!.currentUrl();
+                    if (url != null && await canLaunch(url)) {
+                      await launch(url);
+                    } else {
+                      // TODO: Error popup?
+                    }
+                  },
+                ),
+              ]);
+            },
+          ),
         ],
       ),
       body: Stack(
