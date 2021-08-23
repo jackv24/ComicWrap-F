@@ -42,7 +42,3 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
-
-# Secrets
-android/app/google-services.json
-ios/GoogleService-Info.plist
