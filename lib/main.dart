@@ -1,6 +1,6 @@
-import 'package:comicwrap_f/pages/home_page/library_screen.dart';
-import 'package:comicwrap_f/system/database.dart';
-import 'package:comicwrap_f/system/firebase.dart';
+import 'package:comicwrap_f/pages/library/library_screen.dart';
+import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';

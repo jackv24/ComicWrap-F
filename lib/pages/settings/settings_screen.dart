@@ -1,5 +1,5 @@
-import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
-import 'package:comicwrap_f/system/auth.dart';
+import 'package:comicwrap_f/pages/main_page_scaffold.dart';
+import 'package:comicwrap_f/utils/auth/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
@@ -46,7 +46,7 @@ class SettingsScreen extends ConsumerWidget {
       },
     );
 
-    return HomePageScreen(
+    return MainPageScaffold(
       title: Text('Settings'),
       bodySliver: SliverPadding(
         padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),

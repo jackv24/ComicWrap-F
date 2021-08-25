@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class HomePageScreen extends StatelessWidget {
+class MainPageScaffold extends StatelessWidget {
   final Widget title;
   final Widget bodySliver;
   final List<Widget>? appBarActions;
 
-  const HomePageScreen(
+  const MainPageScaffold(
       {Key? key,
       required this.title,
       required this.bodySliver,

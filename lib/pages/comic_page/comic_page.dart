@@ -5,13 +5,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
-import 'package:comicwrap_f/widgets/comic_info_section.dart';
+import 'package:comicwrap_f/pages/comic_page/comic_info_section.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
-import 'comic_web_page.dart';
+import '../comic_web_page/comic_web_page.dart';
 
 const listItemHeight = 50.0;
 

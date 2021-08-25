@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
-import 'package:comicwrap_f/widgets/comic_info_card.dart';
+import 'package:comicwrap_f/widgets/card_image_button.dart';
 import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
