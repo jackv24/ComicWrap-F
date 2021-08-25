@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:comicwrap_f/system/error.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -24,7 +26,7 @@ Future<void> linkGoogleAuth(BuildContext context) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
   final auth = asyncAuth.data?.value;
   if (auth == null) {
-    // TODO: Show error?
+    await _showGetAuthError(context);
     return;
   }
 
@@ -65,7 +67,7 @@ Future<void> linkEmailAuth(BuildContext context) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
   final auth = asyncAuth.data?.value;
   if (auth == null) {
-    // TODO: Show error?
+    await _showGetAuthError(context);
     return;
   }
 
@@ -238,9 +240,15 @@ Future<void> signOut(BuildContext context) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
   final auth = asyncAuth.data?.value;
   if (auth == null) {
-    // TODO: Show error?
+    await _showGetAuthError(context);
     return;
   }
 
+  EasyLoading.show();
   await auth.signOut();
+  EasyLoading.dismiss();
+}
+
+Future<void> _showGetAuthError(BuildContext context) {
+  return showErrorDialog(context, 'Couldn\'t get FirebaseAuth!');
 }

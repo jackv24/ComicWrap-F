@@ -29,7 +29,7 @@ DocumentReference<SharedComicPageModel>? sharedComicPageFromJson(
       toFirestore: (data, _) => data.toJson(),
     );
 
-// TODO: Use Riverpod
+// TODO: Use Riverpod, replace references with ID and get ref manually
 DocumentReference<Json>? sharedComicPageToJson(
         DocumentReference<SharedComicPageModel>? data) =>
     data != null ? FirebaseFirestore.instance.doc(data.path) : null;

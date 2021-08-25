@@ -1,7 +1,6 @@
 import 'package:comicwrap_f/pages/home_page/home_page_screen.dart';
 import 'package:comicwrap_f/system/auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 
@@ -23,13 +22,13 @@ class SettingsScreen extends ConsumerWidget {
             SignInButton(Buttons.Email,
                 onPressed: () => linkEmailAuth(context)),
             SignInButton(Buttons.Google,
-                onPressed: () => _futureBlocked(linkGoogleAuth(context))),
+                onPressed: () => linkGoogleAuth(context)),
           ];
         } else {
           userHintText = 'You\'re signed in as a full user!';
           signInWidgets = [
             TextButton(
-              onPressed: () => _futureBlocked(signOut(context)),
+              onPressed: () => signOut(context),
               child: Text('Sign Out'),
             ),
           ];
@@ -58,11 +57,5 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _futureBlocked(Future future) async {
-    EasyLoading.show();
-    await future;
-    EasyLoading.dismiss();
   }
 }

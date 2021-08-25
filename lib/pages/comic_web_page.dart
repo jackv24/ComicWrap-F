@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
+import 'package:comicwrap_f/system/error.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -99,7 +100,9 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     if (url != null && await canLaunch(url)) {
                       await launch(url);
                     } else {
-                      // TODO: Error popup?
+                      final displayUrl = url ?? 'null';
+                      await showErrorDialog(
+                          context, 'Could not open URL: $displayUrl');
                     }
                   },
                 ),
