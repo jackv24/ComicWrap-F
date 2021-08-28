@@ -1,77 +1,33 @@
-import 'dart:async';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
+import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/widgets/card_image_button.dart';
 import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ComicInfoCard extends StatefulWidget {
-  final DocumentSnapshot<UserComicModel> userComicSnapshot;
+class ComicInfoCard extends ConsumerWidget {
+  final String comicId;
+  final UserComicModel userComic;
 
-  const ComicInfoCard({Key? key, required this.userComicSnapshot})
+  const ComicInfoCard(
+      {Key? key, required this.comicId, required this.userComic})
       : super(key: key);
 
   @override
-  _ComicInfoCardState createState() => _ComicInfoCardState();
-}
+  Widget build(BuildContext context, ScopedReader watch) {
+    final sharedComicAsync = watch(sharedComicFamily(comicId));
+    return sharedComicAsync.when(
+      loading: () => Text('Loading...'),
+      error: (err, stack) => Text('Error: $err'),
+      data: (sharedComic) {
+        if (sharedComic == null) return Text('Shared Comic is null');
 
-class _ComicInfoCardState extends State<ComicInfoCard> {
-  Stream<DocumentSnapshot<SharedComicModel>>? docStream;
-
-  @override
-  void initState() {
-    _getNewDocStream();
-
-    super.initState();
-  }
-
-  @override
-  void didUpdateWidget(covariant ComicInfoCard oldWidget) {
-    // Make sure we refresh properly when user comic list changes
-    if (widget.userComicSnapshot != oldWidget.userComicSnapshot) {
-      _getNewDocStream();
-    }
-
-    super.didUpdateWidget(oldWidget);
-  }
-
-  void _getNewDocStream() {
-    docStream = FirebaseFirestore.instance
-        .collection('comics')
-        .withConverter<SharedComicModel>(
-          fromFirestore: (snapshot, _) =>
-              SharedComicModel.fromJson(snapshot.data()!),
-          toFirestore: (comic, _) => comic.toJson(),
-        )
-        .doc(widget.userComicSnapshot.id)
-        .snapshots();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot<SharedComicModel>>(
-      stream: docStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) return Text('Error');
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Text('Loading...');
-        }
-
-        final snapshotData = snapshot.data;
-        if (snapshotData == null) return Text('Snapshot data is null');
-
-        final data = snapshotData.data();
-        if (data == null) return Text('Comic data is null');
-
-        var coverImageUrl = data.coverImageUrl;
+        var coverImageUrl = sharedComic.coverImageUrl;
 
         // If cover url is relative, make it absolute
         if (coverImageUrl != null && !coverImageUrl.startsWith('http')) {
-          final scrapeUrl = data.scrapeUrl;
+          final scrapeUrl = sharedComic.scrapeUrl;
           if (scrapeUrl.isNotEmpty) {
             coverImageUrl = scrapeUrl + coverImageUrl;
           }
@@ -89,23 +45,22 @@ class _ComicInfoCardState extends State<ComicInfoCard> {
                 clipBehavior: Clip.antiAlias,
                 child: CardImageButton(
                   coverImageUrl: coverImageUrl,
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => ComicPage(
-                            userComicSnapshot: widget.userComicSnapshot,
-                            sharedComicSnapshot: snapshotData,
-                          ))),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (context) => ComicPage(comicId: comicId)),
+                  ),
                 ),
               ),
             ),
             SizedBox(height: 5.0),
             Text(
-              data.name ?? snapshot.data!.id,
+              sharedComic.name ?? comicId,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.subtitle1,
             ),
             SizedBox(height: 2.0),
             TimeAgoText(
-                time: widget.userComicSnapshot.data()!.lastReadTime?.toDate(),
+                time: userComic.lastReadTime?.toDate(),
                 builder: (text) {
                   return Text(
                     text,

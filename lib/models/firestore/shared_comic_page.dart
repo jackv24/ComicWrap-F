@@ -20,16 +20,3 @@ class SharedComicPageModel {
   Json toJson() =>
       _$SharedComicPageModelToJson(this)..['scrapeTime'] = scrapeTime;
 }
-
-DocumentReference<SharedComicPageModel>? sharedComicPageFromJson(
-        DocumentReference<Json>? json) =>
-    json?.withConverter(
-      fromFirestore: (snapshot, _) =>
-          SharedComicPageModel.fromJson(snapshot.data()!),
-      toFirestore: (data, _) => data.toJson(),
-    );
-
-// TODO: Use Riverpod, replace references with ID and get ref manually
-DocumentReference<Json>? sharedComicPageToJson(
-        DocumentReference<SharedComicPageModel>? data) =>
-    data != null ? FirebaseFirestore.instance.doc(data.path) : null;

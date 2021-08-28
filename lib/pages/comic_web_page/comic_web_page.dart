@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
+import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/error.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/material.dart';
@@ -12,17 +12,14 @@ import 'package:rxdart/subjects.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ComicWebPage extends StatefulWidget {
-  final DocumentSnapshot<UserComicModel> userComicDoc;
-  final DocumentSnapshot<SharedComicModel> sharedComicDoc;
-  final DocumentSnapshot<SharedComicPageModel> initialPageDoc;
+  final String comicId;
+  final String initialPageId;
 
   const ComicWebPage(
-      {required this.userComicDoc,
-      required this.sharedComicDoc,
-      required this.initialPageDoc,
-      Key? key})
+      {required this.comicId, required this.initialPageId, Key? key})
       : super(key: key);
 
   @override
@@ -48,8 +45,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
 
     // Construct url from comic and page ID
-    final rootUrl = 'https://${widget.sharedComicDoc.id}/';
-    final pagePath = widget.initialPageDoc.id.trim().replaceAll(' ', '/');
+    final rootUrl = 'https://${widget.comicId}/';
+    final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
     _initialUrl = rootUrl + pagePath;
 
     _progressSubject = BehaviorSubject.seeded(0);
@@ -116,16 +113,22 @@ class _ComicWebPageState extends State<ComicWebPage> {
           // WebView wrapper
           WillPopScope(
             onWillPop: () async {
+              final userComicRef =
+                  context.read(userComicRefFamily(widget.comicId));
+
+              // Just pop if we couldn't get a ref to the user comic
+              if (userComicRef == null) return true;
+
               EasyLoading.show();
               // Update read stats when exiting, to avoid many doc updates while binge-reading
               if (_currentPage != null) {
-                await widget.userComicDoc.reference.update({
+                await userComicRef.update({
                   'lastReadTime': Timestamp.now(),
-                  'currentPage': sharedComicPageToJson(_currentPage!.reference),
+                  'currentPageId': _currentPage!.id,
                 });
               } else {
                 // Don't set currentPage reference if it's null
-                await widget.userComicDoc.reference.update({
+                await userComicRef.update({
                   'lastReadTime': Timestamp.now(),
                 });
               }
@@ -137,48 +140,55 @@ class _ComicWebPageState extends State<ComicWebPage> {
               // We manually handle popping above
               return false;
             },
-            child: WebView(
-              initialUrl: _initialUrl,
-              javascriptMode: JavascriptMode.unrestricted,
-              onWebViewCreated: (webViewController) {
-                _webViewController.complete(webViewController);
-              },
-              onPageStarted: (currentPage) {
-                final pageId = currentPage.split('/').skip(3).join(' ');
-                if (_newPage != null && pageId == _newPage!.id) {
-                  // Don't trigger rebuild if we haven't changed page
-                  print('Already on page: ' + pageId);
-                  return;
-                } else {
-                  print('Navigating to page: ' + pageId);
-                  setState(() {
-                    _newPage = null;
-                  });
-                }
+            child: Consumer(
+              builder: (context, watch, child) {
+                final userComicDocAsync =
+                    watch(userComicFamily(widget.comicId));
+                final userComicDoc = userComicDocAsync.when(
+                  data: (data) => data,
+                  loading: () => null,
+                  error: (error, stack) => null,
+                );
 
-                // Get data for the new page (don't wait)
-                widget.sharedComicDoc.reference
-                    .collection('pages')
-                    .withConverter<SharedComicPageModel>(
-                      fromFirestore: (snapshot, _) =>
-                          SharedComicPageModel.fromJson(snapshot.data()!),
-                      toFirestore: (comic, _) => comic.toJson(),
-                    )
-                    .doc(pageId)
-                    .get()
-                    .then((value) {
-                  // Update page display
-                  setState(() {
-                    _newPage = value;
-                    _newValidPage = value;
-                    print('Got data for page: ' + pageId);
-                  });
+                return WebView(
+                  initialUrl: _initialUrl,
+                  javascriptMode: JavascriptMode.unrestricted,
+                  onWebViewCreated: (webViewController) {
+                    _webViewController.complete(webViewController);
+                  },
+                  onPageStarted: (currentPage) {
+                    final pageId = currentPage.split('/').skip(3).join(' ');
+                    if (_newPage != null && pageId == _newPage!.id) {
+                      // Don't trigger rebuild if we haven't changed page
+                      print('Already on page: ' + pageId);
+                      return;
+                    } else {
+                      print('Navigating to page: ' + pageId);
+                      setState(() {
+                        _newPage = null;
+                      });
+                    }
 
-                  // Don't need to wait for this, just let it happen whenever
-                  _markPageRead(_newPage!);
-                });
+                    if (userComicDoc == null) return;
+
+                    // Get data for the new page (don't wait)
+                    getSharedComicPage(context, widget.comicId, pageId)
+                        ?.get()
+                        .then((value) {
+                      // Update page display
+                      setState(() {
+                        _newPage = value;
+                        _newValidPage = value;
+                        print('Got data for page: ' + pageId);
+                      });
+
+                      // Don't need to wait for this, just let it happen whenever
+                      _markPageRead(context, userComicDoc, value);
+                    });
+                  },
+                  onProgress: (progress) => _progressSubject.add(progress),
+                );
               },
-              onProgress: (progress) => _progressSubject.add(progress),
             ),
           ),
           // Loading progress bar
@@ -201,25 +211,33 @@ class _ComicWebPageState extends State<ComicWebPage> {
     );
   }
 
-  void _markPageRead(DocumentSnapshot<SharedComicPageModel> doc) async {
+  void _markPageRead(
+      BuildContext context,
+      DocumentSnapshot<UserComicModel> userComic,
+      DocumentSnapshot<SharedComicPageModel> sharedComicPage) async {
     // Try and get existing current page to compare scrape time
     if (_currentPage == null) {
-      _currentPage = await widget.userComicDoc.data()!.currentPage?.get();
+      final currentPageId = userComic.data()!.currentPageId;
+      if (currentPageId != null) {
+        _currentPage =
+            await getSharedComicPage(context, userComic.id, currentPageId)
+                ?.get();
+      }
     }
 
-    final docScrapeTime = doc.data()!.scrapeTime;
+    final docScrapeTime = sharedComicPage.data()!.scrapeTime;
     final currentPageScrapeTime = _currentPage?.data()!.scrapeTime;
 
     // Only record as current if doc page has been scraped
     if (docScrapeTime != null) {
       // If we don't have a current page then just make this the current
       if (_currentPage == null) {
-        _currentPage = doc;
+        _currentPage = sharedComicPage;
       } else {
         // Otherwise make this the current if it's newer than the previous
         if (currentPageScrapeTime != null &&
             currentPageScrapeTime.compareTo(docScrapeTime) < 0) {
-          _currentPage = doc;
+          _currentPage = sharedComicPage;
           print("_currentPage is now " + _currentPage!.id);
         }
       }

@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/user.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
+import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/utils/auth/auth.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final userDocChangesProvider =
@@ -64,4 +67,133 @@ final userComicsListProvider =
           return docs;
         });
       });
+});
+
+final userComicRefFamily = Provider.autoDispose
+    .family<DocumentReference<UserComicModel>?, String>((ref, comicId) {
+  final userDocRefAsync = ref.watch(userDocChangesProvider);
+  return userDocRefAsync.when(
+    loading: () => null,
+    error: (err, stack) => null,
+    data: (snapshot) {
+      if (snapshot == null) return null;
+
+      return snapshot.reference
+          .collection('comics')
+          .doc(comicId)
+          .withConverter<UserComicModel>(
+            fromFirestore: (snapshot, _) =>
+                UserComicModel.fromJson(snapshot.data()!),
+            toFirestore: (data, _) => data.toJson(),
+          );
+    },
+  );
+});
+
+final userComicFamily = StreamProvider.autoDispose
+    .family<DocumentSnapshot<UserComicModel>?, String>((ref, comicId) {
+  final userComicRef = ref.watch(userComicRefFamily(comicId));
+  return userComicRef?.snapshots() ?? Stream.empty();
+});
+
+final sharedComicFamily = StreamProvider.autoDispose
+    .family<SharedComicModel?, String>((ref, comicId) {
+  final firestore = ref.watch(firestoreProvider);
+  if (firestore == null) return Stream.value(null);
+
+  return firestore
+      .collection('comics')
+      .doc(comicId)
+      .withConverter<SharedComicModel>(
+        fromFirestore: (snapshot, _) =>
+            SharedComicModel.fromJson(snapshot.data()!),
+        toFirestore: (data, _) => data.toJson(),
+      )
+      .snapshots()
+      .map((snapshot) => snapshot.data());
+});
+
+class SharedComicPageInfo {
+  final String comicId;
+  final String pageId;
+
+  const SharedComicPageInfo({required this.comicId, required this.pageId});
+}
+
+final sharedComicPageFamily = StreamProvider.autoDispose
+    .family<DocumentSnapshot<SharedComicPageModel>?, SharedComicPageInfo>(
+        (ref, info) {
+  final firestore = ref.watch(firestoreProvider);
+  if (firestore == null) return Stream.value(null);
+
+  return firestore
+      .collection('comics')
+      .doc(info.comicId)
+      .collection('pages')
+      .doc(info.pageId)
+      .withConverter<SharedComicPageModel>(
+        fromFirestore: (snapshot, _) =>
+            SharedComicPageModel.fromJson(snapshot.data()!),
+        toFirestore: (data, _) => data.toJson(),
+      )
+      .snapshots();
+});
+
+DocumentReference<SharedComicPageModel>? getSharedComicPage(
+    BuildContext context, String comicId, String pageId) {
+  final firestore = context.read(firestoreProvider);
+  if (firestore == null) return null;
+
+  return firestore
+      .collection('comics')
+      .doc(comicId)
+      .collection('pages')
+      .doc(pageId)
+      .withConverter<SharedComicPageModel>(
+        fromFirestore: (snapshot, _) =>
+            SharedComicPageModel.fromJson(snapshot.data()!),
+        toFirestore: (data, _) => data.toJson(),
+      );
+}
+
+Query<SharedComicPageModel>? getSharedComicPagesQuery(
+    BuildContext context, String comicId,
+    {required bool descending}) {
+  final firestore = context.read(firestoreProvider);
+  if (firestore == null) return null;
+
+  return firestore
+      .collection('comics')
+      .doc(comicId)
+      .collection('pages')
+      .orderBy('scrapeTime', descending: descending)
+      .withConverter<SharedComicPageModel>(
+        fromFirestore: (snapshot, _) =>
+            SharedComicPageModel.fromJson(snapshot.data()!),
+        toFirestore: (data, _) => data.toJson(),
+      );
+}
+
+final newestPageFamily = FutureProvider.autoDispose
+    .family<SharedComicPageModel?, String>((ref, comicId) async {
+  final firestore = ref.watch(firestoreProvider);
+  if (firestore == null) return null;
+
+  final snapshot = await firestore
+      .collection('comics')
+      .doc(comicId)
+      .collection('pages')
+      .orderBy('scrapeTime', descending: true)
+      .withConverter<SharedComicPageModel>(
+        fromFirestore: (snapshot, _) =>
+            SharedComicPageModel.fromJson(snapshot.data()!),
+        toFirestore: (data, _) => data.toJson(),
+      )
+      .limit(1)
+      .get();
+
+  final docs = snapshot.docs;
+  if (docs.isEmpty) return null;
+
+  return docs[0].data();
 });

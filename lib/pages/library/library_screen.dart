@@ -90,14 +90,7 @@ class LibraryScreen extends ConsumerWidget {
       ),
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          Widget comicWidget;
-          try {
-            comicWidget = ComicInfoCard(
-              userComicSnapshot: userComics[index],
-            );
-          } catch (e) {
-            comicWidget = Text('ERROR: ${e.toString()}');
-          }
+          final userComicSnapshot = userComics[index];
           return AnimationConfiguration.staggeredGrid(
             position: index,
             columnCount: 3,
@@ -106,7 +99,11 @@ class LibraryScreen extends ConsumerWidget {
             child: ScaleAnimation(
               scale: 0.85,
               child: FadeInAnimation(
-                child: comicWidget,
+                child: ComicInfoCard(
+                  comicId: userComicSnapshot.id,
+                  // Snapshot data should never be null since we got it from a collection query
+                  userComic: userComicSnapshot.data()!,
+                ),
               ),
             ),
           );

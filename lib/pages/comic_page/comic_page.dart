@@ -2,28 +2,24 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
-import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_info_section.dart';
+import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/error.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../comic_web_page/comic_web_page.dart';
 
 const listItemHeight = 50.0;
 
 class ComicPage extends StatefulWidget {
-  final DocumentSnapshot<UserComicModel> userComicSnapshot;
-  final DocumentSnapshot<SharedComicModel> sharedComicSnapshot;
+  final String comicId;
 
-  const ComicPage(
-      {Key? key,
-      required this.userComicSnapshot,
-      required this.sharedComicSnapshot})
-      : super(key: key);
+  const ComicPage({Key? key, required this.comicId}) : super(key: key);
 
   @override
   _ComicPageState createState() => _ComicPageState();
@@ -46,17 +42,6 @@ class _ComicPageState extends State<ComicPage> {
   bool _isLoadingDown = false;
   bool _isLoadingUp = false;
 
-  Future<DocumentSnapshot<SharedComicPageModel>>? _currentPageFuture;
-
-  late final Query<SharedComicPageModel> _basePagesQuery = widget
-      .sharedComicSnapshot.reference
-      .collection('pages')
-      .withConverter<SharedComicPageModel>(
-        fromFirestore: (snapshot, _) =>
-            SharedComicPageModel.fromJson(snapshot.data()!),
-        toFirestore: (comic, _) => comic.toJson(),
-      );
-
   TapDownDetails? _listTapDownDetails;
 
   @override
@@ -65,14 +50,22 @@ class _ComicPageState extends State<ComicPage> {
 
     _scrollController = ScrollController();
 
-    // Load initial pages for scrollview
-    final currentPageRef = widget.userComicSnapshot.data()!.currentPage;
+    // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
+    final userComicAsync = context.read(userComicFamily(widget.comicId));
+    final currentPageId = userComicAsync.when(
+      data: (data) => data?.data()?.currentPageId,
+      loading: () => null,
+      error: (error, stack) => null,
+    );
+
+    // Get ref to current page once for centering pages on start
+    final currentPageRef = currentPageId != null
+        ? getSharedComicPage(context, widget.comicId, currentPageId)
+        : null;
+
     if (currentPageRef != null) {
       // Centre on current page
-      _currentPageFuture = currentPageRef.get();
-      _currentPageFuture!.then((snapshot) {
-        _centerPagesOn(snapshot);
-      });
+      _centerPagesOnRef(currentPageRef);
     } else {
       // Start at top if no current page
       _getPages(_ScrollDirection.none);
@@ -111,12 +104,25 @@ class _ComicPageState extends State<ComicPage> {
                 trailing: Icon(Icons.delete),
               ),
               onSelected: (context) async {
-                EasyLoading.show();
-                await widget.userComicSnapshot.reference.delete();
-                EasyLoading.dismiss();
+                final userComicAsync =
+                    context.read(userComicFamily(widget.comicId));
+                final userComicSnapshot = userComicAsync.when(
+                  data: (data) => data,
+                  loading: () => null,
+                  error: (error, stack) => null,
+                );
 
-                // This comic has now been removed, so close it's page
-                Navigator.of(context).pop();
+                if (userComicSnapshot != null) {
+                  EasyLoading.show();
+                  await userComicSnapshot.reference.delete();
+                  EasyLoading.dismiss();
+
+                  // This comic has now been removed, so close it's page
+                  Navigator.of(context).pop();
+                } else {
+                  await showErrorDialog(
+                      context, 'Failed to delete: couldn\'t get user comic');
+                }
               },
             ),
           ]),
@@ -125,8 +131,8 @@ class _ComicPageState extends State<ComicPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final comicInfo = ComicInfoSection(
-            userComicRef: widget.userComicSnapshot.reference,
-            onCurrentPressed: _centerPagesOn,
+            comicId: widget.comicId,
+            onCurrentPressed: _centerPagesOnDoc,
             onFirstPressed:
                 _pages.length > 0 ? () => _goToEndPage(false) : null,
             onLastPressed: _pages.length > 0 ? () => _goToEndPage(true) : null,
@@ -214,65 +220,79 @@ class _ComicPageState extends State<ComicPage> {
     final data = page.data()!;
     final title = data.text;
 
-    // Wait to get read state of pages
-    return FutureBuilder<DocumentSnapshot<SharedComicPageModel>>(
-      future: _currentPageFuture,
-      builder: (context, snapshot) {
-        Widget? trailing;
-        if (snapshot.hasError) {
-          trailing = Icon(Icons.error);
-        }
+    // Only text style changes
+    final titleText = Consumer(builder: (context, watch, child) {
+      final userComicAsync = watch(userComicFamily(widget.comicId));
 
-        final currentPageTime = snapshot.data?.data()!.scrapeTime;
-        final isRead;
-        if (currentPageTime != null && data.scrapeTime != null) {
-          isRead = data.scrapeTime!.compareTo(currentPageTime) <= 0;
-        } else {
-          isRead = false;
-        }
+      // Derive isRead by comparing to current page
+      final isRead = userComicAsync.when(
+        loading: () => false,
+        error: (error, stack) => false,
+        data: (snapshot) {
+          final pageScrapeTime = data.scrapeTime;
+          if (pageScrapeTime == null) return false;
 
-        // Different appearance for read pages
-        final textStyle = isRead ? TextStyle(color: Colors.grey) : null;
+          final userComic = snapshot?.data();
+          if (userComic == null) return false;
 
-        return GestureDetector(
-          onTapDown: (details) => _listTapDownDetails = details,
-          child: ListTile(
-            title: Text(title, style: textStyle),
-            trailing: trailing,
-            onTap: () => _openWebPage(page),
-            onLongPress: () async {
-              final offset = _listTapDownDetails!.globalPosition;
-              final val = await showMenu(
-                  context: context,
-                  position: RelativeRect.fromLTRB(offset.dx, offset.dy, 0, 0),
-                  items: [
-                    PopupMenuItem(value: page, child: Text('Set Bookmark'))
-                  ]);
-              if (val != null) _setPageAsCurrent(val);
-            },
-          ),
-        );
-      },
+          final currentPageId = userComic.currentPageId;
+          if (currentPageId == null) return false;
+
+          final currentPageAsync = watch(sharedComicPageFamily(
+              SharedComicPageInfo(
+                  comicId: widget.comicId, pageId: currentPageId)));
+
+          final currentPage = currentPageAsync.when(
+            data: (data) => data,
+            loading: () => null,
+            error: (error, stack) => null,
+          );
+
+          final currentScrapeTime = currentPage?.data()?.scrapeTime;
+          if (currentScrapeTime == null) return false;
+
+          return pageScrapeTime.compareTo(currentScrapeTime) <= 0;
+        },
+      );
+
+      // Different appearance for read pages
+      final textStyle = isRead ? TextStyle(color: Colors.grey) : null;
+      return Text(title, style: textStyle);
+    });
+
+    return GestureDetector(
+      onTapDown: (details) => _listTapDownDetails = details,
+      child: ListTile(
+        title: titleText,
+        onTap: () => _openWebPage(page.id),
+        onLongPress: () async {
+          final offset = _listTapDownDetails!.globalPosition;
+          final val = await showMenu(
+              context: context,
+              position: RelativeRect.fromLTRB(offset.dx, offset.dy, 0, 0),
+              items: [
+                PopupMenuItem(value: page.id, child: Text('Set Bookmark'))
+              ]);
+          if (val != null) _setPageAsCurrent(val);
+        },
+      ),
     );
   }
 
-  void _openWebPage(DocumentSnapshot<SharedComicPageModel> sharedPage) {
+  void _openWebPage(String pageId) {
     Navigator.of(context)
         .push(MaterialPageRoute(
       builder: (context) => ComicWebPage(
-        userComicDoc: widget.userComicSnapshot,
-        sharedComicDoc: widget.sharedComicSnapshot,
-        initialPageDoc: sharedPage,
+        comicId: widget.comicId,
+        initialPageId: pageId,
       ),
     ))
         .then((value) async {
       if (value is DocumentSnapshot<SharedComicPageModel>) {
-        _currentPageFuture = Future.value(value);
-
         final pageData = value.data();
         final pageTitle = pageData?.text ?? '';
         print('Web Page popped on "$pageTitle" document');
-        _centerPagesOn(value);
+        _centerPagesOnDoc(value);
       } else {
         print('Web Page popped without DocumentSnapshot!');
       }
@@ -280,15 +300,16 @@ class _ComicPageState extends State<ComicPage> {
   }
 
   void _goToEndPage(bool descending) async {
+    final pagesQuery = getSharedComicPagesQuery(context, widget.comicId,
+        descending: descending);
+    if (pagesQuery == null) return;
+
     EasyLoading.show();
 
-    final snapshot = await _basePagesQuery
-        .orderBy('scrapeTime', descending: descending)
-        .limit(1)
-        .get();
+    final snapshot = await pagesQuery.limit(1).get();
 
     if (snapshot.docs.length > 0) {
-      await _centerPagesOn(snapshot.docs[0]);
+      await _centerPagesOnDoc(snapshot.docs[0]);
     }
 
     EasyLoading.dismiss();
@@ -319,7 +340,9 @@ class _ComicPageState extends State<ComicPage> {
 
     print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
-    final pagesQuery = _basePagesQuery.orderBy('scrapeTime', descending: true);
+    final pagesQuery =
+        getSharedComicPagesQuery(context, widget.comicId, descending: true);
+    if (pagesQuery == null) return;
 
     switch (scrollDir) {
       case _ScrollDirection.none:
@@ -408,7 +431,13 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  Future<void> _centerPagesOn(
+  Future<void> _centerPagesOnRef(
+      DocumentReference<SharedComicPageModel> centreDocRef) async {
+    final centreDoc = await centreDocRef.get();
+    return _centerPagesOnDoc(centreDoc);
+  }
+
+  Future<void> _centerPagesOnDoc(
       DocumentSnapshot<SharedComicPageModel> centreDoc) async {
     _pages.clear();
     await _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
@@ -436,17 +465,17 @@ class _ComicPageState extends State<ComicPage> {
     }
   }
 
-  void _setPageAsCurrent(DocumentSnapshot<SharedComicPageModel> page) async {
+  void _setPageAsCurrent(String pageId) async {
+    final userComic = context.read(userComicRefFamily(widget.comicId));
+
+    if (userComic == null) {
+      await showErrorDialog(context,
+          'Failed to set page as current: couldn\'t get user comic ref.');
+      return;
+    }
+
     EasyLoading.show();
-
-    await widget.userComicSnapshot.reference
-        .update({'currentPage': sharedComicPageToJson(page.reference)});
-
-    // Reflect updated value in UI (assumes above update worked)
-    setState(() {
-      _currentPageFuture = Future.value(page);
-    });
-
+    await userComic.update({'currentPageId': pageId});
     EasyLoading.dismiss();
   }
 }

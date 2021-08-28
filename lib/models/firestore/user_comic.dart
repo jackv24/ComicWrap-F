@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/common.dart';
-import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'user_comic.g.dart';
@@ -11,10 +10,9 @@ class UserComicModel {
   @JsonKey(ignore: true)
   late Timestamp? lastReadTime;
 
-  @JsonKey(fromJson: sharedComicPageFromJson, toJson: sharedComicPageToJson)
-  final DocumentReference<SharedComicPageModel>? currentPage;
+  final String? currentPageId;
 
-  UserComicModel({this.lastReadTime, this.currentPage});
+  UserComicModel({this.lastReadTime, this.currentPageId});
 
   factory UserComicModel.fromJson(Json json) =>
       _$UserComicModelFromJson(json)..lastReadTime = json['lastReadTime'];
