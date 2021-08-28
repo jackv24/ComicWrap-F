@@ -6,7 +6,7 @@ import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ComicInfoSection extends ConsumerWidget {
+class ComicInfoSection extends StatelessWidget {
   final String comicId;
   final void Function(DocumentSnapshot<SharedComicPageModel>)? onCurrentPressed;
   final void Function()? onFirstPressed;
@@ -21,11 +21,7 @@ class ComicInfoSection extends ConsumerWidget {
       : super(key: key);
 
   @override
-  Widget build(BuildContext context, ScopedReader watch) {
-    final sharedComicAsync = watch(sharedComicFamily(comicId));
-    final userComicAsync = watch(userComicFamily(comicId));
-    final newestPageAsync = watch(newestPageFamily(comicId));
-
+  Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(12),
       child: Row(
@@ -42,13 +38,16 @@ class ComicInfoSection extends ConsumerWidget {
                 elevation: 5.0,
                 borderRadius: BorderRadius.all(Radius.circular(12.0)),
                 clipBehavior: Clip.antiAlias,
-                child: sharedComicAsync.when(
-                  data: (data) => CardImageButton(
-                    coverImageUrl: data?.coverImageUrl,
-                  ),
-                  loading: () => CardImageButton(),
-                  error: (error, stack) => ErrorWidget(error),
-                ),
+                child: Consumer(builder: (context, watch, child) {
+                  final sharedComicAsync = watch(sharedComicFamily(comicId));
+                  return sharedComicAsync.when(
+                    data: (data) => CardImageButton(
+                      coverImageUrl: data?.coverImageUrl,
+                    ),
+                    loading: () => CardImageButton(),
+                    error: (error, stack) => ErrorWidget(error),
+                  );
+                }),
               ),
             ),
           ),
@@ -58,84 +57,86 @@ class ComicInfoSection extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  sharedComicAsync.when(
-                    data: (data) => Text(
-                      data?.name ?? comicId,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.headline5,
-                    ),
-                    loading: () => Text('Loading...'),
-                    error: (error, stack) => ErrorWidget(error),
-                  ),
+                  Consumer(builder: (context, watch, child) {
+                    final sharedComicAsync = watch(sharedComicFamily(comicId));
+                    return sharedComicAsync.when(
+                      data: (data) => Text(
+                        data?.name ?? comicId,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.headline5,
+                      ),
+                      loading: () => Text('Loading...'),
+                      error: (error, stack) => ErrorWidget(error),
+                    );
+                  }),
                   SizedBox(height: 2),
-                  userComicAsync.when(
-                    data: (data) => TimeAgoText(
-                        time: data?.data()?.lastReadTime?.toDate(),
-                        builder: (text) {
-                          return Text(
-                            'Read: $text',
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.subtitle2,
-                          );
-                        }),
-                    loading: () => Text('Loading...'),
-                    error: (error, stack) => ErrorWidget(error),
-                  ),
-                  newestPageAsync.when(
-                    data: (data) => TimeAgoText(
-                        time: data?.scrapeTime?.toDate(),
-                        builder: (text) {
-                          return Text(
-                            'Updated: $text',
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.subtitle2,
-                          );
-                        }),
-                    loading: () => Text('Loading...'),
-                    error: (error, stack) => ErrorWidget(error),
-                  ),
+                  Consumer(builder: (context, watch, child) {
+                    final userComicAsync = watch(userComicFamily(comicId));
+                    return userComicAsync.when(
+                      data: (data) => TimeAgoText(
+                          time: data?.data()?.lastReadTime?.toDate(),
+                          builder: (text) {
+                            return Text(
+                              'Read: $text',
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.subtitle2,
+                            );
+                          }),
+                      loading: () => Text('Loading...'),
+                      error: (error, stack) => ErrorWidget(error),
+                    );
+                  }),
+                  Consumer(builder: (context, watch, child) {
+                    final newestPageAsync = watch(newestPageFamily(comicId));
+                    return newestPageAsync.when(
+                      data: (data) => TimeAgoText(
+                          time: data?.scrapeTime?.toDate(),
+                          builder: (text) {
+                            return Text(
+                              'Updated: $text',
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.subtitle2,
+                            );
+                          }),
+                      loading: () => Text(
+                        'Updated: ...',
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.subtitle2,
+                      ),
+                      error: (error, stack) => ErrorWidget(error),
+                    );
+                  }),
                   Spacer(),
-                  userComicAsync.when(
-                    data: (userComic) {
-                      final userComicData = userComic?.data();
-                      final currentPageId = userComicData?.currentPageId;
-
-                      if (currentPageId != null) {
-                        final currentPageAsync = watch(sharedComicPageFamily(
-                            SharedComicPageInfo(
-                                comicId: comicId, pageId: currentPageId)));
-                        return currentPageAsync.when(
-                          loading: () => Text('Loading...'),
-                          error: (error, stack) => ErrorWidget(error),
-                          data: (data) => ElevatedButton.icon(
-                            onPressed: data == null || onCurrentPressed == null
-                                ? null
-                                : () => onCurrentPressed!(data),
-                            icon: Icon(Icons.bookmark),
-                            label: Expanded(
-                              child: Text(
-                                data?.data()?.text ??
-                                    'Current page does not exist',
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                  Consumer(
+                    builder: (context, watch, child) {
+                      final currentPageAsync =
+                          watch(currentPageFamily(comicId));
+                      return currentPageAsync.when(
+                        data: (data) => ElevatedButton.icon(
+                          onPressed: data == null || onCurrentPressed == null
+                              ? null
+                              : () => onCurrentPressed!(data),
+                          icon: Icon(Icons.bookmark),
+                          label: Expanded(
+                            child: Text(
+                              data?.data()?.text ?? 'No bookmark',
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        );
-                      } else {
-                        return ElevatedButton.icon(
+                        ),
+                        loading: () => ElevatedButton.icon(
                           onPressed: null,
                           icon: Icon(Icons.bookmark),
                           label: Expanded(
                             child: Text(
-                              'No current page',
+                              'Loading...',
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        );
-                      }
+                        ),
+                        error: (error, stack) => ErrorWidget(error),
+                      );
                     },
-                    loading: () => Text('Loading...'),
-                    error: (error, stack) => ErrorWidget(error),
                   ),
                   Row(
                     children: [

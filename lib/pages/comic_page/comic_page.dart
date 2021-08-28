@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_info_section.dart';
+import 'package:comicwrap_f/pages/comic_web_page/comic_web_page.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/error.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
@@ -11,8 +12,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../comic_web_page/comic_web_page.dart';
 
 const listItemHeight = 50.0;
 
@@ -222,33 +221,17 @@ class _ComicPageState extends State<ComicPage> {
 
     // Only text style changes
     final titleText = Consumer(builder: (context, watch, child) {
-      final userComicAsync = watch(userComicFamily(widget.comicId));
+      final currentPageAsync = watch(currentPageFamily(widget.comicId));
 
       // Derive isRead by comparing to current page
-      final isRead = userComicAsync.when(
+      final isRead = currentPageAsync.when(
         loading: () => false,
         error: (error, stack) => false,
         data: (snapshot) {
           final pageScrapeTime = data.scrapeTime;
           if (pageScrapeTime == null) return false;
 
-          final userComic = snapshot?.data();
-          if (userComic == null) return false;
-
-          final currentPageId = userComic.currentPageId;
-          if (currentPageId == null) return false;
-
-          final currentPageAsync = watch(sharedComicPageFamily(
-              SharedComicPageInfo(
-                  comicId: widget.comicId, pageId: currentPageId)));
-
-          final currentPage = currentPageAsync.when(
-            data: (data) => data,
-            loading: () => null,
-            error: (error, stack) => null,
-          );
-
-          final currentScrapeTime = currentPage?.data()?.scrapeTime;
+          final currentScrapeTime = snapshot?.data()?.scrapeTime;
           if (currentScrapeTime == null) return false;
 
           return pageScrapeTime.compareTo(currentScrapeTime) <= 0;

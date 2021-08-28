@@ -98,10 +98,7 @@ export const addUserComic = functions.https
       // Add comic to calling user's library
       const userDocRef = db.collection('users').doc(context.auth.uid);
       const userComicRef = userDocRef.collection('comics').doc(hostName);
-      userComicRef.create({
-        // For easy access, even though doc names are the same
-        sharedDoc: sharedComicRef,
-      });
+      userComicRef.create({});
 
       // Don't do anything more if document exists, just return the name
       if ((await sharedComicRef.get()).exists) return hostName;

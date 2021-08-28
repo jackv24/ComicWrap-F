@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:comicwrap_f/utils/error.dart';
+import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,7 +9,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import '../firebase.dart';
 import 'email_login_dialog.dart';
 
 final userChangesProvider = StreamProvider<User?>((ref) {

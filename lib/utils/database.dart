@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic.dart';
+import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
-import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/utils/auth/auth.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/material.dart';
@@ -196,4 +196,32 @@ final newestPageFamily = FutureProvider.autoDispose
   if (docs.isEmpty) return null;
 
   return docs[0].data();
+});
+
+final currentPageFamily = FutureProvider.autoDispose
+    .family<DocumentSnapshot<SharedComicPageModel>?, String>((ref, comicId) {
+  final firestore = ref.watch(firestoreProvider);
+  if (firestore == null) return Future.value(null);
+
+  final userComicAsync = ref.watch(userComicFamily(comicId));
+  return userComicAsync.when(
+    data: (userComicSnapshot) {
+      final pageId = userComicSnapshot?.data()?.currentPageId;
+      if (pageId == null) return Future.value(null);
+
+      return firestore
+          .collection('comics')
+          .doc(comicId)
+          .collection('pages')
+          .doc(pageId)
+          .withConverter<SharedComicPageModel>(
+            fromFirestore: (snapshot, _) =>
+                SharedComicPageModel.fromJson(snapshot.data()!),
+            toFirestore: (data, _) => data.toJson(),
+          )
+          .get();
+    },
+    loading: () => Future.value(null),
+    error: (error, stack) => Future.error(error, stack),
+  );
 });
