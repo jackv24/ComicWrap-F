@@ -11,8 +11,9 @@ class UserComicModel {
   late Timestamp? lastReadTime;
 
   final String? currentPageId;
+  final String? newFromPageId;
 
-  UserComicModel({this.lastReadTime, this.currentPageId});
+  UserComicModel({this.lastReadTime, this.currentPageId, this.newFromPageId});
 
   factory UserComicModel.fromJson(Json json) =>
       _$UserComicModelFromJson(json)..lastReadTime = json['lastReadTime'];

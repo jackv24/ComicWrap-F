@@ -174,12 +174,12 @@ Query<SharedComicPageModel>? getSharedComicPagesQuery(
       );
 }
 
-final newestPageFamily = FutureProvider.autoDispose
-    .family<SharedComicPageModel?, String>((ref, comicId) async {
+final newestPageFamily = StreamProvider.autoDispose
+    .family<DocumentSnapshot<SharedComicPageModel>?, String>((ref, comicId) {
   final firestore = ref.watch(firestoreProvider);
-  if (firestore == null) return null;
+  if (firestore == null) return Stream.empty();
 
-  final snapshot = await firestore
+  return firestore
       .collection('comics')
       .doc(comicId)
       .collection('pages')
@@ -190,12 +190,11 @@ final newestPageFamily = FutureProvider.autoDispose
         toFirestore: (data, _) => data.toJson(),
       )
       .limit(1)
-      .get();
-
-  final docs = snapshot.docs;
-  if (docs.isEmpty) return null;
-
-  return docs[0].data();
+      .snapshots()
+      .map((querySnapshot) {
+    final docs = querySnapshot.docs;
+    return docs.length > 0 ? docs[0] : null;
+  });
 });
 
 final currentPageFamily = FutureProvider.autoDispose
@@ -207,6 +206,34 @@ final currentPageFamily = FutureProvider.autoDispose
   return userComicAsync.when(
     data: (userComicSnapshot) {
       final pageId = userComicSnapshot?.data()?.currentPageId;
+      if (pageId == null) return Future.value(null);
+
+      return firestore
+          .collection('comics')
+          .doc(comicId)
+          .collection('pages')
+          .doc(pageId)
+          .withConverter<SharedComicPageModel>(
+            fromFirestore: (snapshot, _) =>
+                SharedComicPageModel.fromJson(snapshot.data()!),
+            toFirestore: (data, _) => data.toJson(),
+          )
+          .get();
+    },
+    loading: () => Future.value(null),
+    error: (error, stack) => Future.error(error, stack),
+  );
+});
+
+final newFromPageFamily = FutureProvider.autoDispose
+    .family<DocumentSnapshot<SharedComicPageModel>?, String>((ref, comicId) {
+  final firestore = ref.watch(firestoreProvider);
+  if (firestore == null) return Future.value(null);
+
+  final userComicAsync = ref.watch(userComicFamily(comicId));
+  return userComicAsync.when(
+    data: (userComicSnapshot) {
+      final pageId = userComicSnapshot?.data()?.newFromPageId;
       if (pageId == null) return Future.value(null);
 
       return firestore

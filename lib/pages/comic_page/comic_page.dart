@@ -219,18 +219,21 @@ class _ComicPageState extends State<ComicPage> {
     final data = page.data()!;
     final title = data.text;
 
+    final pageScrapeTime = data.scrapeTime;
+    if (pageScrapeTime == null) {
+      return Text(title);
+    }
+
     // Only text style changes
     final titleText = Consumer(builder: (context, watch, child) {
       final currentPageAsync = watch(currentPageFamily(widget.comicId));
+      final newFrompageAsync = watch(newFromPageFamily(widget.comicId));
 
       // Derive isRead by comparing to current page
       final isRead = currentPageAsync.when(
         loading: () => false,
         error: (error, stack) => false,
         data: (snapshot) {
-          final pageScrapeTime = data.scrapeTime;
-          if (pageScrapeTime == null) return false;
-
           final currentScrapeTime = snapshot?.data()?.scrapeTime;
           if (currentScrapeTime == null) return false;
 
@@ -238,9 +241,27 @@ class _ComicPageState extends State<ComicPage> {
         },
       );
 
-      // Different appearance for read pages
-      final textStyle = isRead ? TextStyle(color: Colors.grey) : null;
-      return Text(title, style: textStyle);
+      if (isRead) {
+        return Text(title, style: TextStyle(color: Colors.grey));
+      }
+
+      // Derive isNew by comparing to current page
+      final isNew = newFrompageAsync.when(
+        loading: () => false,
+        error: (error, stack) => false,
+        data: (snapshot) {
+          final newScrapeTime = snapshot?.data()?.scrapeTime;
+          if (newScrapeTime == null) return false;
+
+          return pageScrapeTime.compareTo(newScrapeTime) > 0;
+        },
+      );
+
+      if (isNew) {
+        return Text(title, style: TextStyle(color: Colors.blue));
+      }
+
+      return Text(title);
     });
 
     return GestureDetector(

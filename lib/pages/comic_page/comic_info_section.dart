@@ -90,7 +90,7 @@ class ComicInfoSection extends StatelessWidget {
                     final newestPageAsync = watch(newestPageFamily(comicId));
                     return newestPageAsync.when(
                       data: (data) => TimeAgoText(
-                          time: data?.scrapeTime?.toDate(),
+                          time: data?.data()?.scrapeTime?.toDate(),
                           builder: (text) {
                             return Text(
                               'Updated: $text',
