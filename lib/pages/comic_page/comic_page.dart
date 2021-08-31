@@ -50,25 +50,25 @@ class _ComicPageState extends State<ComicPage> {
     _scrollController = ScrollController();
 
     // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
-    final userComicAsync = context.read(userComicFamily(widget.comicId));
-    final currentPageId = userComicAsync.when(
-      data: (data) => data?.data()?.currentPageId,
-      loading: () => null,
-      error: (error, stack) => null,
-    );
+    context
+        .read(userComicFamily(widget.comicId).stream)
+        .first
+        .then((userComicDoc) {
+      final currentPageId = userComicDoc?.data()?.currentPageId;
 
-    // Get ref to current page once for centering pages on start
-    final currentPageRef = currentPageId != null
-        ? getSharedComicPage(context, widget.comicId, currentPageId)
-        : null;
+      // Get ref to current page once for centering pages on start
+      final currentPageRef = currentPageId != null
+          ? getSharedComicPage(context, widget.comicId, currentPageId)
+          : null;
 
-    if (currentPageRef != null) {
-      // Centre on current page
-      _centerPagesOnRef(currentPageRef);
-    } else {
-      // Start at top if no current page
-      _getPages(_ScrollDirection.none);
-    }
+      if (currentPageRef != null) {
+        // Centre on current page
+        _centerPagesOnRef(currentPageRef);
+      } else {
+        // Start at top if no current page
+        _getPages(_ScrollDirection.none);
+      }
+    });
   }
 
   @override
