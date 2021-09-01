@@ -98,10 +98,32 @@ export const addUserComic = functions.https
       // Add comic to calling user's library
       const userDocRef = db.collection('users').doc(context.auth.uid);
       const userComicRef = userDocRef.collection('comics').doc(hostName);
-      userComicRef.create({});
 
-      // Don't do anything more if document exists, just return the name
-      if ((await sharedComicRef.get()).exists) return hostName;
+      const existingUserComicDoc = await userComicRef.get();
+
+      // If user already has comic in library, do nothing
+      if (existingUserComicDoc.exists) {
+        return hostName;
+      }
+
+      if ((await sharedComicRef.get()).exists) {
+        // Shared comic already exists, so record "new from" for user doc
+        const newestPageQuerySnap = await sharedComicRef
+            .collection('pages').orderBy('scrapeTime', 'desc').limit(1).get();
+        const newestPageDocs = newestPageQuerySnap.docs;
+        const newestPageDoc = newestPageDocs.length > 0 ?
+            newestPageDocs[0] : null;
+
+        await userComicRef.create({
+          newFromPageId: newestPageDoc?.id,
+        });
+
+        // Doc already exists, do nothing more
+        return hostName;
+      } else {
+        // Shared comic doesn't exist yet, so just add an empty user doc
+        await userComicRef.create({});
+      }
 
       // Create basic document so it exists for client to subscribe to,
       // triggered event onCreate should handle filling out data
