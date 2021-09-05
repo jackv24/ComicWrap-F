@@ -128,7 +128,6 @@ export const addUserComic = functions.https
       // Create basic document so it exists for client to subscribe to,
       // triggered event onCreate should handle filling out data
       await sharedComicRef.create({
-        name: hostName,
         scrapeUrl: inputUrl,
       });
 

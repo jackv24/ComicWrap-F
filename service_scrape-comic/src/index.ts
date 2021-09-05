@@ -66,11 +66,11 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
     'importError': ''
   })
 
-  let foundComicName: boolean = snapshot.get('name') !== null;
-  let coverImageUrl: string | null = snapshot.get('coverImageUrl');
+  let foundComicName = !!snapshot.get('name');
+  let coverImageUrl: string | undefined = snapshot.get('coverImageUrl');
 
   // Assume if it already has a cover image that it's "good"
-  let foundGoodCover: boolean = coverImageUrl !== null;
+  let foundGoodCover = !!coverImageUrl;
 
   let lastPageQuery = await collection.orderBy('scrapeTime', 'desc').limit(1).get();
   let lastPage = lastPageQuery.docs.length > 0 ? lastPageQuery.docs[0] : null;
