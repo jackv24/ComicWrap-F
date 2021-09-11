@@ -1,3 +1,4 @@
+import 'package:badges/badges.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
 import 'package:comicwrap_f/utils/database.dart';
@@ -10,8 +11,7 @@ class ComicInfoCard extends ConsumerWidget {
   final String comicId;
   final UserComicModel userComic;
 
-  const ComicInfoCard(
-      {Key? key, required this.comicId, required this.userComic})
+  const ComicInfoCard({Key? key, required this.comicId, required this.userComic})
       : super(key: key);
 
   @override
@@ -45,35 +45,33 @@ class ComicInfoCard extends ConsumerWidget {
           }
         }
 
+        final theme = Theme.of(context);
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: 210.0 / 297.0,
-              child: Material(
-                color: Colors.white,
-                elevation: 5.0,
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                clipBehavior: Clip.antiAlias,
-                child: Stack(
-                  alignment: AlignmentDirectional.topEnd,
-                  children: [
-                    CardImageButton(
-                      coverImageUrl: coverImageUrl,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => ComicPage(comicId: comicId)),
-                      ),
+            Badge(
+              showBadge: hasNewPage,
+              badgeColor: theme.indicatorColor,
+              badgeContent: Icon(
+                Icons.new_releases,
+                color: theme.primaryColor,
+                size: 18,
+              ),
+              child: AspectRatio(
+                aspectRatio: 210.0 / 297.0,
+                child: Material(
+                  color: Colors.white,
+                  elevation: 5.0,
+                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                  clipBehavior: Clip.antiAlias,
+                  child: CardImageButton(
+                    coverImageUrl: coverImageUrl,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => ComicPage(comicId: comicId)),
                     ),
-                    if (hasNewPage)
-                      Padding(
-                        padding: EdgeInsets.all(2),
-                        child: Icon(
-                          Icons.new_releases,
-                          color: Colors.white,
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
             ),
