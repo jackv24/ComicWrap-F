@@ -17,6 +17,18 @@ class ComicInfoCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ScopedReader watch) {
     final sharedComicAsync = watch(sharedComicFamily(comicId));
+    final newFromPageAsync = watch(newFromPageFamily(comicId));
+    final newestPageAsync = watch(newestPageFamily(comicId));
+
+    final newFromTime = newFromPageAsync.maybeWhen(
+        data: (data) => data?.data()?.scrapeTime, orElse: () => null);
+    final newestPageTime = newestPageAsync.maybeWhen(
+        data: (data) => data?.data()?.scrapeTime, orElse: () => null);
+
+    final hasNewPage = newFromTime != null &&
+        newestPageTime != null &&
+        newestPageTime.compareTo(newFromTime) > 0;
+
     return sharedComicAsync.when(
       loading: () => Text('Loading...'),
       error: (err, stack) => Text('Error: $err'),
@@ -43,12 +55,25 @@ class ComicInfoCard extends ConsumerWidget {
                 elevation: 5.0,
                 borderRadius: BorderRadius.all(Radius.circular(12.0)),
                 clipBehavior: Clip.antiAlias,
-                child: CardImageButton(
-                  coverImageUrl: coverImageUrl,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => ComicPage(comicId: comicId)),
-                  ),
+                child: Stack(
+                  alignment: AlignmentDirectional.topEnd,
+                  children: [
+                    CardImageButton(
+                      coverImageUrl: coverImageUrl,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => ComicPage(comicId: comicId)),
+                      ),
+                    ),
+                    if (hasNewPage)
+                      Padding(
+                        padding: EdgeInsets.all(2),
+                        child: Icon(
+                          Icons.new_releases,
+                          color: Colors.white,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),

@@ -50,10 +50,7 @@ class _ComicPageState extends State<ComicPage> {
     _scrollController = ScrollController();
 
     // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
-    context
-        .read(userComicFamily(widget.comicId).stream)
-        .first
-        .then((userComicDoc) {
+    context.read(userComicFamily(widget.comicId).last).then((userComicDoc) {
       final currentPageId = userComicDoc?.data()?.currentPageId;
 
       // Get ref to current page once for centering pages on start
@@ -227,7 +224,7 @@ class _ComicPageState extends State<ComicPage> {
     // Only text style changes
     final titleText = Consumer(builder: (context, watch, child) {
       final currentPageAsync = watch(currentPageFamily(widget.comicId));
-      final newFrompageAsync = watch(newFromPageFamily(widget.comicId));
+      final newFromPageAsync = watch(newFromPageFamily(widget.comicId));
 
       // Derive isRead by comparing to current page
       final isRead = currentPageAsync.when(
@@ -246,7 +243,7 @@ class _ComicPageState extends State<ComicPage> {
       }
 
       // Derive isNew by comparing to current page
-      final isNew = newFrompageAsync.when(
+      final isNew = newFromPageAsync.when(
         loading: () => false,
         error: (error, stack) => false,
         data: (snapshot) {
