@@ -11,7 +11,8 @@ class ComicInfoCard extends ConsumerWidget {
   final String comicId;
   final UserComicModel userComic;
 
-  const ComicInfoCard({Key? key, required this.comicId, required this.userComic})
+  const ComicInfoCard(
+      {Key? key, required this.comicId, required this.userComic})
       : super(key: key);
 
   @override

@@ -31,7 +31,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
   DocumentSnapshot<SharedComicPageModel>? _newValidPage;
   DocumentSnapshot<SharedComicPageModel>? _currentPage;
 
-  String? _initialUrl;
+  late String rootUrl;
+  late String _initialUrl;
   final Completer<WebViewController> _webViewController =
       Completer<WebViewController>();
 
@@ -45,7 +46,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
 
     // Construct url from comic and page ID
-    final rootUrl = 'https://${widget.comicId}/';
+    rootUrl = 'https://${widget.comicId}/';
     final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
     _initialUrl = rootUrl + pagePath;
 
@@ -94,13 +95,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
                   ),
                   onSelected: (context) async {
                     final url = await snapshot.data!.currentUrl();
-                    if (url != null && await canLaunch(url)) {
-                      await launch(url);
-                    } else {
-                      final displayUrl = url ?? 'null';
-                      await showErrorDialog(
-                          context, 'Could not open URL: $displayUrl');
-                    }
+                    await _tryLaunchUrl(url);
                   },
                 ),
               ]);
@@ -187,6 +182,26 @@ class _ComicWebPageState extends State<ComicWebPage> {
                   onWebViewCreated: (webViewController) {
                     _webViewController.complete(webViewController);
                   },
+                  navigationDelegate: (request) async {
+                    // Ignore iframes
+                    if (!request.isForMainFrame) {
+                      return NavigationDecision.navigate;
+                    }
+
+                    final rootHost = Uri.parse(rootUrl).host;
+                    final toHost = Uri.parse(request.url).host;
+
+                    // Allow navigation within same website
+                    // (check both in case one has www. and one doesn't)
+                    if (rootHost.endsWith(toHost) ||
+                        toHost.endsWith(rootHost)) {
+                      return NavigationDecision.navigate;
+                    }
+
+                    // Launch external browser for external URLs
+                    await _tryLaunchUrl(request.url);
+                    return NavigationDecision.prevent;
+                  },
                   onPageStarted: (currentPage) {
                     final pageId = currentPage.split('/').skip(3).join(' ');
                     if (_newPage != null && pageId == _newPage!.id) {
@@ -272,6 +287,15 @@ class _ComicWebPageState extends State<ComicWebPage> {
           print("_currentPage is now " + _currentPage!.id);
         }
       }
+    }
+  }
+
+  Future<void> _tryLaunchUrl(String? url) async {
+    if (url != null && await canLaunch(url)) {
+      await launch(url);
+    } else {
+      final displayUrl = url ?? 'null';
+      await showErrorDialog(context, 'Could not open URL: $displayUrl');
     }
   }
 }
