@@ -808,10 +808,12 @@ packages:
   webview_flutter:
     dependency: "direct main"
     description:
-      name: webview_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.13"
+      path: "packages/webview_flutter"
+      ref: HEAD
+      resolved-ref: "84a79ff105d6ce04f477b05d1dc04d8c6a03d0eb"
+      url: "https://github.com/rodruiz/plugins.git"
+    source: git
+    version: "2.0.2+1"
   win32:
     dependency: transitive
     description:

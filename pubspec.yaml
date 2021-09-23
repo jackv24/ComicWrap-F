@@ -32,7 +32,10 @@ dependencies:
   flutter_staggered_animations: ^1.0.0
   rxdart: ^0.27.0
   flutter_cache_manager: ^3.0.1
-  webview_flutter: ^2.0.3
+  webview_flutter:
+    git:
+      url: https://github.com/rodruiz/plugins.git
+      path: packages/webview_flutter
   universal_io: ^2.0.4
   json_serializable: ^4.1.3
   flutter_easyloading: ^3.0.0
