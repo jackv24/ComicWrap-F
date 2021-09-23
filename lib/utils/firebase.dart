@@ -30,7 +30,7 @@ final functionsProvider = Provider<FirebaseFunctions?>((ref) {
 
   final functions = FirebaseFunctions.instance;
   if (USE_EMULATORS) {
-    functions.useFunctionsEmulator(origin: 'http://$_host:5001');
+    functions.useFunctionsEmulator(_host, 5001);
   }
   return functions;
 });
@@ -41,7 +41,7 @@ final authProvider = FutureProvider<FirebaseAuth?>((ref) async {
 
   final auth = FirebaseAuth.instance;
   if (USE_EMULATORS) {
-    await auth.useEmulator('http://$_host:9099');
+    await auth.useAuthEmulator(_host, 9099);
   }
   return auth;
 });
