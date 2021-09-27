@@ -53,10 +53,10 @@ class ComicInfoCard extends ConsumerWidget {
           children: [
             Badge(
               showBadge: hasNewPage,
-              badgeColor: theme.indicatorColor,
+              badgeColor: theme.colorScheme.secondary,
               badgeContent: Icon(
                 Icons.new_releases,
-                color: theme.primaryColor,
+                color: theme.colorScheme.background,
                 size: 18,
               ),
               child: AspectRatio(

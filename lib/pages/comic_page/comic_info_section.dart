@@ -113,21 +113,17 @@ class ComicInfoSection extends StatelessWidget {
                           ? null
                           : () => onCurrentPressed!(data),
                       icon: Icon(Icons.bookmark),
-                      label: Expanded(
-                        child: Text(
-                          data?.data()?.text ?? 'No bookmark',
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      label: Text(
+                        data?.data()?.text ?? 'No bookmark',
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     loading: () => ElevatedButton.icon(
                       onPressed: null,
                       icon: Icon(Icons.bookmark),
-                      label: Expanded(
-                        child: Text(
-                          'Loading...',
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      label: Text(
+                        'Loading...',
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     error: (error, stack) => ErrorWidget(error),

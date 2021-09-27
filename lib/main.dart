@@ -68,6 +68,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget _loadingScreen(String infoText) {
+    final theme = Theme.of(context);
+
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -78,7 +80,8 @@ class _MyAppState extends State<MyApp> {
           ),
           Text(
             infoText,
-            style: Theme.of(context).textTheme.subtitle1,
+            style: theme.textTheme.subtitle1
+                ?.copyWith(color: theme.colorScheme.onBackground),
           ),
         ],
       ),
