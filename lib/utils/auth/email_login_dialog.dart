@@ -38,7 +38,7 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
       child: AlertDialog(
         title: Text('Email Sign In'),
         content: SingleChildScrollView(
-          child: ListBody(
+          child: Column(
             children: [
               TextField(
                 decoration: InputDecoration(
@@ -48,6 +48,7 @@ class _EmailLoginDialogState extends State<EmailLoginDialog> {
                   errorText: _emailErrorText,
                 ),
                 keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
                 onEditingComplete: () => node.nextFocus(),
                 controller: _email,
                 enabled: !_preventPop,
