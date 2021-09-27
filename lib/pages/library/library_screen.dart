@@ -36,7 +36,7 @@ class LibraryScreen extends ConsumerWidget {
     );
 
     return MainPageScaffold(
-      title: Text('Library'),
+      title: 'Library',
       appBarActions: [
         IconButton(
             icon: Icon(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class MainPageScaffold extends StatelessWidget {
-  final Widget title;
+  final String title;
   final Widget bodySliver;
   final List<Widget>? appBarActions;
 
@@ -14,6 +14,9 @@ class MainPageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -21,10 +24,16 @@ class MainPageScaffold extends StatelessWidget {
             pinned: true,
             expandedHeight: 120.0,
             flexibleSpace: FlexibleSpaceBar(
-              title: title,
+              title: Text(
+                title,
+                style: TextStyle(color: colorScheme.onBackground),
+              ),
+              centerTitle: false,
               titlePadding: EdgeInsets.only(left: 16, bottom: 16),
             ),
             actions: appBarActions,
+            backgroundColor: colorScheme.background,
+            foregroundColor: colorScheme.onBackground,
           ),
           bodySliver
         ],

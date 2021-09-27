@@ -34,7 +34,11 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'ComicWrap',
       theme: ThemeData(
-        primaryColor: Colors.white,
+        colorScheme: ColorScheme.light(),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.dark(),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       // Firebase init

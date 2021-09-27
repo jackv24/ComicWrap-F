@@ -47,7 +47,7 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     return MainPageScaffold(
-      title: Text('Settings'),
+      title: 'Settings',
       bodySliver: SliverPadding(
         padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
         sliver: SliverList(
