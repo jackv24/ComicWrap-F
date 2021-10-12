@@ -1,16 +1,15 @@
 # ComicWrap F
 
-A rebuild of [ComicWrap](https://github.com/jackv24/ComicWrap) in Flutter. **WIP!**
+An open source webcomic reader and tracker for Android and iOS.
 
-This is super not ready for active use, you've been warned!
+It's basically all functional at this point, but I wont release a public build until I've done everything in my [Public Beta Release](https://github.com/jackv24/ComicWrap-F/projects/1) project board!
 
 # Building and Running
 
-**WIP!**
-
 There are a few parts to the whole system:
+
 - A Flutter App (for Android or iOS)
-- Firebase project for the Database, Functions and Auth
+- Firebase project for the Database, Functions and Auth (required for the Flutter App to operate properly)
 - A Node.js service for scraping comic websites (which runs on Google App Engine)
 
 ## Prerequisites
@@ -20,20 +19,30 @@ There are a few parts to the whole system:
   - [Flutter SDK](https://flutter.dev/docs/get-started/install)
   - [Android Studio](https://developer.android.com/studio/install) (or [VS Code with dev tools](https://flutter.dev/docs/development/tools/vs-code))
   - (for iOS dev) macOS with XCode
-- Node.js & npm
+- Node.js (project folders contain `.nvmrc` for version)
 
 ## Setup
 
 ### Firebase Functions/Emulators
 
-To run the Firebase emulators with test data, cd into the `functions` directory (then make sure to `npm install` and `npm run build` first if you haven't) and run `npm run serve-all`. The test user can be logged in with email: `test@test.com` and pass: `test1234`.
+To run the Firebase emulators with test data, cd into the `functions` directory.
+
+- run `npm install` and `npm run build` first if you haven't
+- run `npm run serve-all`
+
+The test user can be logged in with email: `test@test.com` and pass: `test1234`.
 
 ### Comic Scraping Service
 
+To run the comic scraping service, cd into the `service_scrape-comic` directory.
 
+- run `npm install` and `npm run build` first if you haven't
+- run `npm run start-local`
 
 ### Flutter
 
 - Create a Firebase project
   - (Android) download and copy `google-services.json` to `android/app/`
   - (iOS) download and copy `GoogleService-Info.plist` to `ios/`
+
+- etc **TODO**
