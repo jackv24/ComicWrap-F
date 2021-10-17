@@ -50,6 +50,9 @@ jobs:
       - name: Run build_runner Codegen
         run: flutter pub run build_runner build
 
+      - name: Run flutter_launcher_icons
+        run: flutter pub run flutter_launcher_icons:main
+
 #      - name: Run Flutter Tests
 #        run: flutter test
 
