@@ -3,6 +3,7 @@ import 'package:comicwrap_f/utils/auth/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerWidget {
   @override
@@ -46,6 +47,8 @@ class SettingsScreen extends ConsumerWidget {
       },
     );
 
+    final theme = Theme.of(context);
+
     return MainPageScaffold(
       title: 'Settings',
       bodySliver: SliverPadding(
@@ -53,6 +56,17 @@ class SettingsScreen extends ConsumerWidget {
         sliver: SliverList(
           delegate: SliverChildListDelegate.fixed([
             userAuthWidget,
+            Divider(),
+            Text(
+              "Have an issue? Want to help out? Follow the link below!",
+              style: theme.textTheme.caption,
+            ),
+            ElevatedButton.icon(
+              icon: Icon(Icons.open_in_browser),
+              label: Text('ComicWrap GitHub'),
+              onPressed: () =>
+                  launch("https://github.com/jackv24/ComicWrap-F/"),
+            ),
           ]),
         ),
       ),
