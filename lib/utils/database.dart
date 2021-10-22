@@ -3,7 +3,7 @@ import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
-import 'package:comicwrap_f/utils/auth/auth.dart';
+import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,3 +1,4 @@
+import 'package:comicwrap_f/pages/auth/sign_in.dart';
 import 'package:comicwrap_f/pages/library/library_screen.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
@@ -45,20 +46,16 @@ class _MyAppState extends State<MyApp> {
       home: Consumer(
         builder: (context, watch, child) {
           final asyncApp = watch(firebaseProvider);
+          final asyncUserDoc = watch(userDocChangesProvider);
           return asyncApp.when(
             loading: () => _loadingScreen('Initializing Firebase...'),
             error: (err, stack) =>
                 _loadingScreen('Failed to initialize Firebase.'),
             // User auth
-            data: (app) => Consumer(
-              builder: (context, watch, child) {
-                final asyncUserDoc = watch(userDocChangesProvider);
-                return asyncUserDoc.when(
-                  loading: () => _loadingScreen('Signing in...'),
-                  error: (err, stack) => _loadingScreen('Error signing in'),
-                  data: (user) => LibraryScreen(),
-                );
-              },
+            data: (app) => asyncUserDoc.when(
+              loading: () => _loadingScreen('Signing in...'),
+              error: (err, stack) => _loadingScreen('Error signing in'),
+              data: (user) => user == null ? SignInScreen() : LibraryScreen(),
             ),
           );
         },
