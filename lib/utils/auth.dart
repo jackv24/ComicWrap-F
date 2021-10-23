@@ -27,8 +27,8 @@ class EmailSignUpDetails {
 final userChangesProvider = StreamProvider<User?>((ref) {
   // Firebase needs to be initialised before we can use it
   return ref.watch(authProvider).when(
-        data: (auth) => auth?.authStateChanges() ?? Stream.empty(),
-        loading: () => Stream.empty(),
+        data: (auth) => auth?.authStateChanges() ?? const Stream.empty(),
+        loading: () => const Stream.empty(),
         error: (err, stack) => Stream.error(err, stack),
       );
 });

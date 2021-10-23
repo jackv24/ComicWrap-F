@@ -34,7 +34,7 @@ class _ComicPageState extends State<ComicPage> {
   final int _initialDocLimit = 30;
   final int _moreDocLimit = 10;
 
-  List<DocumentSnapshot<SharedComicPageModel>> _pages = [];
+  final List<DocumentSnapshot<SharedComicPageModel>> _pages = [];
   ScrollController? _scrollController;
   bool _hasMoreDown = true;
   bool _hasMoreUp = true;
@@ -95,7 +95,7 @@ class _ComicPageState extends State<ComicPage> {
         actions: [
           MoreActionButton(actions: [
             FunctionListItem(
-              child: ListTile(
+              child: const ListTile(
                 title: Text('Delete'),
                 trailing: Icon(Icons.delete),
               ),
@@ -130,8 +130,8 @@ class _ComicPageState extends State<ComicPage> {
             comicId: widget.comicId,
             onCurrentPressed: _centerPagesOnDoc,
             onFirstPressed:
-                _pages.length > 0 ? () => _goToEndPage(false) : null,
-            onLastPressed: _pages.length > 0 ? () => _goToEndPage(true) : null,
+                _pages.isNotEmpty ? () => _goToEndPage(false) : null,
+            onLastPressed: _pages.isNotEmpty ? () => _goToEndPage(true) : null,
           );
 
           // Draw extra info as side bar on large screens
@@ -147,25 +147,23 @@ class _ComicPageState extends State<ComicPage> {
                 // Page List
                 Expanded(
                     child: _buildList(
-                        context, EdgeInsets.symmetric(horizontal: 8)))
+                        context, const EdgeInsets.symmetric(horizontal: 8)))
               ],
             );
           } else {
-            return Container(
-              child: Column(
-                children: [
-                  // Extra info top bar
-                  Container(
-                    height: 200,
-                    alignment: AlignmentDirectional.topStart,
-                    child: comicInfo,
-                  ),
-                  // Page List
-                  Expanded(
-                      child: _buildList(
-                          context, EdgeInsets.symmetric(vertical: 4)))
-                ],
-              ),
+            return Column(
+              children: [
+                // Extra info top bar
+                Container(
+                  height: 200,
+                  alignment: AlignmentDirectional.topStart,
+                  child: comicInfo,
+                ),
+                // Page List
+                Expanded(
+                    child: _buildList(
+                        context, const EdgeInsets.symmetric(vertical: 4)))
+              ],
             );
           }
         },
@@ -177,13 +175,13 @@ class _ComicPageState extends State<ComicPage> {
     return Card(
       elevation: 5,
       margin: EdgeInsetsDirectional.zero,
-      shape: ContinuousRectangleBorder(),
+      shape: const ContinuousRectangleBorder(),
       child: SafeArea(
         child: Stack(
           alignment: AlignmentDirectional.bottomCenter,
           children: [
-            _pages.length == 0
-                ? Center(child: Text('No pages...'))
+            _pages.isEmpty
+                ? const Center(child: Text('No pages...'))
                 : ListView.builder(
                     controller: _scrollController,
                     itemCount: _pages.length,
@@ -193,16 +191,16 @@ class _ComicPageState extends State<ComicPage> {
                   ),
             _isLoadingDown
                 ? Container(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     alignment: AlignmentDirectional.bottomCenter,
-                    child: CircularProgressIndicator(),
+                    child: const CircularProgressIndicator(),
                   )
                 : Container(),
             _isLoadingUp
                 ? Container(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     alignment: AlignmentDirectional.topCenter,
-                    child: CircularProgressIndicator(),
+                    child: const CircularProgressIndicator(),
                   )
                 : Container(),
           ],
@@ -239,7 +237,7 @@ class _ComicPageState extends State<ComicPage> {
       );
 
       if (isRead) {
-        return Text(title, style: TextStyle(color: Colors.grey));
+        return Text(title, style: const TextStyle(color: Colors.grey));
       }
 
       // Derive isNew by comparing to current page
@@ -255,7 +253,7 @@ class _ComicPageState extends State<ComicPage> {
       );
 
       if (isNew) {
-        return Text(title, style: TextStyle(color: Colors.blue));
+        return Text(title, style: const TextStyle(color: Colors.blue));
       }
 
       return Text(title);
@@ -272,7 +270,7 @@ class _ComicPageState extends State<ComicPage> {
               context: context,
               position: RelativeRect.fromLTRB(offset.dx, offset.dy, 0, 0),
               items: [
-                PopupMenuItem(value: page.id, child: Text('Set Bookmark'))
+                PopupMenuItem(value: page.id, child: const Text('Set Bookmark'))
               ]);
           if (val != null) _setPageAsCurrent(val);
         },
@@ -309,7 +307,7 @@ class _ComicPageState extends State<ComicPage> {
 
     final snapshot = await pagesQuery.limit(1).get();
 
-    if (snapshot.docs.length > 0) {
+    if (snapshot.docs.isNotEmpty) {
       await _centerPagesOnDoc(snapshot.docs[0]);
     }
 

@@ -11,7 +11,7 @@ class MoreActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton(
-      child: Padding(
+      child: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 8),
         child: Icon(Icons.more_horiz),
       ),

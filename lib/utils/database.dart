@@ -12,7 +12,7 @@ final userDocChangesProvider =
     StreamProvider<DocumentSnapshot<UserModel>?>((ref) {
   final asyncUser = ref.watch(userChangesProvider);
   return asyncUser.when(
-    loading: () => Stream.empty(),
+    loading: () => const Stream.empty(),
     error: (err, stack) => Stream.error(err, stack),
     data: (user) {
       if (user == null) return Stream.value(null);
@@ -37,7 +37,7 @@ final userComicsListProvider =
     StreamProvider<List<DocumentSnapshot<UserComicModel>>?>((ref) {
   final asyncUserDoc = ref.watch(userDocChangesProvider);
   return asyncUserDoc.when(
-      loading: () => Stream.empty(),
+      loading: () => const Stream.empty(),
       error: (err, stack) => Stream.error(err, stack),
       data: (userDoc) {
         if (userDoc == null) return Stream.value(null);
@@ -93,7 +93,7 @@ final userComicRefFamily = Provider.autoDispose
 final userComicFamily = StreamProvider.autoDispose
     .family<DocumentSnapshot<UserComicModel>?, String>((ref, comicId) {
   final userComicRef = ref.watch(userComicRefFamily(comicId));
-  return userComicRef?.snapshots() ?? Stream.empty();
+  return userComicRef?.snapshots() ?? const Stream.empty();
 });
 
 final sharedComicFamily = StreamProvider.autoDispose
@@ -177,7 +177,7 @@ Query<SharedComicPageModel>? getSharedComicPagesQuery(
 final newestPageFamily = StreamProvider.autoDispose
     .family<DocumentSnapshot<SharedComicPageModel>?, String>((ref, comicId) {
   final firestore = ref.watch(firestoreProvider);
-  if (firestore == null) return Stream.empty();
+  if (firestore == null) return const Stream.empty();
 
   return firestore
       .collection('comics')
@@ -193,7 +193,7 @@ final newestPageFamily = StreamProvider.autoDispose
       .snapshots()
       .map((querySnapshot) {
     final docs = querySnapshot.docs;
-    return docs.length > 0 ? docs[0] : null;
+    return docs.isNotEmpty ? docs[0] : null;
   });
 });
 

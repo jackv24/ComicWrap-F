@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -35,11 +35,11 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'ComicWrap',
       theme: ThemeData(
-        colorScheme: ColorScheme.light(),
+        colorScheme: const ColorScheme.light(),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       darkTheme: ThemeData(
-        colorScheme: ColorScheme.dark(),
+        colorScheme: const ColorScheme.dark(),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       // Firebase init
@@ -55,7 +55,8 @@ class _MyAppState extends State<MyApp> {
             data: (app) => asyncUserDoc.when(
               loading: () => _loadingScreen('Signing in...'),
               error: (err, stack) => _loadingScreen('Error signing in'),
-              data: (user) => user == null ? SignInScreen() : LibraryScreen(),
+              data: (user) =>
+                  user == null ? const SignInScreen() : const LibraryScreen(),
             ),
           );
         },
@@ -71,7 +72,7 @@ class _MyAppState extends State<MyApp> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Padding(
+          const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
             child: CircularProgressIndicator(),
           ),

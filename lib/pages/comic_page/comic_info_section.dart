@@ -26,14 +26,14 @@ class ComicInfoSection extends StatelessWidget {
       Material(
         color: Colors.white,
         elevation: 5.0,
-        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+        borderRadius: const BorderRadius.all(Radius.circular(12.0)),
         clipBehavior: Clip.antiAlias,
         child: AspectRatio(
           aspectRatio: 210.0 / 297.0,
           child: Material(
             color: Colors.white,
             elevation: 5.0,
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
+            borderRadius: const BorderRadius.all(Radius.circular(12.0)),
             clipBehavior: Clip.antiAlias,
             child: Consumer(builder: (context, watch, child) {
               final sharedComicAsync = watch(sharedComicFamily(comicId));
@@ -41,7 +41,7 @@ class ComicInfoSection extends StatelessWidget {
                 data: (data) => CardImageButton(
                   coverImageUrl: data?.coverImageUrl,
                 ),
-                loading: () => CardImageButton(),
+                loading: () => const CardImageButton(),
                 error: (error, stack) => ErrorWidget(error),
               );
             }),
@@ -50,7 +50,7 @@ class ComicInfoSection extends StatelessWidget {
       ),
       Expanded(
         child: Padding(
-          padding: EdgeInsets.only(left: 12, top: 6),
+          padding: const EdgeInsets.only(left: 12, top: 6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -62,11 +62,11 @@ class ComicInfoSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.headline5,
                   ),
-                  loading: () => Text('Loading...'),
+                  loading: () => const Text('Loading...'),
                   error: (error, stack) => ErrorWidget(error),
                 );
               }),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Consumer(builder: (context, watch, child) {
                 final userComicAsync = watch(userComicFamily(comicId));
                 return userComicAsync.when(
@@ -79,7 +79,7 @@ class ComicInfoSection extends StatelessWidget {
                           style: Theme.of(context).textTheme.subtitle2,
                         );
                       }),
-                  loading: () => Text('Loading...'),
+                  loading: () => const Text('Loading...'),
                   error: (error, stack) => ErrorWidget(error),
                 );
               }),
@@ -103,7 +103,7 @@ class ComicInfoSection extends StatelessWidget {
                   error: (error, stack) => ErrorWidget(error),
                 );
               }),
-              Spacer(),
+              const Spacer(),
               Consumer(
                 builder: (context, watch, child) {
                   final currentPageAsync = watch(currentPageFamily(comicId));
@@ -112,7 +112,7 @@ class ComicInfoSection extends StatelessWidget {
                       onPressed: data == null || onCurrentPressed == null
                           ? null
                           : () => onCurrentPressed!(data),
-                      icon: Icon(Icons.bookmark),
+                      icon: const Icon(Icons.bookmark),
                       label: Text(
                         data?.data()?.text ?? 'No bookmark',
                         overflow: TextOverflow.ellipsis,
@@ -120,8 +120,8 @@ class ComicInfoSection extends StatelessWidget {
                     ),
                     loading: () => ElevatedButton.icon(
                       onPressed: null,
-                      icon: Icon(Icons.bookmark),
-                      label: Text(
+                      icon: const Icon(Icons.bookmark),
+                      label: const Text(
                         'Loading...',
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -135,15 +135,15 @@ class ComicInfoSection extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                         onPressed: onFirstPressed,
-                        icon: Icon(Icons.first_page),
-                        label: Text('First')),
+                        icon: const Icon(Icons.first_page),
+                        label: const Text('First')),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
                         onPressed: onLastPressed,
-                        icon: Icon(Icons.last_page),
-                        label: Text('Last')),
+                        icon: const Icon(Icons.last_page),
+                        label: const Text('Last')),
                   )
                 ],
               )
@@ -154,7 +154,7 @@ class ComicInfoSection extends StatelessWidget {
     ];
 
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > constraints.maxHeight) {

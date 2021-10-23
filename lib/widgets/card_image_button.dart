@@ -69,7 +69,7 @@ class _CardImageButtonState extends State<CardImageButton> {
       if (_imageDownloadProgress == null) {
         return InkWell(
           onTap: widget.onTap,
-          child: Icon(Icons.error, color: Colors.red),
+          child: const Icon(Icons.error, color: Colors.red),
         );
       } else {
         return Stack(

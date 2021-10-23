@@ -29,12 +29,12 @@ class _SignInScreenState extends State<SignInScreen> {
     return MainPageScaffold(
       title: 'Sign In',
       bodySliver: SliverPadding(
-        padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
         sliver: SliverList(
           delegate: SliverChildListDelegate.fixed([
             TextField(
               decoration: InputDecoration(
-                prefixIcon: Icon(Icons.email),
+                prefixIcon: const Icon(Icons.email),
                 labelText: 'Email',
                 hintText: 'you@example.com',
                 errorText: _emailErrorText,
@@ -47,7 +47,7 @@ class _SignInScreenState extends State<SignInScreen> {
             ),
             TextField(
               decoration: InputDecoration(
-                prefixIcon: Icon(Icons.security),
+                prefixIcon: const Icon(Icons.security),
                 labelText: 'Password',
                 errorText: _passErrorText,
               ),
@@ -60,13 +60,14 @@ class _SignInScreenState extends State<SignInScreen> {
               enabled: !_inProgress,
             ),
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
               child: Column(
                 children: [
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      child: Text('Sign In'),
+                      child: const Text('Sign In'),
                       onPressed: _inProgress ? null : () => _submit(context),
                     ),
                   ),
@@ -76,7 +77,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         onPressed: () => linkGoogleAuth(context)),
                   ),
                   TextButton(
-                    child: Text('Sign Up with Email'),
+                    child: const Text('Sign Up with Email'),
                     onPressed: _inProgress
                         ? null
                         : () async {
@@ -93,8 +94,8 @@ class _SignInScreenState extends State<SignInScreen> {
                 ],
               ),
             ),
-            Divider(),
-            GitHubLinkButton(),
+            const Divider(),
+            const GitHubLinkButton(),
           ]),
         ),
       ),

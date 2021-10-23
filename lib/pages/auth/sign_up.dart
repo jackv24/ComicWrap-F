@@ -39,12 +39,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return MainPageScaffold(
       title: 'Email Sign Up',
       bodySliver: SliverPadding(
-        padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
         sliver: SliverList(
           delegate: SliverChildListDelegate.fixed([
             TextField(
               decoration: InputDecoration(
-                prefixIcon: Icon(Icons.email),
+                prefixIcon: const Icon(Icons.email),
                 labelText: 'Email',
                 hintText: 'you@example.com',
                 errorText: _emailErrorText,
@@ -57,7 +57,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
             TextField(
               decoration: InputDecoration(
-                prefixIcon: Icon(Icons.security),
+                prefixIcon: const Icon(Icons.security),
                 labelText: 'Password',
                 errorText: _passAErrorText,
               ),
@@ -68,7 +68,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
             TextField(
               decoration: InputDecoration(
-                prefixIcon: Icon(Icons.security),
+                prefixIcon: const Icon(Icons.security),
                 labelText: 'Confirm Password',
                 errorText: _passBErrorText,
               ),
@@ -81,11 +81,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
               enabled: !_inProgress,
             ),
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  child: Text('Sign Up'),
+                  child: const Text('Sign Up'),
                   onPressed: _inProgress ? null : () => _submit(context),
                 ),
               ),

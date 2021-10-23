@@ -29,7 +29,7 @@ class MainPageScaffold extends StatelessWidget {
                 style: TextStyle(color: colorScheme.onBackground),
               ),
               centerTitle: false,
-              titlePadding: EdgeInsets.only(left: 16, bottom: 16),
+              titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
             ),
             actions: appBarActions,
             backgroundColor: colorScheme.background,

@@ -73,14 +73,14 @@ class _ComicWebPageState extends State<ComicWebPage> {
             future: _webViewController.future,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return Icon(Icons.more);
+                return const Icon(Icons.more);
               }
 
               final controller = snapshot.data!;
 
               return MoreActionButton(actions: [
                 FunctionListItem(
-                  child: ListTile(
+                  child: const ListTile(
                     title: Text('Refresh'),
                     trailing: Icon(Icons.refresh),
                   ),
@@ -89,7 +89,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
                   },
                 ),
                 FunctionListItem(
-                  child: ListTile(
+                  child: const ListTile(
                     title: Text('Open Browser'),
                     trailing: Icon(Icons.open_in_browser),
                   ),

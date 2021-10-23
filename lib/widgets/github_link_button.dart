@@ -15,8 +15,8 @@ class GitHubLinkButton extends StatelessWidget {
           style: theme.textTheme.caption,
         ),
         TextButton.icon(
-          icon: Icon(Icons.open_in_browser),
-          label: Text('ComicWrap GitHub'),
+          icon: const Icon(Icons.open_in_browser),
+          label: const Text('ComicWrap GitHub'),
           onPressed: () => launch("https://github.com/jackv24/ComicWrap-F/"),
         ),
       ],

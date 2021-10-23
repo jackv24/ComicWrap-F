@@ -31,10 +31,10 @@ class ComicInfoCard extends ConsumerWidget {
         newestPageTime.compareTo(newFromTime) > 0;
 
     return sharedComicAsync.when(
-      loading: () => Text('Loading...'),
+      loading: () => const Text('Loading...'),
       error: (err, stack) => Text('Error: $err'),
       data: (sharedComic) {
-        if (sharedComic == null) return Text('Shared Comic is null');
+        if (sharedComic == null) return const Text('Shared Comic is null');
 
         var coverImageUrl = sharedComic.coverImageUrl;
 
@@ -64,7 +64,7 @@ class ComicInfoCard extends ConsumerWidget {
                 child: Material(
                   color: Colors.white,
                   elevation: 5.0,
-                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                  borderRadius: const BorderRadius.all(Radius.circular(12.0)),
                   clipBehavior: Clip.antiAlias,
                   child: CardImageButton(
                     coverImageUrl: coverImageUrl,
@@ -76,13 +76,13 @@ class ComicInfoCard extends ConsumerWidget {
                 ),
               ),
             ),
-            SizedBox(height: 5.0),
+            const SizedBox(height: 5.0),
             Text(
               sharedComic.name ?? comicId,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.subtitle1,
             ),
-            SizedBox(height: 2.0),
+            const SizedBox(height: 2.0),
             TimeAgoText(
                 time: userComic.lastReadTime?.toDate(),
                 builder: (text) {

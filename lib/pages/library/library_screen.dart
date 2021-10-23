@@ -18,15 +18,15 @@ class LibraryScreen extends ConsumerWidget {
   Widget build(BuildContext context, ScopedReader watch) {
     final asyncComicsList = watch(userComicsListProvider);
     final comicsListWidget = asyncComicsList.when(
-      loading: () => SliverToBoxAdapter(
+      loading: () => const SliverToBoxAdapter(
         child: Text("Loading user comics..."),
       ),
-      error: (err, stack) => SliverToBoxAdapter(
+      error: (err, stack) => const SliverToBoxAdapter(
         child: Text("Error loading user comics."),
       ),
       data: (comicsList) {
         if (comicsList == null) {
-          return SliverToBoxAdapter(
+          return const SliverToBoxAdapter(
             child: Text("User is not signed in (no comics list found)."),
           );
         }
@@ -39,18 +39,18 @@ class LibraryScreen extends ConsumerWidget {
       title: 'Library',
       appBarActions: [
         IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.library_add,
             ),
             onPressed: () => _onAddPressed(context)),
         IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.settings_rounded,
             ),
             onPressed: () => _onSettingsPressed(context)),
       ],
       bodySliver: SliverPadding(
-        padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
         sliver: comicsListWidget,
       ),
     );
@@ -60,7 +60,7 @@ class LibraryScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) {
-        return AddComicDialog();
+        return const AddComicDialog();
       },
     );
   }
@@ -68,15 +68,15 @@ class LibraryScreen extends ConsumerWidget {
   void _onSettingsPressed(BuildContext context) {
     Navigator.push(context, CupertinoPageRoute(
       builder: (context) {
-        return SettingsScreen();
+        return const SettingsScreen();
       },
     ));
   }
 
   Widget _getBodySliver(
       BuildContext context, List<DocumentSnapshot<UserComicModel>> userComics) {
-    if (userComics.length == 0) {
-      return SliverToBoxAdapter(
+    if (userComics.isEmpty) {
+      return const SliverToBoxAdapter(
         child: Text("User has no comics."),
       );
     }
@@ -94,8 +94,8 @@ class LibraryScreen extends ConsumerWidget {
           return AnimationConfiguration.staggeredGrid(
             position: index,
             columnCount: 3,
-            duration: Duration(milliseconds: 200),
-            delay: Duration(milliseconds: 50),
+            duration: const Duration(milliseconds: 200),
+            delay: const Duration(milliseconds: 50),
             child: ScaleAnimation(
               scale: 0.85,
               child: FadeInAnimation(

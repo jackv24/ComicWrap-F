@@ -4,12 +4,14 @@ import 'package:comicwrap_f/widgets/github_link_button.dart';
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MainPageScaffold(
       title: 'Settings',
       bodySliver: SliverPadding(
-        padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
         sliver: SliverList(
           delegate: SliverChildListDelegate.fixed([
             TextButton(
@@ -17,10 +19,10 @@ class SettingsScreen extends StatelessWidget {
                 await signOut(context);
                 Navigator.of(context).pop();
               },
-              child: Text('Sign Out'),
+              child: const Text('Sign Out'),
             ),
-            Divider(),
-            GitHubLinkButton(),
+            const Divider(),
+            const GitHubLinkButton(),
           ]),
         ),
       ),

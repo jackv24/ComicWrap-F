@@ -27,7 +27,7 @@ class _TimeAgoTextState extends State<TimeAgoText> {
       _text = timeago.format(widget.time!);
 
       // Update time display periodically
-      _timer = new Timer.periodic(Duration(seconds: 1), (timer) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
           _text = timeago.format(widget.time!);
         });

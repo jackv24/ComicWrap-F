@@ -7,7 +7,7 @@ Future<void> showErrorDialog(BuildContext context, String error) {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Row(children: [
+          title: Row(children: const [
             Padding(
               padding: EdgeInsets.only(right: 4.0),
               child: Icon(Icons.error, color: Colors.red),
@@ -17,7 +17,7 @@ Future<void> showErrorDialog(BuildContext context, String error) {
           content: Text(error),
           actions: [
             TextButton(
-              child: Text('OK'),
+              child: const Text('OK'),
               onPressed: () => Navigator.pop(context),
             ),
           ],

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddComicDialog extends StatefulWidget {
-  AddComicDialog({Key? key}) : super(key: key);
+  const AddComicDialog({Key? key}) : super(key: key);
 
   @override
   _AddComicDialogState createState() => _AddComicDialogState();
@@ -26,11 +26,11 @@ class _AddComicDialogState extends State<AddComicDialog> {
     return WillPopScope(
       onWillPop: () async => !_preventPop,
       child: AlertDialog(
-        title: Text('Add Comic'),
+        title: const Text('Add Comic'),
         content: SingleChildScrollView(
           child: TextField(
             decoration: InputDecoration(
-              prefixIcon: Icon(Icons.web),
+              prefixIcon: const Icon(Icons.web),
               labelText: 'URL',
               hintText: 'http://www.example.com/',
               errorText: _urlErrorText,
@@ -43,11 +43,11 @@ class _AddComicDialogState extends State<AddComicDialog> {
         ),
         actions: <Widget>[
           TextButton(
-            child: Text('Add'),
+            child: const Text('Add'),
             onPressed: _preventPop ? null : () => _submit(context),
           ),
           TextButton(
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
             onPressed:
                 _preventPop ? null : () => Navigator.of(context).pop(null),
           ),
