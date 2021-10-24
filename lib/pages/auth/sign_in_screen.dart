@@ -1,4 +1,4 @@
-import 'package:comicwrap_f/pages/auth/sign_up.dart';
+import 'package:comicwrap_f/pages/auth/sign_up_screen.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/widgets/github_link_button.dart';
@@ -78,18 +78,8 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                   TextButton(
                     child: const Text('Sign Up with Email'),
-                    onPressed: _inProgress
-                        ? null
-                        : () async {
-                            await Navigator.push(context, CupertinoPageRoute(
-                              builder: (context) {
-                                return SignUpScreen(
-                                  initialEmail: _email.text,
-                                  initialPassword: _pass.text,
-                                );
-                              },
-                            ));
-                          },
+                    onPressed:
+                        _inProgress ? null : () => _onSignUpPressed(context),
                   )
                 ],
               ),
@@ -161,5 +151,16 @@ class _SignInScreenState extends State<SignInScreen> {
         });
         break;
     }
+  }
+
+  Future<void> _onSignUpPressed(BuildContext context) async {
+    await Navigator.push(context, CupertinoPageRoute(
+      builder: (context) {
+        return SignUpScreen(
+          initialEmail: _email.text,
+          initialPassword: _pass.text,
+        );
+      },
+    ));
   }
 }

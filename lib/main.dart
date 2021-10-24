@@ -1,6 +1,7 @@
-import 'package:comicwrap_f/pages/auth/sign_in.dart';
+import 'package:comicwrap_f/pages/auth/email_verify_screen.dart';
+import 'package:comicwrap_f/pages/auth/sign_in_screen.dart';
 import 'package:comicwrap_f/pages/library/library_screen.dart';
-import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,7 @@ class _MyAppState extends State<MyApp> {
       home: Consumer(
         builder: (context, watch, child) {
           final asyncApp = watch(firebaseProvider);
-          final asyncUserDoc = watch(userDocChangesProvider);
+          final asyncUserDoc = watch(userChangesProvider);
           return asyncApp.when(
             loading: () => _loadingScreen('Initializing Firebase...'),
             error: (err, stack) =>
@@ -55,8 +56,11 @@ class _MyAppState extends State<MyApp> {
             data: (app) => asyncUserDoc.when(
               loading: () => _loadingScreen('Signing in...'),
               error: (err, stack) => _loadingScreen('Error signing in'),
-              data: (user) =>
-                  user == null ? const SignInScreen() : const LibraryScreen(),
+              data: (user) {
+                if (user == null) return const SignInScreen();
+                if (!user.emailVerified) return const EmailVerifyScreen();
+                return const LibraryScreen();
+              },
             ),
           );
         },
