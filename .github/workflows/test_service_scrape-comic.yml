@@ -3,9 +3,13 @@ name: Test scrape-comic AppEngine Service
 # Controls when the action will run. 
 on:
   push:
+    paths:
+      - 'service_scrape-comic/**'
 
   pull_request:
     branches: [ main ]
+    paths:
+      - 'service_scrape-comic/**'
 
 jobs:
   test_appengine:
