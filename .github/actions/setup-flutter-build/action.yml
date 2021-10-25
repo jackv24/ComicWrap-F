@@ -1,0 +1,16 @@
+name: "Setup Flutter Build"
+description: "Performs all (platform agnostic) steps required before a Flutter build can be run"
+runs:
+  using: "composite"
+  steps:
+    - name: Install Flutter Dependencies
+      run: flutter pub get
+      shell: bash
+
+    - name: Run build_runner Codegen
+      run: flutter pub run build_runner build
+      shell: bash
+
+    - name: Run flutter_launcher_icons
+      run: flutter pub run flutter_launcher_icons:main
+      shell: bash
