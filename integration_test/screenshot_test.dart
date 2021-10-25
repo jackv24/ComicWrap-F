@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:comicwrap_f/main.dart';
+import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,15 +12,17 @@ Future<void> main() async {
   final binding = IntegrationTestWidgetsFlutterBinding();
 
   testWidgets('loginScreen', (tester) async {
-    // TODO: Mock ProviderScope
-    await tester.pumpWidget(const ProviderScope(child: MyApp()));
+    await tester.pumpWidget(_getCleanState(
+      child: const MyApp(),
+    ));
 
     await _takeScreenshot(binding, tester);
   });
 
   testWidgets('emailSignUpScreen', (tester) async {
-    // TODO: Mock ProviderScope
-    await tester.pumpWidget(const ProviderScope(child: MyApp()));
+    await tester.pumpWidget(_getCleanState(
+      child: const MyApp(),
+    ));
 
     await tester.pumpAndSettle();
     final finder = find.widgetWithText(TextButton, 'Sign Up with Email');
@@ -27,6 +30,17 @@ Future<void> main() async {
 
     await _takeScreenshot(binding, tester);
   });
+}
+
+Widget _getCleanState({required Widget child, List<Override>? extraOverrides}) {
+  return ProviderScope(
+    overrides: [
+      // Break firebaseProvider to force all firebase connections to be mocked
+      firebaseProvider.overrideWithValue(AsyncValue.error('Not Implemented')),
+      if (extraOverrides != null) ...extraOverrides,
+    ],
+    child: child,
+  );
 }
 
 Future<void> _takeScreenshot(
