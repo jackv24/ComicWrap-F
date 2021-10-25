@@ -42,3 +42,6 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# Generated screenshots
+screenshots/
