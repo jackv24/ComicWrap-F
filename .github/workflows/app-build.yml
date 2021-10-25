@@ -1,0 +1,85 @@
+name: Main Build Pipeline
+
+# Controls when the action will run.
+on:
+  push:
+    paths:
+      - "lib/**"
+      - "assets/**"
+      - "android/**"
+      - "ios/**"
+      - "test/**"
+      - "pubspec.lock"
+      - "pubspec.yaml"
+
+jobs:
+  build_android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Set build name conditionally
+      - name: Set Build name
+        run: |
+          case $GITHUB_REF in
+            "refs/tags/"*) echo "BUILD_NAME=${GITHUB_REF/refs\/tags\/v}" >> $GITHUB_ENV ;;
+            *) echo "BUILD_NAME=$GITHUB_REF" >> $GITHUB_ENV ;;
+          esac
+      # Write decoded secrets files
+      - name: Secret google-services.json to file
+        run: echo $GOOGLE_SERVICES_ANDROID | base64 --decode > android/app/google-services.json
+        env:
+          GOOGLE_SERVICES_ANDROID: ${{ secrets.GOOGLE_SERVICES_ANDROID }}
+      - name: Decode Play Store Upload Key to Keyfile
+        run: echo $PLAY_STORE_UPLOAD_KEY | base64 --decode > android/app/upload-keystore.jks
+        env:
+          PLAY_STORE_UPLOAD_KEY: ${{ secrets.PLAY_STORE_UPLOAD_KEY }}
+      - name: Secret key.properties to file
+        run: echo $ANDROID_KEY_PROPERTIES | base64 --decode > android/key.properties
+        env:
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+      # Setup required tools
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: "zulu"
+          java-version: "12"
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: 2.5.3
+      # Run build
+      - uses: ./.github/actions/setup-flutter-build
+      - name: Build AppBundle
+        run: flutter build appbundle -v --build-name=$BUILD_NAME --build-number=${{github.run_number}}
+      # Upload artifacts
+      - name: Upload Android AppBundle
+        uses: actions/upload-artifact@v2
+        with:
+          name: AndroidAppBundle
+          path: ./build/app/outputs/bundle/release/app-release.aab
+          retention-days: 1
+
+  release-android:
+    needs: [build_android]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Download artifacts
+      - name: Download Android AppBundle
+        uses: actions/download-artifact@v2
+        with:
+          name: AndroidAppBundle
+          path: ./build/app/outputs/bundle/release/app-release.aab
+      # Setup required tools
+      - name: Setup Fastlane (Ruby)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.6"
+          bundler-cache: true
+          working-directory: android
+      # Run Fastlane
+      - run: bundle exec fastlane internal
+        env:
+          FASTLANE_SERVICE_ACCOUNT_KEY: ${{ secrets.FASTLANE_SERVICE_ACCOUNT_KEY }}
+        working-directory: android
