@@ -11,13 +11,13 @@ class GitHubLinkButton extends StatelessWidget {
     return Column(
       children: [
         Text(
-          "Have an issue? Want to help out? Follow the link below!",
+          'Have an issue? Want to help out? Follow the link below!',
           style: theme.textTheme.caption,
         ),
         TextButton.icon(
           icon: const Icon(Icons.open_in_browser),
           label: const Text('ComicWrap GitHub'),
-          onPressed: () => launch("https://github.com/jackv24/ComicWrap-F/"),
+          onPressed: () => launch('https://github.com/jackv24/ComicWrap-F/'),
         ),
       ],
     );

@@ -1,1 +1,9 @@
+# https://dart.dev/guides/language/analysis-options
+
 include: package:flutter_lints/flutter.yaml
+
+# https://dart-lang.github.io/linter/lints/index.html.
+linter:
+  rules:
+    avoid_print: false
+    prefer_single_quotes: true

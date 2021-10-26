@@ -19,15 +19,15 @@ class LibraryScreen extends ConsumerWidget {
     final asyncComicsList = watch(userComicsListProvider);
     final comicsListWidget = asyncComicsList.when(
       loading: () => const SliverToBoxAdapter(
-        child: Text("Loading user comics..."),
+        child: Text('Loading user comics...'),
       ),
       error: (err, stack) => const SliverToBoxAdapter(
-        child: Text("Error loading user comics."),
+        child: Text('Error loading user comics.'),
       ),
       data: (comicsList) {
         if (comicsList == null) {
           return const SliverToBoxAdapter(
-            child: Text("User is not signed in (no comics list found)."),
+            child: Text('User is not signed in (no comics list found).'),
           );
         }
 
@@ -77,7 +77,7 @@ class LibraryScreen extends ConsumerWidget {
       BuildContext context, List<DocumentSnapshot<UserComicModel>> userComics) {
     if (userComics.isEmpty) {
       return const SliverToBoxAdapter(
-        child: Text("User has no comics."),
+        child: Text('User has no comics.'),
       );
     }
 

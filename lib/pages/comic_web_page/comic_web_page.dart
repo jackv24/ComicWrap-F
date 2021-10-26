@@ -284,7 +284,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
         if (currentPageScrapeTime != null &&
             currentPageScrapeTime.compareTo(docScrapeTime) < 0) {
           _currentPage = sharedComicPage;
-          print("_currentPage is now " + _currentPage!.id);
+          print('_currentPage is now ' + _currentPage!.id);
         }
       }
     }
