@@ -4,6 +4,8 @@ name: Main Build Pipeline
 on:
   push:
     paths:
+      - ".github/workflows/app-build.yml"
+      - ".github/actions/setup-flutter-build/**"
       - "lib/**"
       - "assets/**"
       - "android/**"
