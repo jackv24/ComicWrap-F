@@ -3,12 +3,18 @@ import 'dart:io';
 import 'package:comicwrap_f/main.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
+import 'screenshot_test.mocks.dart';
+
+@GenerateMocks([User])
 Future<void> main() async {
   final binding = IntegrationTestWidgetsFlutterBinding();
 
@@ -37,6 +43,21 @@ Future<void> main() async {
 
     await _takeScreenshot(binding, tester);
   });
+
+  testWidgets('emailVerifyScreen', (tester) async {
+    final user = MockUser();
+    when(user.email).thenReturn('test@test.com');
+    when(user.emailVerified).thenReturn(false);
+
+    await tester.pumpWidget(_getCleanState(
+      child: const MyApp(),
+      extraOverrides: [
+        userChangesProvider.overrideWithValue(AsyncValue.data(user)),
+      ],
+    ));
+
+    await _takeScreenshot(binding, tester);
+  });
 }
 
 Widget _getCleanState({required Widget child, List<Override>? extraOverrides}) {
@@ -44,7 +65,7 @@ Widget _getCleanState({required Widget child, List<Override>? extraOverrides}) {
     overrides: [
       // Break firebaseProvider to force all firebase connections to be mocked
       firebaseProvider.overrideWithValue(AsyncValue.error('Not Implemented')),
-      if (extraOverrides != null) ...extraOverrides,
+      ...?extraOverrides,
     ],
     child: child,
   );

@@ -11,6 +11,7 @@ on:
       - "test/**"
       - "pubspec.lock"
       - "pubspec.yaml"
+      - "build.yaml"
 
 jobs:
   build_android:
