@@ -16,6 +16,33 @@ on:
       - "build.yaml"
 
 jobs:
+  test_android:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        api-level: [23, 30] # from android/app/build.gradle minSdkVersion & targetSdkVersion
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: 2.5.3
+      - uses: ./.github/actions/setup-flutter-build
+      - name: Run FLutter Driver tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          script: ./run_screenshots.sh
+      - name: Upload Screenshots
+        uses: actions/upload-artifact@v2
+        with:
+          name: Screenshots
+          path: ./screenshots/**
+          retention-days: 30
+
   build_android:
     runs-on: ubuntu-latest
     steps:
@@ -63,7 +90,7 @@ jobs:
           retention-days: 1
 
   release-android:
-    needs: [build_android]
+    needs: [build_android, test_android]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
