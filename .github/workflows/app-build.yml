@@ -23,6 +23,7 @@ jobs:
     strategy:
       matrix:
         api-level: [23, 30] # from android/app/build.gradle minSdkVersion & targetSdkVersion
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - name: Setup Flutter
