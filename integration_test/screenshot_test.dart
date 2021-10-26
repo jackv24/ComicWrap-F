@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:comicwrap_f/main.dart';
+import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,9 @@ Future<void> main() async {
   testWidgets('loginScreen', (tester) async {
     await tester.pumpWidget(_getCleanState(
       child: const MyApp(),
+      extraOverrides: [
+        userChangesProvider.overrideWithValue(const AsyncValue.data(null)),
+      ],
     ));
 
     await _takeScreenshot(binding, tester);
@@ -22,6 +26,9 @@ Future<void> main() async {
   testWidgets('emailSignUpScreen', (tester) async {
     await tester.pumpWidget(_getCleanState(
       child: const MyApp(),
+      extraOverrides: [
+        userChangesProvider.overrideWithValue(const AsyncValue.data(null)),
+      ],
     ));
 
     await tester.pumpAndSettle();
