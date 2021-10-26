@@ -9,6 +9,8 @@ on:
       - "android/**"
       - "ios/**"
       - "test/**"
+      - "integration_test/**"
+      - "test_driver/**"
       - "pubspec.lock"
       - "pubspec.yaml"
 
