@@ -27,7 +27,7 @@ class LibraryScreen extends ConsumerWidget {
       data: (comicsList) {
         if (comicsList == null) {
           return const SliverToBoxAdapter(
-            child: Text('User is not signed in (no comics list found).'),
+            child: Text('User has no comics list.'),
           );
         }
 

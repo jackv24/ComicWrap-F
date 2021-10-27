@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:comicwrap_f/main.dart';
 import 'package:comicwrap_f/utils/auth.dart';
+import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -55,6 +56,40 @@ Future<void> main() async {
         userChangesProvider.overrideWithValue(AsyncValue.data(user)),
       ],
     ));
+
+    await _takeScreenshot(binding, tester);
+  });
+
+  testWidgets('libraryScreen', (tester) async {
+    final user = MockUser();
+    when(user.emailVerified).thenReturn(true);
+
+    await tester.pumpWidget(_getCleanState(
+      child: const MyApp(),
+      extraOverrides: [
+        userChangesProvider.overrideWithValue(AsyncValue.data(user)),
+        userComicsListProvider.overrideWithValue(const AsyncValue.data(null)),
+      ],
+    ));
+
+    await _takeScreenshot(binding, tester);
+  });
+
+  testWidgets('settingsScreen', (tester) async {
+    final user = MockUser();
+    when(user.emailVerified).thenReturn(true);
+
+    await tester.pumpWidget(_getCleanState(
+      child: const MyApp(),
+      extraOverrides: [
+        userChangesProvider.overrideWithValue(AsyncValue.data(user)),
+        userComicsListProvider.overrideWithValue(const AsyncValue.data(null)),
+      ],
+    ));
+
+    await tester.pumpAndSettle();
+    final finder = find.widgetWithIcon(IconButton, Icons.settings_rounded);
+    await tester.tap(finder);
 
     await _takeScreenshot(binding, tester);
   });
