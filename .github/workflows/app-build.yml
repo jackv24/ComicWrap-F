@@ -93,13 +93,13 @@ jobs:
           api-level: 30 # from android/app/build.gradle targetSdkVersion
           target: google_apis
           arch: x86_64
-          profile: ${{ device-profile }}
+          profile: ${{ matrix.device-profile }}
           script: ./run_screenshots.sh
       # Upload artifacts
       - name: Upload Screenshots
         uses: actions/upload-artifact@v2
         with:
-          name: Screenshots_${{ device-profile }}
+          name: Screenshots_${{ matrix.device-profile }}
           path: ./screenshots/**
           retention-days: 30
 
