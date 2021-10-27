@@ -73,8 +73,6 @@ Widget _getCleanState({required Widget child, List<Override>? extraOverrides}) {
 
 Future<void> _takeScreenshot(
     IntegrationTestWidgetsFlutterBinding binding, WidgetTester tester) async {
-  await tester.pumpAndSettle();
-  
   // Special per-platform setup + name
   final String platformName;
   if (!kIsWeb) {
@@ -90,5 +88,6 @@ Future<void> _takeScreenshot(
     platformName = 'web';
   }
 
+  await tester.pumpAndSettle();
   await binding.takeScreenshot('$platformName-${tester.testDescription}');
 }
