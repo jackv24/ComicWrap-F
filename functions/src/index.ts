@@ -142,3 +142,16 @@ export const updateExistingComics = functions.pubsub
       const result = appRequest('/updateAll/');
       console.info(result);
     });
+
+export const deleteUserData = functions.auth.user().onDelete(async (user) => {
+  const userDocRef = db.collection('users').doc(user.uid);
+
+  // Delete sub collection data first
+  const userComicDocs = (await userDocRef.collection('comics').get()).docs;
+  for (const userComicDoc of userComicDocs) {
+    await userComicDoc.ref.delete();
+  }
+
+  // Delete user doc last
+  await userDocRef.delete();
+});
