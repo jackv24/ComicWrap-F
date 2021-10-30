@@ -2,6 +2,7 @@ import 'package:comicwrap_f/pages/auth/email_verify_screen.dart';
 import 'package:comicwrap_f/pages/auth/sign_in_screen.dart';
 import 'package:comicwrap_f/pages/library/library_screen.dart';
 import 'package:comicwrap_f/utils/auth.dart';
+import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -52,7 +53,12 @@ class _MyAppState extends State<MyApp> {
             error: (err, stack) => _loadingScreen('Error signing in'),
             data: (user) {
               if (user == null) return const SignInScreen();
-              if (!user.emailVerified) return const EmailVerifyScreen();
+
+              // Can only verify email if not running firebase emulators
+              if (!user.emailVerified && !useEmulators) {
+                return const EmailVerifyScreen();
+              }
+
               return const LibraryScreen();
             },
           );
