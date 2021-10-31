@@ -73,8 +73,15 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                   SizedBox(
                     width: double.infinity,
-                    child: SignInButton(Buttons.Google,
-                        onPressed: () => linkGoogleAuth(context)),
+                    child: SignInButton(Buttons.Google, onPressed: () async {
+                      setState(() {
+                        _inProgress = true;
+                      });
+                      await linkGoogleAuth(context);
+                      setState(() {
+                        _inProgress = false;
+                      });
+                    }),
                   ),
                   TextButton(
                     child: const Text('Sign Up with Email'),
