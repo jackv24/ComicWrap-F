@@ -57,7 +57,7 @@ jobs:
       - name: Build AppBundle
         run: |
           flutter build appbundle -v --build-name=$BUILD_NAME \
-          --build-number=$(expr 4 + ${{github.run_number}})
+          --build-number=$(expr 2 + ${{github.run_number}})
       # Upload artifacts
       - name: Upload Android AppBundle
         uses: actions/upload-artifact@v2
@@ -121,7 +121,7 @@ jobs:
       - name: Setup Fastlane (Ruby)
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "2.6"
+          ruby-version: "2.7.2"
           bundler-cache: true
           working-directory: android
       # Run Fastlane
