@@ -66,11 +66,14 @@ class ComicInfoCard extends ConsumerWidget {
                   elevation: 5.0,
                   borderRadius: const BorderRadius.all(Radius.circular(12.0)),
                   clipBehavior: Clip.antiAlias,
-                  child: CardImageButton(
-                    coverImageUrl: coverImageUrl,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) => ComicPage(comicId: comicId)),
+                  child: Tooltip(
+                    message: sharedComic.name ?? comicId,
+                    child: CardImageButton(
+                      coverImageUrl: coverImageUrl,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => ComicPage(comicId: comicId)),
+                      ),
                     ),
                   ),
                 ),

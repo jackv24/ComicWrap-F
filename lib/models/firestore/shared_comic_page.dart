@@ -12,7 +12,7 @@ class SharedComicPageModel {
   @JsonKey(ignore: true)
   late Timestamp? scrapeTime;
 
-  SharedComicPageModel({required this.text});
+  SharedComicPageModel({required this.text, this.scrapeTime});
 
   factory SharedComicPageModel.fromJson(Json json) =>
       _$SharedComicPageModelFromJson(json)..scrapeTime = json['scrapeTime'];

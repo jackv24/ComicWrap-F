@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/main.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic.dart';
+import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/database.dart';
@@ -25,6 +26,16 @@ Future<void> main() async {
   group('promo', () {
     testWidgets('0_libraryScreen', (tester) async {
       await _pumpPromoMock(tester);
+      await _takeScreenshot(binding, tester, 'promo');
+    });
+
+    testWidgets('1_comicPage', (tester) async {
+      await _pumpPromoMock(tester);
+
+      await tester.pumpAndSettle();
+      final finder = find.byTooltip('Test 1');
+      await tester.tap(finder);
+
       await _takeScreenshot(binding, tester, 'promo');
     });
   });
@@ -144,12 +155,26 @@ Future<void> _pumpPromoMock(WidgetTester tester) async {
   final user = MockUser();
   when(user.emailVerified).thenReturn(true);
 
+  // Comic 1
   final userDoc1 = MockDocumentSnapshot<UserComicModel>();
   when(userDoc1.id).thenReturn('www.test1.com');
-  when(userDoc1.data()).thenReturn(UserComicModel());
+  when(userDoc1.data()).thenReturn(UserComicModel(
+      lastReadTime: Timestamp.fromDate(
+          DateTime.now().subtract(const Duration(hours: 3)))));
+  final newestPage1 = MockDocumentSnapshot<SharedComicPageModel>();
+  when(newestPage1.id).thenReturn('comic page1');
+  when(newestPage1.data()).thenReturn(SharedComicPageModel(
+      text: 'Page 1',
+      scrapeTime: Timestamp.fromDate(
+          DateTime.now().subtract(const Duration(days: 2)))));
+
+  // Comic 2
   final userDoc2 = MockDocumentSnapshot<UserComicModel>();
   when(userDoc2.id).thenReturn('www.test2.com');
-  when(userDoc2.data()).thenReturn(UserComicModel());
+  when(userDoc2.data()).thenReturn(UserComicModel(
+      lastReadTime: Timestamp.fromDate(
+          DateTime.now().subtract(const Duration(days: 5)))));
+
   final docs = [userDoc1, userDoc2];
 
   await tester.pumpWidget(_getCleanState(
@@ -157,14 +182,18 @@ Future<void> _pumpPromoMock(WidgetTester tester) async {
     extraOverrides: [
       userChangesProvider.overrideWithValue(AsyncValue.data(user)),
       userComicsListProvider.overrideWithValue(AsyncValue.data(docs)),
+
+      // Comic 1
+      userComicFamily(userDoc1.id).overrideWithValue(AsyncValue.data(userDoc1)),
       sharedComicFamily(userDoc1.id).overrideWithValue(AsyncValue.data(
           SharedComicModel(scrapeUrl: userDoc1.id, name: 'Test 1'))),
-      sharedComicFamily(userDoc2.id)
-          .overrideWithValue(AsyncValue.data(SharedComicModel(
-        scrapeUrl: userDoc2.id,
-        name: 'Test 2',
-        isImporting: true,
-      ))),
+      newestPageFamily(userDoc1.id)
+          .overrideWithValue(AsyncValue.data(newestPage1)),
+
+      // Comic 2
+      userComicFamily(userDoc2.id).overrideWithValue(AsyncValue.data(userDoc2)),
+      sharedComicFamily(userDoc2.id).overrideWithValue(AsyncValue.data(
+          SharedComicModel(scrapeUrl: userDoc2.id, name: 'Test 2'))),
     ],
   ));
 }
