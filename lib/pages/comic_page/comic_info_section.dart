@@ -57,10 +57,18 @@ class ComicInfoSection extends StatelessWidget {
               Consumer(builder: (context, watch, child) {
                 final sharedComicAsync = watch(sharedComicFamily(comicId));
                 return sharedComicAsync.when(
-                  data: (data) => Text(
-                    data?.name ?? comicId,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headline5,
+                  data: (data) => Row(
+                    children: [
+                      // Show an indicator when still importing or no data
+                      if (data?.isImporting ?? true) const Icon(Icons.warning),
+                      Expanded(
+                        child: Text(
+                          data?.name ?? comicId,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.headline5,
+                        ),
+                      )
+                    ],
                   ),
                   loading: () => const Text('Loading...'),
                   error: (error, stack) => ErrorWidget(error),

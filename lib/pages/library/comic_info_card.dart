@@ -77,10 +77,23 @@ class ComicInfoCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 5.0),
-            Text(
-              sharedComic.name ?? comicId,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.subtitle1,
+            Row(
+              children: [
+                // Show an indicator when still importing
+                if (sharedComic.isImporting)
+                  const Icon(
+                    Icons.warning,
+                    size: 18.0,
+                  ),
+                // Title fill rest of the space
+                Expanded(
+                  child: Text(
+                    sharedComic.name ?? comicId,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.subtitle1,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 2.0),
             TimeAgoText(
