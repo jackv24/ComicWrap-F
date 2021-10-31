@@ -52,10 +52,12 @@ jobs:
         uses: subosito/flutter-action@v1
         with:
           flutter-version: 2.5.3
-      # Run build
+      # Run build with build number added for Google Play
       - uses: ./.github/actions/setup-flutter-build
       - name: Build AppBundle
-        run: flutter build appbundle -v --build-name=$BUILD_NAME --build-number=${{github.run_number}}
+        run: |
+          flutter build appbundle -v --build-name=$BUILD_NAME \
+          --build-number=$(expr 4 + ${{github.run_number}})
       # Upload artifacts
       - name: Upload Android AppBundle
         uses: actions/upload-artifact@v2
