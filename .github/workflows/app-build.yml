@@ -72,3 +72,40 @@ jobs:
         env:
           FASTLANE_SERVICE_ACCOUNT_KEY: ${{ secrets.FASTLANE_SERVICE_ACCOUNT_KEY }}
         working-directory: android
+
+  screenshots-android:
+    # macos image is the only one with Intel HAXM
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        device-profile:
+          - "pixel_3a"
+          - "7in WSVGA (Tablet)"
+          - "10.1in WXGA (Tablet)"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: 2.5.3
+      # Build will fail without google-services.json, but our tests will mock Firebase
+      - name: Secret google-services.json to file
+        run: echo $GOOGLE_SERVICES_ANDROID | base64 --decode > android/app/google-services.json
+        env:
+          GOOGLE_SERVICES_ANDROID: ${{ secrets.GOOGLE_SERVICES_ANDROID }}
+      - uses: ./.github/actions/setup-flutter-build
+      # Run tests
+      - name: Run Flutter Driver tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30 # from android/app/build.gradle targetSdkVersion
+          target: google_apis
+          arch: x86_64
+          profile: ${{ matrix.device-profile }}
+          script: ./run_screenshots.sh
+      # Upload artifacts
+      - name: Upload Screenshots
+        uses: actions/upload-artifact@v2
+        with:
+          name: Screenshots_${{ matrix.device-profile }}
+          path: ./screenshots/**

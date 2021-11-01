@@ -22,6 +22,7 @@ import 'screenshot_test.mocks.dart';
 @GenerateMocks([User, DocumentSnapshot])
 Future<void> main() async {
   final binding = IntegrationTestWidgetsFlutterBinding();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('promo', () {
     testWidgets('0_libraryScreen', (tester) async {
@@ -131,24 +132,14 @@ Widget _getCleanState({required Widget child, List<Override>? extraOverrides}) {
 
 Future<void> _takeScreenshot(IntegrationTestWidgetsFlutterBinding binding,
     WidgetTester tester, String subFolder) async {
-  // Special per-platform setup + name
-  final String platformName;
-  if (!kIsWeb) {
+  // Android special handling
+  if (Platform.isAndroid) {
+    await tester.pumpAndSettle();
     await binding.convertFlutterSurfaceToImage();
-    if (Platform.isAndroid) {
-      platformName = 'android';
-    } else if (Platform.isIOS) {
-      platformName = 'ios';
-    } else {
-      platformName = 'unknown';
-    }
-  } else {
-    platformName = 'web';
   }
 
   await tester.pumpAndSettle();
-  await binding
-      .takeScreenshot('$subFolder/$platformName/${tester.testDescription}');
+  await binding.takeScreenshot('$subFolder/${tester.testDescription}');
 }
 
 Future<void> _pumpPromoMock(WidgetTester tester) async {
