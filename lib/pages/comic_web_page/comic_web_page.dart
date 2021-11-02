@@ -132,10 +132,12 @@ class _ComicWebPageState extends State<ComicWebPage> {
                       await context.read(newestPageFamily(widget.comicId).last);
                   newFromPageId = lastPage?.id;
                 } else {
+                  final newFromPageRef = context.read(sharedComicPageRefFamily(
+                      SharedComicPageInfo(
+                          comicId: widget.comicId, pageId: newFromPageId)));
+
                   // If reading into the new pages, then set them as not new
-                  final newFromPage = await getSharedComicPage(
-                          context, widget.comicId, newFromPageId)
-                      ?.get();
+                  final newFromPage = await newFromPageRef?.get();
                   final newScrapeTime = newFromPage?.data()?.scrapeTime;
                   final currentScrapeTime = _currentPage!.data()?.scrapeTime;
 
@@ -217,10 +219,12 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
                     if (userComicDoc == null) return;
 
+                    final pageRef = context.read(sharedComicPageRefFamily(
+                        SharedComicPageInfo(
+                            comicId: widget.comicId, pageId: pageId)));
+
                     // Get data for the new page (don't wait)
-                    getSharedComicPage(context, widget.comicId, pageId)
-                        ?.get()
-                        .then((value) {
+                    pageRef?.get().then((value) {
                       // Update page display
                       setState(() {
                         _newPage = value;
@@ -265,9 +269,11 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (_currentPage == null) {
       final currentPageId = userComic.data()!.currentPageId;
       if (currentPageId != null) {
-        _currentPage =
-            await getSharedComicPage(context, userComic.id, currentPageId)
-                ?.get();
+        final pageRef = context.read(sharedComicPageRefFamily(
+            SharedComicPageInfo(
+                comicId: widget.comicId, pageId: currentPageId)));
+
+        _currentPage = await pageRef?.get();
       }
     }
 

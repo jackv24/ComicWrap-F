@@ -55,7 +55,8 @@ class _ComicPageState extends State<ComicPage> {
 
       // Get ref to current page once for centering pages on start
       final currentPageRef = currentPageId != null
-          ? getSharedComicPage(context, widget.comicId, currentPageId)
+          ? context.read(sharedComicPageRefFamily(SharedComicPageInfo(
+              comicId: widget.comicId, pageId: currentPageId)))
           : null;
 
       if (currentPageRef != null) {
@@ -130,8 +131,9 @@ class _ComicPageState extends State<ComicPage> {
             comicId: widget.comicId,
             onCurrentPressed: _centerPagesOnDoc,
             onFirstPressed:
-                _pages.isNotEmpty ? () => _goToEndPage(false) : null,
-            onLastPressed: _pages.isNotEmpty ? () => _goToEndPage(true) : null,
+                _pages.isNotEmpty ? () => _goToEndPage(context, false) : null,
+            onLastPressed:
+                _pages.isNotEmpty ? () => _goToEndPage(context, true) : null,
           );
 
           // Draw extra info as side bar on large screens
@@ -298,17 +300,16 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  void _goToEndPage(bool descending) async {
-    final pagesQuery = getSharedComicPagesQuery(context, widget.comicId,
-        descending: descending);
-    if (pagesQuery == null) return;
-
+  void _goToEndPage(BuildContext context, bool descending) async {
     EasyLoading.show();
 
-    final snapshot = await pagesQuery.limit(1).get();
+    final doc = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: descending,
+    )).future);
 
-    if (snapshot.docs.isNotEmpty) {
-      await _centerPagesOnDoc(snapshot.docs[0]);
+    if (doc != null) {
+      await _centerPagesOnDoc(doc);
     }
 
     EasyLoading.dismiss();
@@ -340,7 +341,10 @@ class _ComicPageState extends State<ComicPage> {
     print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
     final pagesQuery =
-        getSharedComicPagesQuery(context, widget.comicId, descending: true);
+        context.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: true,
+    )));
     if (pagesQuery == null) return;
 
     switch (scrollDir) {
