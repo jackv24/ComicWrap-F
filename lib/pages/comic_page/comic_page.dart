@@ -15,6 +15,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const listItemHeight = 50.0;
 
+final pageListOverrideProvider = Provider.autoDispose
+    .family<List<DocumentSnapshot<SharedComicPageModel>>?, String>(
+        (ref, comicId) {
+  // To be overridden for tests
+  return null;
+});
+
 class ComicPage extends StatefulWidget {
   final String comicId;
 
@@ -34,7 +41,8 @@ class _ComicPageState extends State<ComicPage> {
   final int _initialDocLimit = 30;
   final int _moreDocLimit = 10;
 
-  final List<DocumentSnapshot<SharedComicPageModel>> _pages = [];
+  late List<DocumentSnapshot<SharedComicPageModel>> _pages;
+  late bool _isPagesOverridden;
   ScrollController? _scrollController;
   bool _hasMoreDown = true;
   bool _hasMoreUp = true;
@@ -46,6 +54,17 @@ class _ComicPageState extends State<ComicPage> {
   @override
   void initState() {
     super.initState();
+
+    final pageListOverride =
+        context.read(pageListOverrideProvider(widget.comicId));
+    if (pageListOverride == null) {
+      _pages = [];
+      _isPagesOverridden = false;
+    } else {
+      // If custom list provided just use that, don't load any more
+      _pages = pageListOverride;
+      _isPagesOverridden = true;
+    }
 
     _scrollController = ScrollController();
 
@@ -317,7 +336,7 @@ class _ComicPageState extends State<ComicPage> {
 
   Future<void> _getPages(_ScrollDirection scrollDir,
       {DocumentSnapshot? centredOnDoc}) async {
-    if (_isLoadingUp || _isLoadingDown) {
+    if (_isLoadingUp || _isLoadingDown || _isPagesOverridden) {
       return;
     }
 
@@ -442,6 +461,8 @@ class _ComicPageState extends State<ComicPage> {
 
   Future<void> _centerPagesOnDoc(
       DocumentSnapshot<SharedComicPageModel> centreDoc) async {
+    if (_isPagesOverridden) return;
+
     _pages.clear();
     await _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
   }

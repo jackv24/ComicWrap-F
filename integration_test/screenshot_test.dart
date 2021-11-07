@@ -5,6 +5,7 @@ import 'package:comicwrap_f/main.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
+import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
@@ -151,12 +152,7 @@ Future<void> _pumpPromoMock(WidgetTester tester) async {
   when(userDoc1.data()).thenReturn(UserComicModel(
       lastReadTime: Timestamp.fromDate(
           DateTime.now().subtract(const Duration(hours: 3)))));
-  final newestPage1 = MockDocumentSnapshot<SharedComicPageModel>();
-  when(newestPage1.id).thenReturn('comic page1');
-  when(newestPage1.data()).thenReturn(SharedComicPageModel(
-      text: 'Page 1',
-      scrapeTime: Timestamp.fromDate(
-          DateTime.now().subtract(const Duration(days: 2)))));
+  final doc1Pages = _generateMockPages();
 
   // Comic 2
   final userDoc2 = MockDocumentSnapshot<UserComicModel>();
@@ -177,8 +173,19 @@ Future<void> _pumpPromoMock(WidgetTester tester) async {
       userComicFamily(userDoc1.id).overrideWithValue(AsyncValue.data(userDoc1)),
       sharedComicFamily(userDoc1.id).overrideWithValue(AsyncValue.data(
           SharedComicModel(scrapeUrl: userDoc1.id, name: 'Test 1'))),
+      pageListOverrideProvider(userDoc1.id).overrideWithValue(doc1Pages),
       newestPageFamily(userDoc1.id)
-          .overrideWithValue(AsyncValue.data(newestPage1)),
+          .overrideWithValue(AsyncValue.data(doc1Pages.first)),
+      newFromPageFamily(userDoc1.id)
+          .overrideWithValue(AsyncValue.data(doc1Pages[3])),
+      currentPageFamily(userDoc1.id)
+          .overrideWithValue(AsyncValue.data(doc1Pages[6])),
+      endPageFamily(SharedComicPagesQueryInfo(
+              comicId: userDoc1.id, descending: false))
+          .overrideWithValue(AsyncValue.data(doc1Pages.first)),
+      endPageFamily(
+              SharedComicPagesQueryInfo(comicId: userDoc1.id, descending: true))
+          .overrideWithValue(AsyncValue.data(doc1Pages.last)),
 
       // Comic 2
       userComicFamily(userDoc2.id).overrideWithValue(AsyncValue.data(userDoc2)),
@@ -186,4 +193,19 @@ Future<void> _pumpPromoMock(WidgetTester tester) async {
           SharedComicModel(scrapeUrl: userDoc2.id, name: 'Test 2'))),
     ],
   ));
+}
+
+List<DocumentSnapshot<SharedComicPageModel>> _generateMockPages() {
+  const pageCount = 50;
+  final List<DocumentSnapshot<SharedComicPageModel>> list = [];
+  for (int i = pageCount; i > 0; i--) {
+    final page = MockDocumentSnapshot<SharedComicPageModel>();
+    when(page.id).thenReturn('comic page$i');
+    when(page.data()).thenReturn(SharedComicPageModel(
+        text: 'Page $i',
+        scrapeTime: Timestamp.fromDate(
+            DateTime.now().subtract(Duration(days: pageCount - i)))));
+    list.add(page);
+  }
+  return list;
 }
