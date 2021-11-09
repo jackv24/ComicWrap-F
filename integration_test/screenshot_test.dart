@@ -31,10 +31,10 @@ Future<void> main() async {
     });
 
     testWidgets('1_comicPage', (tester) async {
-      await _pumpPromoMock(tester);
+      final tooltip = await _pumpPromoMock(tester);
 
       await tester.pumpAndSettle();
-      final finder = find.byTooltip('Test 1');
+      final finder = find.byTooltip(tooltip);
       await tester.tap(finder);
 
       await _takeScreenshot(binding, tester, 'promo');
@@ -142,62 +142,108 @@ Future<void> _takeScreenshot(IntegrationTestWidgetsFlutterBinding binding,
   await binding.takeScreenshot('$subFolder/${tester.testDescription}');
 }
 
-Future<void> _pumpPromoMock(WidgetTester tester) async {
+Future<String> _pumpPromoMock(WidgetTester tester) async {
   final user = MockUser();
   when(user.emailVerified).thenReturn(true);
 
-  // Comic 1
-  final userDoc1 = MockDocumentSnapshot<UserComicModel>();
-  when(userDoc1.id).thenReturn('www.test1.com');
-  when(userDoc1.data()).thenReturn(UserComicModel(
-      lastReadTime: Timestamp.fromDate(
-          DateTime.now().subtract(const Duration(hours: 3)))));
-  final doc1Pages = _generateMockPages();
+  final comics = [
+    _generateMockComic(
+      name: 'Tim & Jim: Adventure Bros',
+      age: const Duration(hours: 3),
+      newFromPage: 1,
+      currentPage: 5,
+    ),
+    _generateMockComic(
+      name: 'Fight!',
+      age: const Duration(days: 5),
+      currentPage: 2,
+    ),
+    _generateMockComic(
+      name: 'Summer Time',
+      age: const Duration(days: 12),
+    ),
+    _generateMockComic(
+      name: 'Cool Shirts and Black Caps',
+      age: const Duration(days: 15),
+    ),
+  ];
 
-  // Comic 2
-  final userDoc2 = MockDocumentSnapshot<UserComicModel>();
-  when(userDoc2.id).thenReturn('www.test2.com');
-  when(userDoc2.data()).thenReturn(UserComicModel(
-      lastReadTime: Timestamp.fromDate(
-          DateTime.now().subtract(const Duration(days: 5)))));
-
-  final docs = [userDoc1, userDoc2];
+  final List<Override> comicOverrides = [];
+  for (final comic in comics) {
+    final userDoc = comic.userDoc;
+    final id = userDoc.id;
+    final pages = comic.pages;
+    comicOverrides.addAll([
+      userComicFamily(id).overrideWithValue(AsyncValue.data(userDoc)),
+      sharedComicFamily(id).overrideWithValue(AsyncValue.data(
+          SharedComicModel(scrapeUrl: id, name: comic.sharedComic.name))),
+      pageListOverrideProvider(id).overrideWithValue(comic.pages),
+      newestPageFamily(id).overrideWithValue(AsyncValue.data(pages.first)),
+      newFromPageFamily(id).overrideWithValue(AsyncValue.data(
+          comic.newFromPage != null ? pages[comic.newFromPage!] : null)),
+      currentPageFamily(id).overrideWithValue(AsyncValue.data(
+          comic.currentPage != null ? pages[comic.currentPage!] : null)),
+      endPageFamily(SharedComicPagesQueryInfo(comicId: id, descending: false))
+          .overrideWithValue(AsyncValue.data(pages.first)),
+      endPageFamily(SharedComicPagesQueryInfo(comicId: id, descending: true))
+          .overrideWithValue(AsyncValue.data(pages.last)),
+    ]);
+  }
 
   await tester.pumpWidget(_getCleanState(
     child: const MyApp(),
     extraOverrides: [
       userChangesProvider.overrideWithValue(AsyncValue.data(user)),
-      userComicsListProvider.overrideWithValue(AsyncValue.data(docs)),
-
-      // Comic 1
-      userComicFamily(userDoc1.id).overrideWithValue(AsyncValue.data(userDoc1)),
-      sharedComicFamily(userDoc1.id).overrideWithValue(AsyncValue.data(
-          SharedComicModel(scrapeUrl: userDoc1.id, name: 'Test 1'))),
-      pageListOverrideProvider(userDoc1.id).overrideWithValue(doc1Pages),
-      newestPageFamily(userDoc1.id)
-          .overrideWithValue(AsyncValue.data(doc1Pages.first)),
-      newFromPageFamily(userDoc1.id)
-          .overrideWithValue(AsyncValue.data(doc1Pages[3])),
-      currentPageFamily(userDoc1.id)
-          .overrideWithValue(AsyncValue.data(doc1Pages[6])),
-      endPageFamily(SharedComicPagesQueryInfo(
-              comicId: userDoc1.id, descending: false))
-          .overrideWithValue(AsyncValue.data(doc1Pages.first)),
-      endPageFamily(
-              SharedComicPagesQueryInfo(comicId: userDoc1.id, descending: true))
-          .overrideWithValue(AsyncValue.data(doc1Pages.last)),
-
-      // Comic 2
-      userComicFamily(userDoc2.id).overrideWithValue(AsyncValue.data(userDoc2)),
-      sharedComicFamily(userDoc2.id).overrideWithValue(AsyncValue.data(
-          SharedComicModel(scrapeUrl: userDoc2.id, name: 'Test 2'))),
+      userComicsListProvider.overrideWithValue(
+          AsyncValue.data(comics.map((e) => e.userDoc).toList())),
+      ...comicOverrides,
+      //imageCacheManagerProvider.overrideWithValue(value),
     ],
   ));
+
+  // Return name of first comic to be found by tooltip to tap
+  return comics.first.sharedComic.name!;
 }
 
-List<DocumentSnapshot<SharedComicPageModel>> _generateMockPages() {
+class _MockComicData {
+  final MockDocumentSnapshot<UserComicModel> userDoc;
+  final SharedComicModel sharedComic;
+  final List<MockDocumentSnapshot<SharedComicPageModel>> pages;
+  final int? newFromPage;
+  final int? currentPage;
+
+  _MockComicData(
+      {required this.userDoc,
+      required this.sharedComic,
+      required this.pages,
+      this.newFromPage,
+      this.currentPage});
+}
+
+_MockComicData _generateMockComic(
+    {required String name,
+    required Duration age,
+    int? newFromPage,
+    int? currentPage}) {
+  final userDoc = MockDocumentSnapshot<UserComicModel>();
+  when(userDoc.id).thenReturn(name);
+  when(userDoc.data()).thenReturn(UserComicModel(
+      lastReadTime: Timestamp.fromDate(DateTime.now().subtract(age))));
+
+  final pages = _generateMockPages();
+
+  return _MockComicData(
+    userDoc: userDoc,
+    sharedComic: SharedComicModel(scrapeUrl: name, name: name),
+    pages: pages,
+    newFromPage: newFromPage,
+    currentPage: currentPage,
+  );
+}
+
+List<MockDocumentSnapshot<SharedComicPageModel>> _generateMockPages() {
   const pageCount = 50;
-  final List<DocumentSnapshot<SharedComicPageModel>> list = [];
+  final List<MockDocumentSnapshot<SharedComicPageModel>> list = [];
   for (int i = pageCount; i > 0; i--) {
     final page = MockDocumentSnapshot<SharedComicPageModel>();
     when(page.id).thenReturn('comic page$i');
