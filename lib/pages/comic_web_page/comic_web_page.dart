@@ -106,72 +106,79 @@ class _ComicWebPageState extends State<ComicWebPage> {
       body: Stack(
         children: [
           // WebView wrapper
-          WillPopScope(
-            onWillPop: () async {
-              final userComicAsync =
-                  context.read(userComicFamily(widget.comicId));
-              final userComicSnapshot = userComicAsync.when(
-                data: (data) => data,
-                loading: () => null,
-                error: (err, stack) {
-                  debugPrintStack(label: err.toString(), stackTrace: stack);
-                  return null;
-                },
-              );
+          Consumer(
+            builder: (context, ref, child) {
+              return WillPopScope(
+                onWillPop: () async {
+                  final userComicAsync =
+                      ref.read(userComicFamily(widget.comicId));
+                  final userComicSnapshot = userComicAsync.when(
+                    data: (data) => data,
+                    loading: () => null,
+                    error: (err, stack) {
+                      debugPrintStack(label: err.toString(), stackTrace: stack);
+                      return null;
+                    },
+                  );
 
-              // Just pop if we couldn't get a ref to the user comic
-              if (userComicSnapshot == null) return true;
+                  // Just pop if we couldn't get a ref to the user comic
+                  if (userComicSnapshot == null) return true;
 
-              EasyLoading.show();
-              // Update read stats when exiting, to avoid many doc updates while binge-reading
-              if (_currentPage != null) {
-                var newFromPageId = userComicSnapshot.data()?.newFromPageId;
-                if (newFromPageId == null) {
-                  // If there is no "new from page" just set it to the last page
-                  final lastPage =
-                      await context.read(newestPageFamily(widget.comicId).last);
-                  newFromPageId = lastPage?.id;
-                } else {
-                  final newFromPageRef = context.read(sharedComicPageRefFamily(
-                      SharedComicPageInfo(
-                          comicId: widget.comicId, pageId: newFromPageId)));
+                  EasyLoading.show();
+                  // Update read stats when exiting, to avoid many doc updates while binge-reading
+                  if (_currentPage != null) {
+                    var newFromPageId = userComicSnapshot.data()?.newFromPageId;
+                    if (newFromPageId == null) {
+                      // If there is no "new from page" just set it to the last page
+                      final lastPage = await ref
+                          .read(newestPageFamily(widget.comicId).future);
+                      newFromPageId = lastPage?.id;
+                    } else {
+                      final newFromPageRef = ref.read(sharedComicPageRefFamily(
+                          SharedComicPageInfo(
+                              comicId: widget.comicId, pageId: newFromPageId)));
 
-                  // If reading into the new pages, then set them as not new
-                  final newFromPage = await newFromPageRef?.get();
-                  final newScrapeTime = newFromPage?.data()?.scrapeTime;
-                  final currentScrapeTime = _currentPage!.data()?.scrapeTime;
+                      // If reading into the new pages, then set them as not new
+                      final newFromPage = await newFromPageRef?.get();
+                      final newScrapeTime = newFromPage?.data()?.scrapeTime;
+                      final currentScrapeTime =
+                          _currentPage!.data()?.scrapeTime;
 
-                  // Can only compare scrape times if both pages have them
-                  if (newScrapeTime != null &&
-                      currentScrapeTime != null &&
-                      currentScrapeTime.compareTo(newScrapeTime) > 0) {
-                    newFromPageId = _currentPage!.id;
+                      // Can only compare scrape times if both pages have them
+                      if (newScrapeTime != null &&
+                          currentScrapeTime != null &&
+                          currentScrapeTime.compareTo(newScrapeTime) > 0) {
+                        newFromPageId = _currentPage!.id;
+                      }
+                    }
+
+                    await userComicSnapshot.reference.update({
+                      'lastReadTime': Timestamp.now(),
+                      'currentPageId': _currentPage!.id,
+                      'newFromPageId': newFromPageId,
+                    });
+                  } else {
+                    // Don't set currentPage reference if it's null
+                    await userComicSnapshot.reference.update({
+                      'lastReadTime': Timestamp.now(),
+                    });
                   }
-                }
+                  EasyLoading.dismiss();
 
-                await userComicSnapshot.reference.update({
-                  'lastReadTime': Timestamp.now(),
-                  'currentPageId': _currentPage!.id,
-                  'newFromPageId': newFromPageId,
-                });
-              } else {
-                // Don't set currentPage reference if it's null
-                await userComicSnapshot.reference.update({
-                  'lastReadTime': Timestamp.now(),
-                });
-              }
-              EasyLoading.dismiss();
+                  // Pop with value of current page
+                  Navigator.of(context).pop(_newValidPage);
 
-              // Pop with value of current page
-              Navigator.of(context).pop(_newValidPage);
-
-              // We manually handle popping above
-              return false;
+                  // We manually handle popping above
+                  return false;
+                },
+                child: child!,
+              );
             },
+            // Webview child doesn't need to rebuild with parent Consumer
             child: Consumer(
-              builder: (context, watch, child) {
+              builder: (context, ref, child) {
                 final userComicDocAsync =
-                    watch(userComicFamily(widget.comicId));
+                    ref.watch(userComicFamily(widget.comicId));
                 final userComicDoc = userComicDocAsync.when(
                   data: (data) => data,
                   loading: () => null,
@@ -181,6 +188,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
                 return WebView(
                   initialUrl: _initialUrl,
                   javascriptMode: JavascriptMode.unrestricted,
+                  zoomEnabled: true,
                   onWebViewCreated: (webViewController) {
                     _webViewController.complete(webViewController);
                   },
@@ -219,7 +227,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
                     if (userComicDoc == null) return;
 
-                    final pageRef = context.read(sharedComicPageRefFamily(
+                    final pageRef = ref.read(sharedComicPageRefFamily(
                         SharedComicPageInfo(
                             comicId: widget.comicId, pageId: pageId)));
 
@@ -233,7 +241,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
                       });
 
                       // Don't need to wait for this, just let it happen whenever
-                      _markPageRead(context, userComicDoc, value);
+                      _markPageRead(ref, userComicDoc, value);
                     });
                   },
                   onProgress: (progress) => _progressSubject.add(progress),
@@ -261,17 +269,14 @@ class _ComicWebPageState extends State<ComicWebPage> {
     );
   }
 
-  void _markPageRead(
-      BuildContext context,
-      DocumentSnapshot<UserComicModel> userComic,
+  void _markPageRead(WidgetRef ref, DocumentSnapshot<UserComicModel> userComic,
       DocumentSnapshot<SharedComicPageModel> sharedComicPage) async {
     // Try and get existing current page to compare scrape time
     if (_currentPage == null) {
       final currentPageId = userComic.data()!.currentPageId;
       if (currentPageId != null) {
-        final pageRef = context.read(sharedComicPageRefFamily(
-            SharedComicPageInfo(
-                comicId: widget.comicId, pageId: currentPageId)));
+        final pageRef = ref.read(sharedComicPageRefFamily(SharedComicPageInfo(
+            comicId: widget.comicId, pageId: currentPageId)));
 
         _currentPage = await pageRef?.get();
       }

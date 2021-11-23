@@ -22,7 +22,7 @@ final pageListOverrideProvider = Provider.autoDispose
   return null;
 });
 
-class ComicPage extends StatefulWidget {
+class ComicPage extends ConsumerStatefulWidget {
   final String comicId;
 
   const ComicPage({Key? key, required this.comicId}) : super(key: key);
@@ -37,7 +37,7 @@ enum _ScrollDirection {
   up,
 }
 
-class _ComicPageState extends State<ComicPage> {
+class _ComicPageState extends ConsumerState<ComicPage> {
   final int _initialDocLimit = 30;
   final int _moreDocLimit = 10;
 
@@ -55,8 +55,7 @@ class _ComicPageState extends State<ComicPage> {
   void initState() {
     super.initState();
 
-    final pageListOverride =
-        context.read(pageListOverrideProvider(widget.comicId));
+    final pageListOverride = ref.read(pageListOverrideProvider(widget.comicId));
     if (pageListOverride == null) {
       _pages = [];
       _isPagesOverridden = false;
@@ -69,12 +68,12 @@ class _ComicPageState extends State<ComicPage> {
     _scrollController = ScrollController();
 
     // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
-    context.read(userComicFamily(widget.comicId).last).then((userComicDoc) {
+    ref.read(userComicFamily(widget.comicId).future).then((userComicDoc) {
       final currentPageId = userComicDoc?.data()?.currentPageId;
 
       // Get ref to current page once for centering pages on start
       final currentPageRef = currentPageId != null
-          ? context.read(sharedComicPageRefFamily(SharedComicPageInfo(
+          ? ref.read(sharedComicPageRefFamily(SharedComicPageInfo(
               comicId: widget.comicId, pageId: currentPageId)))
           : null;
 
@@ -121,7 +120,7 @@ class _ComicPageState extends State<ComicPage> {
               ),
               onSelected: (context) async {
                 final userComicAsync =
-                    context.read(userComicFamily(widget.comicId));
+                    ref.read(userComicFamily(widget.comicId));
                 final userComicSnapshot = userComicAsync.when(
                   data: (data) => data,
                   loading: () => null,
@@ -150,9 +149,8 @@ class _ComicPageState extends State<ComicPage> {
             comicId: widget.comicId,
             onCurrentPressed: _centerPagesOnDoc,
             onFirstPressed:
-                _pages.isNotEmpty ? () => _goToEndPage(context, false) : null,
-            onLastPressed:
-                _pages.isNotEmpty ? () => _goToEndPage(context, true) : null,
+                _pages.isNotEmpty ? () => _goToEndPage(false) : null,
+            onLastPressed: _pages.isNotEmpty ? () => _goToEndPage(true) : null,
           );
 
           // Draw extra info as side bar on large screens
@@ -241,9 +239,9 @@ class _ComicPageState extends State<ComicPage> {
     }
 
     // Only text style changes
-    final titleText = Consumer(builder: (context, watch, child) {
-      final currentPageAsync = watch(currentPageFamily(widget.comicId));
-      final newFromPageAsync = watch(newFromPageFamily(widget.comicId));
+    final titleText = Consumer(builder: (context, ref, child) {
+      final currentPageAsync = ref.watch(currentPageFamily(widget.comicId));
+      final newFromPageAsync = ref.watch(newFromPageFamily(widget.comicId));
 
       // Derive isRead by comparing to current page
       final isRead = currentPageAsync.when(
@@ -319,10 +317,10 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  void _goToEndPage(BuildContext context, bool descending) async {
+  void _goToEndPage(bool descending) async {
     EasyLoading.show();
 
-    final doc = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+    final doc = await ref.read(endPageFamily(SharedComicPagesQueryInfo(
       comicId: widget.comicId,
       descending: descending,
     )).future);
@@ -360,7 +358,7 @@ class _ComicPageState extends State<ComicPage> {
     print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
     final pagesQuery =
-        context.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
+        ref.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
       comicId: widget.comicId,
       descending: true,
     )));
@@ -490,7 +488,7 @@ class _ComicPageState extends State<ComicPage> {
   }
 
   void _setPageAsCurrent(String pageId) async {
-    final userComic = context.read(userComicRefFamily(widget.comicId));
+    final userComic = ref.read(userComicRefFamily(widget.comicId));
 
     if (userComic == null) {
       await showErrorDialog(context,

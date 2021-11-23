@@ -26,8 +26,9 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
             padding:
                 const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
             child: Consumer(
-              builder: (context, watch, child) {
-                final user = watch(userChangesProvider)
+              builder: (context, ref, child) {
+                final user = ref
+                    .watch(userChangesProvider)
                     .maybeWhen(data: (data) => data, orElse: () => null);
 
                 // Should never show screen when user is not signed in
@@ -49,14 +50,18 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
                         // Only send verification once
                         onPressed: _sentVerification
                             ? null
-                            : () => _sendVerification(context, user),
+                            : () => _sendVerification(user),
                       ),
                     ),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        child: const Text('Already verified? Refresh!'),
-                        onPressed: () => _reloadUser(context, user),
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          return ElevatedButton(
+                            child: const Text('Already verified? Refresh!'),
+                            onPressed: () => _reloadUser(ref, user),
+                          );
+                        },
                       ),
                     ),
                     TextButton(
@@ -75,7 +80,7 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
     );
   }
 
-  Future<void> _sendVerification(BuildContext context, User user) async {
+  Future<void> _sendVerification(User user) async {
     EasyLoading.show();
     await user.sendEmailVerification();
     EasyLoading.dismiss();
@@ -85,11 +90,11 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
     });
   }
 
-  Future<void> _reloadUser(BuildContext context, User user) async {
+  Future<void> _reloadUser(WidgetRef ref, User user) async {
     EasyLoading.show();
     await user.reload();
     EasyLoading.dismiss();
 
-    context.refresh(userChangesProvider);
+    ref.refresh(userChangesProvider);
   }
 }

@@ -31,10 +31,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
               child: const Text('Sign Out'),
             ),
-            Consumer(builder: (context, watch, child) {
-              final auth = watch(authProvider)
+            Consumer(builder: (context, ref, child) {
+              final auth = ref
+                  .watch(authProvider)
                   .maybeWhen(data: (auth) => auth, orElse: () => null);
-              final user = watch(userChangesProvider)
+              final user = ref
+                  .watch(userChangesProvider)
                   .maybeWhen(data: (value) => value, orElse: () => null);
 
               final bool canResetPassword;

@@ -46,8 +46,8 @@ class _MyAppState extends State<MyApp> {
       ),
       // Firebase init
       home: Consumer(
-        builder: (context, watch, child) {
-          final asyncUser = watch(userChangesProvider);
+        builder: (context, ref, child) {
+          final asyncUser = ref.watch(userChangesProvider);
           return asyncUser.when(
             loading: () => _loadingScreen('Signing in...'),
             error: (err, stack) => _loadingScreen('Error signing in'),

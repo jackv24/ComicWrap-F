@@ -37,7 +37,7 @@ Future<void> linkGoogleAuth(BuildContext context) async {
   //_isChangingAuth = true;
 
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return;
@@ -71,7 +71,7 @@ Future<void> linkGoogleAuth(BuildContext context) async {
 
 Future<void> signOut(BuildContext context) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return;
@@ -89,7 +89,7 @@ Future<void> _showGetAuthError(BuildContext context) {
 Future<String?> submitSignIn(
     BuildContext context, EmailSignInDetails authDetails) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return 'no-auth-provider';
@@ -121,7 +121,7 @@ Future<String?> submitSignIn(
 Future<String?> submitSignUp(
     BuildContext context, EmailSignUpDetails authDetails) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return 'no-auth-provider';

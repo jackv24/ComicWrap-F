@@ -34,8 +34,8 @@ class ComicInfoSection extends StatelessWidget {
           elevation: 5.0,
           borderRadius: const BorderRadius.all(Radius.circular(12.0)),
           clipBehavior: Clip.antiAlias,
-          child: Consumer(builder: (context, watch, child) {
-            final sharedComicAsync = watch(sharedComicFamily(comicId));
+          child: Consumer(builder: (context, ref, child) {
+            final sharedComicAsync = ref.watch(sharedComicFamily(comicId));
             return sharedComicAsync.when(
               data: (data) => CardImageButton(
                 coverImageUrl: data?.coverImageUrl,
@@ -51,8 +51,8 @@ class ComicInfoSection extends StatelessWidget {
     final infoSection = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Consumer(builder: (context, watch, child) {
-          final sharedComicAsync = watch(sharedComicFamily(comicId));
+        Consumer(builder: (context, ref, child) {
+          final sharedComicAsync = ref.watch(sharedComicFamily(comicId));
           return sharedComicAsync.when(
             data: (data) => Row(
               children: [
@@ -72,8 +72,8 @@ class ComicInfoSection extends StatelessWidget {
           );
         }),
         const SizedBox(height: 2),
-        Consumer(builder: (context, watch, child) {
-          final userComicAsync = watch(userComicFamily(comicId));
+        Consumer(builder: (context, ref, child) {
+          final userComicAsync = ref.watch(userComicFamily(comicId));
           return userComicAsync.when(
             data: (data) => TimeAgoText(
                 time: data?.data()?.lastReadTime?.toDate(),
@@ -88,8 +88,8 @@ class ComicInfoSection extends StatelessWidget {
             error: (error, stack) => ErrorWidget(error),
           );
         }),
-        Consumer(builder: (context, watch, child) {
-          final newestPageAsync = watch(newestPageFamily(comicId));
+        Consumer(builder: (context, ref, child) {
+          final newestPageAsync = ref.watch(newestPageFamily(comicId));
           return newestPageAsync.when(
             data: (data) => TimeAgoText(
                 time: data?.data()?.scrapeTime?.toDate(),
@@ -115,8 +115,8 @@ class ComicInfoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Consumer(
-          builder: (context, watch, child) {
-            final currentPageAsync = watch(currentPageFamily(comicId));
+          builder: (context, ref, child) {
+            final currentPageAsync = ref.watch(currentPageFamily(comicId));
             return currentPageAsync.when(
               data: (data) => ElevatedButton.icon(
                 onPressed: data == null || onCurrentPressed == null
