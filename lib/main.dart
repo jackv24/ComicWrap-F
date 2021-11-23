@@ -35,7 +35,6 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ComicWrap',
-      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: const ColorScheme.light(),
         visualDensity: VisualDensity.adaptivePlatformDensity,

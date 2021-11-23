@@ -120,6 +120,7 @@ Future<void> main() async {
 }
 
 Widget _getCleanState({required Widget child, List<Override>? extraOverrides}) {
+  WidgetsApp.debugAllowBannerOverride = false;
   return ProviderScope(
     overrides: [
       // Break firebaseProvider to force all firebase connections to be mocked
