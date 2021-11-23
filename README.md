@@ -45,4 +45,7 @@ To run the comic scraping service, cd into the `service_scrape-comic` directory.
   - (Android) download and copy `google-services.json` to `android/app/`
   - (iOS) download and copy `GoogleService-Info.plist` to `ios/`
 
-- etc **TODO**
+- (from project root) run `flutter pub get` to get dependencies
+- run `flutter pub run build_runner build` to generate code (will sometimes need to run this again after editing certain files)
+
+You should now be ready for development! There are a few run configurations for Android Studio in `.run/`.
