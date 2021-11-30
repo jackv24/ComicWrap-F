@@ -8,6 +8,7 @@ import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/download.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -138,7 +139,7 @@ Future<void> _takeScreenshot(IntegrationTestWidgetsFlutterBinding binding,
   if (Platform.isAndroid) {
     await tester.pumpAndSettle();
     await binding.convertFlutterSurfaceToImage();
-  }
+  } //imageCacheManagerProvider.overrideWithValue(value),
 
   await tester.pumpAndSettle();
   await binding.takeScreenshot('$subFolder/${tester.testDescription}');
@@ -154,19 +155,23 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
       age: const Duration(hours: 3),
       newFromPage: 1,
       currentPage: 5,
+      coverImageFile: 'integration_test/assets/comic_cover_bros.png',
     ),
     _generateMockComic(
       name: 'Fight!',
       age: const Duration(days: 5),
       currentPage: 2,
+      coverImageFile: 'integration_test/assets/comic_cover_fight.png',
     ),
     _generateMockComic(
       name: 'Summer Time',
       age: const Duration(days: 12),
+      coverImageFile: 'integration_test/assets/comic_cover_shirt.png',
     ),
     _generateMockComic(
       name: 'Cool Shirts and Black Caps',
       age: const Duration(days: 15),
+      coverImageFile: 'integration_test/assets/comic_cover_summer.png',
     ),
   ];
 
@@ -175,10 +180,12 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
     final userDoc = comic.userDoc;
     final id = userDoc.id;
     final pages = comic.pages;
+    final coverImageUrl = comic.sharedComic.coverImageUrl;
+    final coverImageFile = comic.coverImageFile;
     comicOverrides.addAll([
       userComicFamily(id).overrideWithValue(AsyncValue.data(userDoc)),
-      sharedComicFamily(id).overrideWithValue(AsyncValue.data(
-          SharedComicModel(scrapeUrl: id, name: comic.sharedComic.name))),
+      sharedComicFamily(id)
+          .overrideWithValue(AsyncValue.data(comic.sharedComic)),
       pageListOverrideProvider(id).overrideWithValue(comic.pages),
       newestPageFamily(id).overrideWithValue(AsyncValue.data(pages.first)),
       newFromPageFamily(id).overrideWithValue(AsyncValue.data(
@@ -189,17 +196,20 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
           .overrideWithValue(AsyncValue.data(pages.first)),
       endPageFamily(SharedComicPagesQueryInfo(comicId: id, descending: true))
           .overrideWithValue(AsyncValue.data(pages.last)),
+      if (coverImageUrl != null && coverImageFile != null)
+        downloadImageProvider(coverImageUrl).overrideWithValue(AsyncValue.data(
+            ImageResponse(AssetImage(coverImageFile), coverImageUrl))),
     ]);
   }
 
+  const app = MyApp();
   await tester.pumpWidget(_getCleanState(
-    child: const MyApp(),
+    child: app,
     extraOverrides: [
       userChangesProvider.overrideWithValue(AsyncValue.data(user)),
       userComicsListProvider.overrideWithValue(
           AsyncValue.data(comics.map((e) => e.userDoc).toList())),
       ...comicOverrides,
-      //imageCacheManagerProvider.overrideWithValue(value),
     ],
   ));
 
@@ -210,6 +220,7 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
 class _MockComicData {
   final MockDocumentSnapshot<UserComicModel> userDoc;
   final SharedComicModel sharedComic;
+  final String? coverImageFile;
   final List<MockDocumentSnapshot<SharedComicPageModel>> pages;
   final int? newFromPage;
   final int? currentPage;
@@ -217,6 +228,7 @@ class _MockComicData {
   _MockComicData(
       {required this.userDoc,
       required this.sharedComic,
+      this.coverImageFile,
       required this.pages,
       this.newFromPage,
       this.currentPage});
@@ -226,7 +238,8 @@ _MockComicData _generateMockComic(
     {required String name,
     required Duration age,
     int? newFromPage,
-    int? currentPage}) {
+    int? currentPage,
+    String? coverImageFile}) {
   final userDoc = MockDocumentSnapshot<UserComicModel>();
   when(userDoc.id).thenReturn(name);
   when(userDoc.data()).thenReturn(UserComicModel(
@@ -236,7 +249,12 @@ _MockComicData _generateMockComic(
 
   return _MockComicData(
     userDoc: userDoc,
-    sharedComic: SharedComicModel(scrapeUrl: name, name: name),
+    sharedComic: SharedComicModel(
+        scrapeUrl: name,
+        name: name,
+        coverImageUrl:
+            coverImageFile != null ? 'http://$coverImageFile' : null),
+    coverImageFile: coverImageFile,
     pages: pages,
     newFromPage: newFromPage,
     currentPage: currentPage,

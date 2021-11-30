@@ -20,10 +20,10 @@ class CardImageButton extends ConsumerWidget {
     final progress = ref.watch(downloadImageProvider(url));
     return progress.when(
       data: (data) {
-        if (data is FileInfo) {
+        if (data is ImageResponse) {
           // Image downloaded, display image
           return Ink.image(
-            image: FileImage(data.file),
+            image: data.image,
             fit: BoxFit.cover,
             child: InkWell(
               onTap: onTap,
