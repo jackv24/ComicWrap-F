@@ -176,12 +176,19 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
   ];
 
   final List<Override> comicOverrides = [];
+  final List<AssetImage?> coverImageProviders = [];
   for (final comic in comics) {
     final userDoc = comic.userDoc;
     final id = userDoc.id;
     final pages = comic.pages;
     final coverImageUrl = comic.sharedComic.coverImageUrl;
     final coverImageFile = comic.coverImageFile;
+
+    final coverImageProvider = coverImageUrl != null && coverImageFile != null
+        ? AssetImage(coverImageFile)
+        : null;
+    coverImageProviders.add(coverImageProvider);
+
     comicOverrides.addAll([
       userComicFamily(id).overrideWithValue(AsyncValue.data(userDoc)),
       sharedComicFamily(id)
@@ -196,9 +203,9 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
           .overrideWithValue(AsyncValue.data(pages.first)),
       endPageFamily(SharedComicPagesQueryInfo(comicId: id, descending: true))
           .overrideWithValue(AsyncValue.data(pages.last)),
-      if (coverImageUrl != null && coverImageFile != null)
-        downloadImageProvider(coverImageUrl).overrideWithValue(AsyncValue.data(
-            ImageResponse(AssetImage(coverImageFile), coverImageUrl))),
+      if (coverImageProvider != null)
+        downloadImageProvider(coverImageUrl!).overrideWithValue(
+            AsyncValue.data(ImageResponse(coverImageProvider, coverImageUrl))),
     ]);
   }
 
@@ -212,6 +219,14 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
       ...comicOverrides,
     ],
   ));
+  await tester.pumpAndSettle();
+
+  // Wait for all cover images to be pre-cached
+  final BuildContext appContext = tester.element(find.byWidget(app));
+  for (final provider in coverImageProviders) {
+    if (provider != null) await precacheImage(provider, appContext);
+  }
+  await tester.pumpAndSettle();
 
   // Return name of first comic to be found by tooltip to tap
   return comics.first.sharedComic.name!;
