@@ -166,12 +166,12 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
     _generateMockComic(
       name: 'Summer Time',
       age: const Duration(days: 12),
-      coverImageFile: 'integration_test/assets/comic_cover_shirt.png',
+      coverImageFile: 'integration_test/assets/comic_cover_summer.png',
     ),
     _generateMockComic(
       name: 'Cool Shirts and Black Caps',
       age: const Duration(days: 15),
-      coverImageFile: 'integration_test/assets/comic_cover_summer.png',
+      coverImageFile: 'integration_test/assets/comic_cover_shirt.png',
     ),
   ];
 
