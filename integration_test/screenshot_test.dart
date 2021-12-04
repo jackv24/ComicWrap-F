@@ -10,6 +10,7 @@ import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/download.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
+import 'package:comicwrap_f/utils/settings.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,12 +28,12 @@ Future<void> main() async {
 
   group('promo', () {
     testWidgets('0_libraryScreen', (tester) async {
-      await _pumpPromoMock(tester);
+      await _pumpPromoMock(tester, ThemeMode.light);
       await _takeScreenshot(binding, tester, 'promo');
     });
 
     testWidgets('1_comicPage', (tester) async {
-      final tooltip = await _pumpPromoMock(tester);
+      final tooltip = await _pumpPromoMock(tester, ThemeMode.light);
 
       await tester.pumpAndSettle();
       final finder = find.byTooltip(tooltip);
@@ -40,23 +41,41 @@ Future<void> main() async {
 
       await _takeScreenshot(binding, tester, 'promo');
     });
+
+    // TODO: 2_comicWebPage
+
+    testWidgets('3_libraryScreenDark', (tester) async {
+      await _pumpPromoMock(tester, ThemeMode.dark);
+      await _takeScreenshot(binding, tester, 'promo');
+    });
   });
 
-  group('test', () {
+  _runAppearanceTests(binding, ThemeMode.light);
+  _runAppearanceTests(binding, ThemeMode.dark);
+}
+
+void _runAppearanceTests(
+  IntegrationTestWidgetsFlutterBinding binding,
+  ThemeMode themeMode,
+) {
+  final groupName = 'test_$themeMode';
+  group(groupName, () {
     testWidgets('loginScreen', (tester) async {
       await tester.pumpWidget(_getCleanState(
         child: const MyApp(),
+        themeMode: themeMode,
         extraOverrides: [
           userChangesProvider.overrideWithValue(const AsyncValue.data(null)),
         ],
       ));
 
-      await _takeScreenshot(binding, tester, 'test');
+      await _takeScreenshot(binding, tester, groupName);
     });
 
     testWidgets('emailSignUpScreen', (tester) async {
       await tester.pumpWidget(_getCleanState(
         child: const MyApp(),
+        themeMode: themeMode,
         extraOverrides: [
           userChangesProvider.overrideWithValue(const AsyncValue.data(null)),
         ],
@@ -66,7 +85,7 @@ Future<void> main() async {
       final finder = find.widgetWithText(TextButton, 'Sign Up with Email');
       await tester.tap(finder);
 
-      await _takeScreenshot(binding, tester, 'test');
+      await _takeScreenshot(binding, tester, groupName);
     });
 
     testWidgets('emailVerifyScreen', (tester) async {
@@ -76,12 +95,13 @@ Future<void> main() async {
 
       await tester.pumpWidget(_getCleanState(
         child: const MyApp(),
+        themeMode: themeMode,
         extraOverrides: [
           userChangesProvider.overrideWithValue(AsyncValue.data(user)),
         ],
       ));
 
-      await _takeScreenshot(binding, tester, 'test');
+      await _takeScreenshot(binding, tester, groupName);
     });
 
     testWidgets('libraryScreen', (tester) async {
@@ -90,13 +110,14 @@ Future<void> main() async {
 
       await tester.pumpWidget(_getCleanState(
         child: const MyApp(),
+        themeMode: themeMode,
         extraOverrides: [
           userChangesProvider.overrideWithValue(AsyncValue.data(user)),
           userComicsListProvider.overrideWithValue(const AsyncValue.data(null)),
         ],
       ));
 
-      await _takeScreenshot(binding, tester, 'test');
+      await _takeScreenshot(binding, tester, groupName);
     });
 
     testWidgets('settingsScreen', (tester) async {
@@ -105,6 +126,7 @@ Future<void> main() async {
 
       await tester.pumpWidget(_getCleanState(
         child: const MyApp(),
+        themeMode: themeMode,
         extraOverrides: [
           userChangesProvider.overrideWithValue(AsyncValue.data(user)),
           userComicsListProvider.overrideWithValue(const AsyncValue.data(null)),
@@ -115,18 +137,23 @@ Future<void> main() async {
       final finder = find.widgetWithIcon(IconButton, Icons.settings_rounded);
       await tester.tap(finder);
 
-      await _takeScreenshot(binding, tester, 'test');
+      await _takeScreenshot(binding, tester, groupName);
     });
   });
 }
 
-Widget _getCleanState({required Widget child, List<Override>? extraOverrides}) {
+Widget _getCleanState({
+  required Widget child,
+  required ThemeMode themeMode,
+  List<Override>? extraOverrides,
+}) {
   WidgetsApp.debugAllowBannerOverride = false;
   return ProviderScope(
     overrides: [
       // Break firebaseProvider to force all firebase connections to be mocked
       firebaseProvider
           .overrideWithValue(const AsyncValue.error('Not Implemented')),
+      themeModeProvider.overrideWithValue(themeMode),
       ...?extraOverrides,
     ],
     child: child,
@@ -145,7 +172,7 @@ Future<void> _takeScreenshot(IntegrationTestWidgetsFlutterBinding binding,
   await binding.takeScreenshot('$subFolder/${tester.testDescription}');
 }
 
-Future<String> _pumpPromoMock(WidgetTester tester) async {
+Future<String> _pumpPromoMock(WidgetTester tester, ThemeMode themeMode) async {
   final user = MockUser();
   when(user.emailVerified).thenReturn(true);
 
@@ -212,6 +239,7 @@ Future<String> _pumpPromoMock(WidgetTester tester) async {
   const app = MyApp();
   await tester.pumpWidget(_getCleanState(
     child: app,
+    themeMode: themeMode,
     extraOverrides: [
       userChangesProvider.overrideWithValue(AsyncValue.data(user)),
       userComicsListProvider.overrideWithValue(

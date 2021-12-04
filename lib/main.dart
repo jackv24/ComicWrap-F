@@ -3,6 +3,7 @@ import 'package:comicwrap_f/pages/auth/sign_in_screen.dart';
 import 'package:comicwrap_f/pages/library/library_screen.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
+import 'package:comicwrap_f/utils/settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -33,18 +34,26 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ComicWrap',
-      theme: ThemeData(
-        colorScheme: const ColorScheme.light(),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: const ColorScheme.dark(),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      // Firebase init
-      home: Consumer(
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeMode = ref.watch(themeModeProvider);
+        return MaterialApp(
+          title: 'ComicWrap',
+          theme: ThemeData(
+            colorScheme: const ColorScheme.light(),
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: const ColorScheme.dark(),
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          themeMode: themeMode,
+          // Firebase init
+          home: child,
+          builder: EasyLoading.init(),
+        );
+      },
+      child: Consumer(
         builder: (context, ref, child) {
           final asyncUser = ref.watch(userChangesProvider);
           return asyncUser.when(
@@ -63,7 +72,6 @@ class _MyAppState extends State<MyApp> {
           );
         },
       ),
-      builder: EasyLoading.init(),
     );
   }
 
