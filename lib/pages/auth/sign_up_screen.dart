@@ -1,3 +1,4 @@
+import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:flutter/material.dart';
@@ -38,60 +39,62 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     return MainPageScaffold(
       title: 'Email Sign Up',
-      bodySliver: SliverPadding(
-        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-        sliver: SliverList(
-          delegate: SliverChildListDelegate.fixed([
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.email),
-                labelText: 'Email',
-                hintText: 'you@example.com',
-                errorText: _emailErrorText,
+      bodySliver: MainPageInner(
+        sliver: SliverPadding(
+          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate.fixed([
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.email),
+                  labelText: 'Email',
+                  hintText: 'you@example.com',
+                  errorText: _emailErrorText,
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                onEditingComplete: () => node.nextFocus(),
+                controller: _email,
+                enabled: !_inProgress,
               ),
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              onEditingComplete: () => node.nextFocus(),
-              controller: _email,
-              enabled: !_inProgress,
-            ),
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.security),
-                labelText: 'Password',
-                errorText: _passAErrorText,
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.security),
+                  labelText: 'Password',
+                  errorText: _passAErrorText,
+                ),
+                obscureText: true,
+                onEditingComplete: () => node.nextFocus(),
+                controller: _passA,
+                enabled: !_inProgress,
               ),
-              obscureText: true,
-              onEditingComplete: () => node.nextFocus(),
-              controller: _passA,
-              enabled: !_inProgress,
-            ),
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.security),
-                labelText: 'Confirm Password',
-                errorText: _passBErrorText,
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.security),
+                  labelText: 'Confirm Password',
+                  errorText: _passBErrorText,
+                ),
+                obscureText: true,
+                onSubmitted: (_) {
+                  node.unfocus();
+                  _submit(context);
+                },
+                controller: _passB,
+                enabled: !_inProgress,
               ),
-              obscureText: true,
-              onSubmitted: (_) {
-                node.unfocus();
-                _submit(context);
-              },
-              controller: _passB,
-              enabled: !_inProgress,
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  child: const Text('Sign Up'),
-                  onPressed: _inProgress ? null : () => _submit(context),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20.0, horizontal: 20.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    child: const Text('Sign Up'),
+                    onPressed: _inProgress ? null : () => _submit(context),
+                  ),
                 ),
               ),
-            ),
-          ]),
+            ]),
+          ),
         ),
       ),
     );
@@ -140,12 +143,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         break;
 
       case null:
-        // No errors, account create succeeded!
+      // No errors, account create succeeded!
         Navigator.of(context).pop();
         break;
 
       default:
-        // Unhandled error, just show code
+      // Unhandled error, just show code
         setState(() {
           _emailErrorText = errorCode;
         });

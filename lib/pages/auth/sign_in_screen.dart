@@ -1,4 +1,5 @@
 import 'package:comicwrap_f/pages/auth/sign_up_screen.dart';
+import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/widgets/github_link_button.dart';
@@ -28,72 +29,74 @@ class _SignInScreenState extends State<SignInScreen> {
 
     return MainPageScaffold(
       title: 'Sign In',
-      bodySliver: SliverPadding(
-        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-        sliver: SliverList(
-          delegate: SliverChildListDelegate.fixed([
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.email),
-                labelText: 'Email',
-                hintText: 'you@example.com',
-                errorText: _emailErrorText,
+      bodySliver: MainPageInner(
+        sliver: SliverPadding(
+          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate.fixed([
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.email),
+                  labelText: 'Email',
+                  hintText: 'you@example.com',
+                  errorText: _emailErrorText,
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                onEditingComplete: () => node.nextFocus(),
+                controller: _email,
+                enabled: !_inProgress,
               ),
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              onEditingComplete: () => node.nextFocus(),
-              controller: _email,
-              enabled: !_inProgress,
-            ),
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.security),
-                labelText: 'Password',
-                errorText: _passErrorText,
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.security),
+                  labelText: 'Password',
+                  errorText: _passErrorText,
+                ),
+                obscureText: true,
+                onSubmitted: (_) {
+                  node.unfocus();
+                  _submit(context);
+                },
+                controller: _pass,
+                enabled: !_inProgress,
               ),
-              obscureText: true,
-              onSubmitted: (_) {
-                node.unfocus();
-                _submit(context);
-              },
-              controller: _pass,
-              enabled: !_inProgress,
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      child: const Text('Sign In'),
-                      onPressed: _inProgress ? null : () => _submit(context),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20.0, horizontal: 20.0),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        child: const Text('Sign In'),
+                        onPressed: _inProgress ? null : () => _submit(context),
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: SignInButton(Buttons.Google, onPressed: () async {
-                      setState(() {
-                        _inProgress = true;
-                      });
-                      await linkGoogleAuth(context);
-                      setState(() {
-                        _inProgress = false;
-                      });
-                    }),
-                  ),
-                  TextButton(
-                    child: const Text('Sign Up with Email'),
-                    onPressed:
-                        _inProgress ? null : () => _onSignUpPressed(context),
-                  )
-                ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: SignInButton(Buttons.Google, onPressed: () async {
+                        setState(() {
+                          _inProgress = true;
+                        });
+                        await linkGoogleAuth(context);
+                        setState(() {
+                          _inProgress = false;
+                        });
+                      }),
+                    ),
+                    TextButton(
+                      child: const Text('Sign Up with Email'),
+                      onPressed:
+                          _inProgress ? null : () => _onSignUpPressed(context),
+                    )
+                  ],
+                ),
               ),
-            ),
-            const Divider(),
-            const GitHubLinkButton(),
-          ]),
+              const Divider(),
+              const GitHubLinkButton(),
+            ]),
+          ),
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/widgets/github_link_button.dart';
@@ -20,62 +21,64 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
   Widget build(BuildContext context) {
     return MainPageScaffold(
       title: 'Verify Email',
-      bodySliver: SliverList(
-        delegate: SliverChildListDelegate.fixed([
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-            child: Consumer(
-              builder: (context, ref, child) {
-                final user = ref
-                    .watch(userChangesProvider)
-                    .maybeWhen(data: (data) => data, orElse: () => null);
+      bodySliver: MainPageInner(
+        sliver: SliverList(
+          delegate: SliverChildListDelegate.fixed([
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final user = ref
+                      .watch(userChangesProvider)
+                      .maybeWhen(data: (data) => data, orElse: () => null);
 
-                // Should never show screen when user is not signed in
-                if (user == null) return ErrorWidget('User is null');
+                  // Should never show screen when user is not signed in
+                  if (user == null) return ErrorWidget('User is null');
 
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0),
-                      child: Text(
-                        '${user.email} is signed in but not verified.',
-                        style: Theme.of(context).textTheme.subtitle1,
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20.0),
+                        child: Text(
+                          '${user.email} is signed in but not verified.',
+                          style: Theme.of(context).textTheme.subtitle1,
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        child: const Text('Send verification email'),
-                        // Only send verification once
-                        onPressed: _sentVerification
-                            ? null
-                            : () => _sendVerification(user),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          child: const Text('Send verification email'),
+                          // Only send verification once
+                          onPressed: _sentVerification
+                              ? null
+                              : () => _sendVerification(user),
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Consumer(
-                        builder: (context, ref, child) {
-                          return ElevatedButton(
-                            child: const Text('Already verified? Refresh!'),
-                            onPressed: () => _reloadUser(ref, user),
-                          );
-                        },
+                      SizedBox(
+                        width: double.infinity,
+                        child: Consumer(
+                          builder: (context, ref, child) {
+                            return ElevatedButton(
+                              child: const Text('Already verified? Refresh!'),
+                              onPressed: () => _reloadUser(ref, user),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                    TextButton(
-                      child: const Text('Sign Out'),
-                      onPressed: () => signOut(context),
-                    )
-                  ],
-                );
-              },
+                      TextButton(
+                        child: const Text('Sign Out'),
+                        onPressed: () => signOut(context),
+                      )
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
-          const Divider(),
-          const GitHubLinkButton(),
-        ]),
+            const Divider(),
+            const GitHubLinkButton(),
+          ]),
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_info_section.dart';
 import 'package:comicwrap_f/pages/comic_web_page/comic_web_page.dart';
@@ -154,7 +155,7 @@ class _ComicPageState extends ConsumerState<ComicPage> {
           );
 
           // Draw extra info as side bar on large screens
-          if (constraints.maxWidth > 600) {
+          if (constraints.maxWidth > wideScreenThreshold) {
             return Row(
               children: [
                 // Extra info side bar
