@@ -143,7 +143,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         break;
 
       case null:
-      // No errors, account create succeeded!
+        // No errors, account create succeeded!
         Navigator.of(context).pop();
         break;
 

@@ -2,9 +2,12 @@ import 'package:comicwrap_f/pages/auth/sign_up_screen.dart';
 import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/utils/auth.dart';
+import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:comicwrap_f/widgets/github_link_button.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -22,6 +25,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _pass = TextEditingController();
 
   bool _inProgress = false;
+  bool _hasSentPassReset = false;
 
   @override
   Widget build(BuildContext context) {
@@ -75,21 +79,38 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(
                       width: double.infinity,
-                      child: SignInButton(Buttons.Google, onPressed: () async {
-                        setState(() {
-                          _inProgress = true;
-                        });
-                        await linkGoogleAuth(context);
-                        setState(() {
-                          _inProgress = false;
-                        });
-                      }),
+                      child: AbsorbPointer(
+                        absorbing: _inProgress,
+                        child:
+                            SignInButton(Buttons.Google, onPressed: () async {
+                          setState(() {
+                            _inProgress = true;
+                          });
+                          await linkGoogleAuth(context);
+                          setState(() {
+                            _inProgress = false;
+                          });
+                        }),
+                      ),
                     ),
                     TextButton(
                       child: const Text('Sign Up with Email'),
                       onPressed:
                           _inProgress ? null : () => _onSignUpPressed(context),
-                    )
+                    ),
+                    // Password reset button
+                    Consumer(builder: (context, ref, child) {
+                      final auth = ref
+                          .watch(authProvider)
+                          .maybeWhen(data: (auth) => auth, orElse: () => null);
+                      return TextButton(
+                        onPressed:
+                            _inProgress || auth == null || _hasSentPassReset
+                                ? null
+                                : () => _onResetPasswordPressed(context, auth),
+                        child: const Text('Reset Password'),
+                      );
+                    })
                   ],
                 ),
               ),
@@ -112,11 +133,14 @@ class _SignInScreenState extends State<SignInScreen> {
 
     final errorCode = await submitSignIn(
         context, EmailSignInDetails(_email.text, _pass.text));
+    _showErrorCode(errorCode);
 
     setState(() {
       _inProgress = false;
     });
+  }
 
+  void _showErrorCode(String? errorCode) {
     switch (errorCode) {
       case 'empty-auth':
         setState(() {
@@ -149,6 +173,12 @@ class _SignInScreenState extends State<SignInScreen> {
         });
         break;
 
+      case 'invalid-email':
+        setState(() {
+          _emailErrorText = 'Email is invalid';
+        });
+        break;
+
       case null:
         // Do nothing if there were no errors
         // App state management will handle switching screens
@@ -172,5 +202,64 @@ class _SignInScreenState extends State<SignInScreen> {
         );
       },
     ));
+  }
+
+  Future<void> _onResetPasswordPressed(
+      BuildContext context, FirebaseAuth auth) async {
+    setState(() {
+      _emailErrorText = null;
+      _passErrorText = null;
+    });
+
+    if (_email.text.isEmpty) {
+      _showErrorCode('empty-email');
+      return;
+    }
+
+    final response = await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Reset Password?'),
+            content: Text(
+                'Are you sure you want to reset the password for ${_email.text}?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Reset Password'),
+              ),
+            ],
+          );
+        });
+
+    if (response != true) {
+      return;
+    }
+
+    setState(() {
+      _inProgress = true;
+    });
+
+    try {
+      await auth.sendPasswordResetEmail(email: _email.text);
+    } on FirebaseAuthException catch (exception, _) {
+      setState(() {
+        _inProgress = false;
+      });
+      _showErrorCode(exception.code);
+      return;
+    }
+
+    setState(() {
+      _inProgress = false;
+      _hasSentPassReset = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password reset email sent')));
   }
 }
