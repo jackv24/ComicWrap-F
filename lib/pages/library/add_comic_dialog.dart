@@ -4,8 +4,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddComicDialog extends StatefulWidget {
   const AddComicDialog({Key? key}) : super(key: key);
@@ -45,13 +45,13 @@ class _AddComicDialogState extends State<AddComicDialog> {
         ),
         actions: <Widget>[
           TextButton(
-            child: Text(loc.addComicAddButton),
-            onPressed: _preventPop ? null : () => _submit(context),
-          ),
-          TextButton(
             child: Text(loc.addComicCancelButton),
             onPressed:
                 _preventPop ? null : () => Navigator.of(context).pop(null),
+          ),
+          TextButton(
+            child: Text(loc.addComicAddButton),
+            onPressed: _preventPop ? null : () => _submit(context),
           ),
         ],
       ),
