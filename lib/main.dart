@@ -7,9 +7,9 @@ import 'package:comicwrap_f/utils/settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,17 +36,16 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-
     return Consumer(
       builder: (context, ref, child) {
         final themeMode = ref.watch(themeModeProvider);
         return MaterialApp(
-          onGenerateTitle: (context) => loc.appTitle,
+          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
+            AppLocalizations.delegate,
           ],
           supportedLocales: const [
             Locale('en'),
@@ -67,6 +66,7 @@ class _MyAppState extends State<MyApp> {
       },
       child: Consumer(
         builder: (context, ref, child) {
+          final loc = AppLocalizations.of(context)!;
           final asyncUser = ref.watch(userChangesProvider);
           return asyncUser.when(
             loading: () => _loadingScreen(loc.signingIn),
