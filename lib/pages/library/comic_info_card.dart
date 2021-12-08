@@ -6,6 +6,7 @@ import 'package:comicwrap_f/widgets/card_image_button.dart';
 import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ComicInfoCard extends ConsumerWidget {
   final String comicId;
@@ -17,6 +18,8 @@ class ComicInfoCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
+
     final sharedComicAsync = ref.watch(sharedComicFamily(comicId));
     final newFromPageAsync = ref.watch(newFromPageFamily(comicId));
     final newestPageAsync = ref.watch(newestPageFamily(comicId));
@@ -31,7 +34,7 @@ class ComicInfoCard extends ConsumerWidget {
         newestPageTime.compareTo(newFromTime) > 0;
 
     return sharedComicAsync.when(
-      loading: () => const Text('Loading...'),
+      loading: () => Text(loc.loadingText),
       error: (err, stack) => Text('Error: $err'),
       data: (sharedComic) {
         if (sharedComic == null) return const Text('Shared Comic is null');

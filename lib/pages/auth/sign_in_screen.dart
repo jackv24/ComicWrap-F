@@ -9,6 +9,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
@@ -30,9 +31,10 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
+    final loc = AppLocalizations.of(context)!;
 
     return MainPageScaffold(
-      title: 'Sign In',
+      title: loc.signInTitle,
       bodySliver: MainPageInner(
         sliver: SliverPadding(
           padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
@@ -41,7 +43,7 @@ class _SignInScreenState extends State<SignInScreen> {
               TextField(
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.email),
-                  labelText: 'Email',
+                  labelText: loc.signInEmail,
                   hintText: 'you@example.com',
                   errorText: _emailErrorText,
                 ),
@@ -54,7 +56,7 @@ class _SignInScreenState extends State<SignInScreen> {
               TextField(
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.security),
-                  labelText: 'Password',
+                  labelText: loc.signInPassword,
                   errorText: _passErrorText,
                 ),
                 obscureText: true,
@@ -73,7 +75,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        child: const Text('Sign In'),
+                        child: Text(loc.signInButton),
                         onPressed: _inProgress ? null : () => _submit(context),
                       ),
                     ),
@@ -94,7 +96,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                     ),
                     TextButton(
-                      child: const Text('Sign Up with Email'),
+                      child: Text(loc.signUpEmailButton),
                       onPressed:
                           _inProgress ? null : () => _onSignUpPressed(context),
                     ),
@@ -108,7 +110,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             _inProgress || auth == null || _hasSentPassReset
                                 ? null
                                 : () => _onResetPasswordPressed(context, auth),
-                        child: const Text('Reset Password'),
+                        child: Text(loc.resetPassword),
                       );
                     })
                   ],
@@ -133,49 +135,51 @@ class _SignInScreenState extends State<SignInScreen> {
 
     final errorCode = await submitSignIn(
         context, EmailSignInDetails(_email.text, _pass.text));
-    _showErrorCode(errorCode);
+    _showErrorCode(context, errorCode);
 
     setState(() {
       _inProgress = false;
     });
   }
 
-  void _showErrorCode(String? errorCode) {
+  void _showErrorCode(BuildContext context, String? errorCode) {
+    final loc = AppLocalizations.of(context)!;
+
     switch (errorCode) {
       case 'empty-auth':
         setState(() {
-          _emailErrorText = 'Required';
-          _passErrorText = 'Required';
+          _emailErrorText = loc.errorRequired;
+          _passErrorText = loc.errorRequired;
         });
         break;
 
       case 'empty-email':
         setState(() {
-          _emailErrorText = 'Required';
+          _emailErrorText = loc.errorRequired;
         });
         break;
 
       case 'empty-pass':
         setState(() {
-          _passErrorText = 'Required';
+          _passErrorText = loc.errorRequired;
         });
         break;
 
       case 'user-not-found':
         setState(() {
-          _emailErrorText = 'Email is not registered';
+          _emailErrorText = loc.errorNoUser;
         });
         break;
 
       case 'wrong-password':
         setState(() {
-          _passErrorText = 'Wrong password';
+          _passErrorText = loc.errorWrongPass;
         });
         break;
 
       case 'invalid-email':
         setState(() {
-          _emailErrorText = 'Email is invalid';
+          _emailErrorText = loc.errorInvalidEmail;
         });
         break;
 
@@ -212,25 +216,26 @@ class _SignInScreenState extends State<SignInScreen> {
     });
 
     if (_email.text.isEmpty) {
-      _showErrorCode('empty-email');
+      _showErrorCode(context, 'empty-email');
       return;
     }
+
+    final loc = AppLocalizations.of(context)!;
 
     final response = await showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Reset Password?'),
-            content: Text(
-                'Are you sure you want to reset the password for ${_email.text}?'),
+            title: Text(loc.resetPassDialogTitle),
+            content: Text(loc.resetPassDialogText(_email.text)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                child: Text(loc.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Reset Password'),
+                child: Text(loc.resetPassword),
               ),
             ],
           );
@@ -250,7 +255,7 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() {
         _inProgress = false;
       });
-      _showErrorCode(exception.code);
+      _showErrorCode(context, exception.code);
       return;
     }
 
@@ -259,7 +264,7 @@ class _SignInScreenState extends State<SignInScreen> {
       _hasSentPassReset = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset email sent')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(loc.resetPassSent)));
   }
 }

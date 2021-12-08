@@ -13,6 +13,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 const listItemHeight = 50.0;
 
@@ -67,6 +68,25 @@ class _ComicPageState extends ConsumerState<ComicPage> {
     }
 
     _scrollController = ScrollController();
+    _scrollController!.addListener(() {
+      final maxScroll = _scrollController!.position.maxScrollExtent;
+      final minScroll = _scrollController!.position.minScrollExtent;
+      final currentScroll = _scrollController!.position.pixels;
+
+      // Fetch more documents if user scrolls 20% of device height
+      final delta = MediaQuery.of(context).size.height * 0.2;
+
+      final distanceToMax = maxScroll - currentScroll;
+      final distanceToMin = currentScroll - minScroll;
+
+      //print('Delta: $delta, To Min: $distanceToMin, To Max: $distanceToMax');
+
+      if (distanceToMax <= delta) {
+        _getPages(_ScrollDirection.down);
+      } else if (distanceToMin <= delta) {
+        _getPages(_ScrollDirection.up);
+      }
+    });
 
     // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
     ref.read(userComicFamily(widget.comicId).future).then((userComicDoc) {
@@ -90,34 +110,16 @@ class _ComicPageState extends ConsumerState<ComicPage> {
 
   @override
   Widget build(BuildContext context) {
-    _scrollController!.addListener(() {
-      final maxScroll = _scrollController!.position.maxScrollExtent;
-      final minScroll = _scrollController!.position.minScrollExtent;
-      final currentScroll = _scrollController!.position.pixels;
-
-      // Fetch more documents if user scrolls 20% of device height
-      final delta = MediaQuery.of(context).size.height * 0.2;
-
-      final distanceToMax = maxScroll - currentScroll;
-      final distanceToMin = currentScroll - minScroll;
-
-      //print('Delta: $delta, To Min: $distanceToMin, To Max: $distanceToMax');
-
-      if (distanceToMax <= delta) {
-        _getPages(_ScrollDirection.down);
-      } else if (distanceToMin <= delta) {
-        _getPages(_ScrollDirection.up);
-      }
-    });
+    final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
         actions: [
           MoreActionButton(actions: [
             FunctionListItem(
-              child: const ListTile(
-                title: Text('Delete'),
-                trailing: Icon(Icons.delete),
+              child: ListTile(
+                title: Text(loc.delete),
+                trailing: const Icon(Icons.delete),
               ),
               onSelected: (context) async {
                 final userComicAsync =
@@ -136,8 +138,7 @@ class _ComicPageState extends ConsumerState<ComicPage> {
                   // This comic has now been removed, so close it's page
                   Navigator.of(context).pop();
                 } else {
-                  await showErrorDialog(
-                      context, 'Failed to delete: couldn\'t get user comic');
+                  await showErrorDialog(context, loc.comicDeleteFail);
                 }
               },
             ),
@@ -192,6 +193,8 @@ class _ComicPageState extends ConsumerState<ComicPage> {
   }
 
   Widget _buildList(BuildContext context, EdgeInsetsGeometry listPadding) {
+    final loc = AppLocalizations.of(context)!;
+
     return Card(
       elevation: 5,
       margin: EdgeInsetsDirectional.zero,
@@ -201,7 +204,7 @@ class _ComicPageState extends ConsumerState<ComicPage> {
           alignment: AlignmentDirectional.bottomCenter,
           children: [
             _pages.isEmpty
-                ? const Center(child: Text('No pages...'))
+                ? Center(child: Text(loc.comicNoPages))
                 : ListView.builder(
                     controller: _scrollController,
                     itemCount: _pages.length,
@@ -279,6 +282,8 @@ class _ComicPageState extends ConsumerState<ComicPage> {
       return Text(title);
     });
 
+    final loc = AppLocalizations.of(context)!;
+
     return GestureDetector(
       onTapDown: (details) => _listTapDownDetails = details,
       child: ListTile(
@@ -290,7 +295,7 @@ class _ComicPageState extends ConsumerState<ComicPage> {
               context: context,
               position: RelativeRect.fromLTRB(offset.dx, offset.dy, 0, 0),
               items: [
-                PopupMenuItem(value: page.id, child: const Text('Set Bookmark'))
+                PopupMenuItem(value: page.id, child: Text(loc.comicSetBookmark))
               ]);
           if (val != null) _setPageAsCurrent(val);
         },
@@ -492,8 +497,8 @@ class _ComicPageState extends ConsumerState<ComicPage> {
     final userComic = ref.read(userComicRefFamily(widget.comicId));
 
     if (userComic == null) {
-      await showErrorDialog(context,
-          'Failed to set page as current: couldn\'t get user comic ref.');
+      final loc = AppLocalizations.of(context)!;
+      await showErrorDialog(context, loc.comicSetBookmarkFail);
       return;
     }
 

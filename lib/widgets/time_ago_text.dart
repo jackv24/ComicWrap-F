@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TimeAgoText extends StatefulWidget {
   final DateTime? time;
@@ -20,9 +21,11 @@ class _TimeAgoTextState extends State<TimeAgoText> {
 
   @override
   void initState() {
+    final loc = AppLocalizations.of(context)!;
+
     if (widget.time == null) {
       // No need to update periodically if it'll never change
-      _text = 'never';
+      _text = loc.timeAgoNever;
     } else {
       _text = timeago.format(widget.time!);
 

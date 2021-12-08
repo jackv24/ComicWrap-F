@@ -13,6 +13,7 @@ import 'package:rxdart/subjects.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ComicWebPage extends StatefulWidget {
   final String comicId;
@@ -62,6 +63,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     final pageData = _newPage?.data();
     final pageTitle = pageData?.text ?? '';
 
@@ -80,18 +83,18 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
               return MoreActionButton(actions: [
                 FunctionListItem(
-                  child: const ListTile(
-                    title: Text('Refresh'),
-                    trailing: Icon(Icons.refresh),
+                  child: ListTile(
+                    title: Text(loc.refresh),
+                    trailing: const Icon(Icons.refresh),
                   ),
                   onSelected: (context) async {
                     await controller.reload();
                   },
                 ),
                 FunctionListItem(
-                  child: const ListTile(
-                    title: Text('Open Browser'),
-                    trailing: Icon(Icons.open_in_browser),
+                  child: ListTile(
+                    title: Text(loc.webOpenBrowser),
+                    trailing: const Icon(Icons.open_in_browser),
                   ),
                   onSelected: (context) async {
                     final url = await snapshot.data!.currentUrl();
@@ -305,8 +308,9 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (url != null && await canLaunch(url)) {
       await launch(url);
     } else {
+      final loc = AppLocalizations.of(context)!;
       final displayUrl = url ?? 'null';
-      await showErrorDialog(context, 'Could not open URL: $displayUrl');
+      await showErrorDialog(context, loc.webErrorUrl(displayUrl));
     }
   }
 }

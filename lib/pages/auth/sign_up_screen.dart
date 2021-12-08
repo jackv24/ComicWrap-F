@@ -2,6 +2,7 @@ import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SignUpScreen extends StatefulWidget {
   final String? initialEmail;
@@ -36,9 +37,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
+    final loc = AppLocalizations.of(context)!;
 
     return MainPageScaffold(
-      title: 'Email Sign Up',
+      title: loc.signUpTitle,
       bodySliver: MainPageInner(
         sliver: SliverPadding(
           padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
@@ -47,7 +49,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               TextField(
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.email),
-                  labelText: 'Email',
+                  labelText: loc.signInEmail,
                   hintText: 'you@example.com',
                   errorText: _emailErrorText,
                 ),
@@ -60,7 +62,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               TextField(
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.security),
-                  labelText: 'Password',
+                  labelText: loc.signInPassword,
                   errorText: _passAErrorText,
                 ),
                 obscureText: true,
@@ -71,7 +73,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               TextField(
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.security),
-                  labelText: 'Confirm Password',
+                  labelText: loc.signUpPassConfirm,
                   errorText: _passBErrorText,
                 ),
                 obscureText: true,
@@ -88,7 +90,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    child: const Text('Sign Up'),
+                    child: Text(loc.signUpButton),
                     onPressed: _inProgress ? null : () => _submit(context),
                   ),
                 ),
@@ -116,29 +118,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _inProgress = false;
     });
 
+    final loc = AppLocalizations.of(context)!;
+
     switch (errorCode) {
       case 'empty-auth':
         setState(() {
-          _emailErrorText = 'Required';
-          _passAErrorText = 'Required';
+          _emailErrorText = loc.errorRequired;
+          _passAErrorText = loc.errorRequired;
         });
         break;
 
       case 'empty-email':
         setState(() {
-          _emailErrorText = 'Required';
+          _emailErrorText = loc.errorRequired;
         });
         break;
 
       case 'empty-pass':
         setState(() {
-          _passAErrorText = 'Required';
+          _passAErrorText = loc.errorRequired;
         });
         break;
 
       case 'pass-not-match':
         setState(() {
-          _passBErrorText = 'Does not match';
+          _passBErrorText = loc.errorPassMatch;
         });
         break;
 
@@ -148,7 +152,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         break;
 
       default:
-      // Unhandled error, just show code
+        // Unhandled error, just show code
         setState(() {
           _emailErrorText = errorCode;
         });

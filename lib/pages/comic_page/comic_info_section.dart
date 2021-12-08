@@ -5,6 +5,7 @@ import 'package:comicwrap_f/widgets/card_image_button.dart';
 import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ComicInfoSection extends StatelessWidget {
   final String comicId;
@@ -22,6 +23,8 @@ class ComicInfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     final coverSection = Material(
       color: Colors.white,
       elevation: 5.0,
@@ -67,7 +70,7 @@ class ComicInfoSection extends StatelessWidget {
                 )
               ],
             ),
-            loading: () => const Text('Loading...'),
+            loading: () => Text(loc.loadingText),
             error: (error, stack) => ErrorWidget(error),
           );
         }),
@@ -79,12 +82,12 @@ class ComicInfoSection extends StatelessWidget {
                 time: data?.data()?.lastReadTime?.toDate(),
                 builder: (text) {
                   return Text(
-                    'Read: $text',
+                    loc.infoRead(text),
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.subtitle2,
                   );
                 }),
-            loading: () => const Text('Loading...'),
+            loading: () => Text(loc.loadingText),
             error: (error, stack) => ErrorWidget(error),
           );
         }),
@@ -95,13 +98,13 @@ class ComicInfoSection extends StatelessWidget {
                 time: data?.data()?.scrapeTime?.toDate(),
                 builder: (text) {
                   return Text(
-                    'Updated: $text',
+                    loc.infoUpdated(text),
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.subtitle2,
                   );
                 }),
             loading: () => Text(
-              'Updated: ...',
+              loc.infoUpdated('...'),
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.subtitle2,
             ),
@@ -124,15 +127,15 @@ class ComicInfoSection extends StatelessWidget {
                     : () => onCurrentPressed!(data),
                 icon: const Icon(Icons.bookmark),
                 label: Text(
-                  data?.data()?.text ?? 'No bookmark',
+                  data?.data()?.text ?? loc.infoNoBookmark,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               loading: () => ElevatedButton.icon(
                 onPressed: null,
                 icon: const Icon(Icons.bookmark),
-                label: const Text(
-                  'Loading...',
+                label: Text(
+                  loc.loadingText,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -146,14 +149,14 @@ class ComicInfoSection extends StatelessWidget {
               child: ElevatedButton.icon(
                   onPressed: onFirstPressed,
                   icon: const Icon(Icons.first_page),
-                  label: const Text('First')),
+                  label: Text(loc.buttonFirst)),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton.icon(
                   onPressed: onLastPressed,
                   icon: const Icon(Icons.last_page),
-                  label: const Text('Last')),
+                  label: Text(loc.buttonLast)),
             )
           ],
         )

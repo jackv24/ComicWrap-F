@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class EmailVerifyScreen extends StatefulWidget {
   const EmailVerifyScreen({Key? key}) : super(key: key);
@@ -19,6 +20,8 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return MainPageScaffold(
       title: 'Verify Email',
       bodySliver: MainPageInner(
@@ -41,14 +44,14 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 20.0),
                         child: Text(
-                          '${user.email} is signed in but not verified.',
+                          loc.emailVerifyUserNull(user.email!),
                           style: Theme.of(context).textTheme.subtitle1,
                         ),
                       ),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          child: const Text('Send verification email'),
+                          child: Text(loc.emailVerifySend),
                           // Only send verification once
                           onPressed: _sentVerification
                               ? null
@@ -60,14 +63,14 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
                         child: Consumer(
                           builder: (context, ref, child) {
                             return ElevatedButton(
-                              child: const Text('Already verified? Refresh!'),
+                              child: Text(loc.emailVerifyRefresh),
                               onPressed: () => _reloadUser(ref, user),
                             );
                           },
                         ),
                       ),
                       TextButton(
-                        child: const Text('Sign Out'),
+                        child: Text(loc.signOut),
                         onPressed: () => signOut(context),
                       )
                     ],

@@ -5,6 +5,7 @@ import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AddComicDialog extends StatefulWidget {
   const AddComicDialog({Key? key}) : super(key: key);
@@ -22,16 +23,17 @@ class _AddComicDialogState extends State<AddComicDialog> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
+    final loc = AppLocalizations.of(context)!;
 
     return WillPopScope(
       onWillPop: () async => !_preventPop,
       child: AlertDialog(
-        title: const Text('Add Comic'),
+        title: Text(loc.addComicTitle),
         content: SingleChildScrollView(
           child: TextField(
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.web),
-              labelText: 'URL',
+              labelText: loc.addComicUrl,
               hintText: 'http://www.example.com/',
               errorText: _urlErrorText,
             ),
@@ -43,11 +45,11 @@ class _AddComicDialogState extends State<AddComicDialog> {
         ),
         actions: <Widget>[
           TextButton(
-            child: const Text('Add'),
+            child: Text(loc.addComicAddButton),
             onPressed: _preventPop ? null : () => _submit(context),
           ),
           TextButton(
-            child: const Text('Cancel'),
+            child: Text(loc.addComicCancelButton),
             onPressed:
                 _preventPop ? null : () => Navigator.of(context).pop(null),
           ),
