@@ -16,10 +16,10 @@ class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, ScopedReader watch) {
     final loc = AppLocalizations.of(context)!;
 
-    final asyncComicsList = ref.watch(userComicsListProvider);
+    final asyncComicsList = watch(userComicsListProvider);
     final comicsListWidget = asyncComicsList.when(
       loading: () => SliverToBoxAdapter(
         child: Text(loc.loadingText),

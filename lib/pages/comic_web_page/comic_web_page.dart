@@ -110,11 +110,11 @@ class _ComicWebPageState extends State<ComicWebPage> {
         children: [
           // WebView wrapper
           Consumer(
-            builder: (context, ref, child) {
+            builder: (context, watch, child) {
               return WillPopScope(
                 onWillPop: () async {
                   final userComicAsync =
-                      ref.read(userComicFamily(widget.comicId));
+                      context.read(userComicFamily(widget.comicId));
                   final userComicSnapshot = userComicAsync.when(
                     data: (data) => data,
                     loading: () => null,
@@ -133,12 +133,12 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     var newFromPageId = userComicSnapshot.data()?.newFromPageId;
                     if (newFromPageId == null) {
                       // If there is no "new from page" just set it to the last page
-                      final lastPage = await ref
-                          .read(newestPageFamily(widget.comicId).future);
+                      final lastPage = await context
+                          .read(newestPageFamily(widget.comicId).last);
                       newFromPageId = lastPage?.id;
                     } else {
-                      final newFromPageRef = ref.read(sharedComicPageRefFamily(
-                          SharedComicPageInfo(
+                      final newFromPageRef = context.read(
+                          sharedComicPageRefFamily(SharedComicPageInfo(
                               comicId: widget.comicId, pageId: newFromPageId)));
 
                       // If reading into the new pages, then set them as not new
@@ -179,9 +179,9 @@ class _ComicWebPageState extends State<ComicWebPage> {
             },
             // Webview child doesn't need to rebuild with parent Consumer
             child: Consumer(
-              builder: (context, ref, child) {
+              builder: (context, watch, child) {
                 final userComicDocAsync =
-                    ref.watch(userComicFamily(widget.comicId));
+                    watch(userComicFamily(widget.comicId));
                 final userComicDoc = userComicDocAsync.when(
                   data: (data) => data,
                   loading: () => null,
@@ -230,7 +230,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
                     if (userComicDoc == null) return;
 
-                    final pageRef = ref.read(sharedComicPageRefFamily(
+                    final pageRef = context.read(sharedComicPageRefFamily(
                         SharedComicPageInfo(
                             comicId: widget.comicId, pageId: pageId)));
 
@@ -244,7 +244,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
                       });
 
                       // Don't need to wait for this, just let it happen whenever
-                      _markPageRead(ref, userComicDoc, value);
+                      _markPageRead(context, userComicDoc, value);
                     });
                   },
                   onProgress: (progress) => _progressSubject.add(progress),
@@ -272,14 +272,17 @@ class _ComicWebPageState extends State<ComicWebPage> {
     );
   }
 
-  void _markPageRead(WidgetRef ref, DocumentSnapshot<UserComicModel> userComic,
+  void _markPageRead(
+      BuildContext context,
+      DocumentSnapshot<UserComicModel> userComic,
       DocumentSnapshot<SharedComicPageModel> sharedComicPage) async {
     // Try and get existing current page to compare scrape time
     if (_currentPage == null) {
       final currentPageId = userComic.data()!.currentPageId;
       if (currentPageId != null) {
-        final pageRef = ref.read(sharedComicPageRefFamily(SharedComicPageInfo(
-            comicId: widget.comicId, pageId: currentPageId)));
+        final pageRef = context.read(sharedComicPageRefFamily(
+            SharedComicPageInfo(
+                comicId: widget.comicId, pageId: currentPageId)));
 
         _currentPage = await pageRef?.get();
       }

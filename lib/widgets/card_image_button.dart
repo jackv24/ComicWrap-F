@@ -11,13 +11,13 @@ class CardImageButton extends ConsumerWidget {
       : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, ScopedReader watch) {
     final url = coverImageUrl;
     if (url == null) {
       return _getEmptyImageButton();
     }
 
-    final progress = ref.watch(downloadImageProvider(url));
+    final progress = watch(downloadImageProvider(url));
     return progress.when(
       data: (data) {
         if (data is ImageResponse) {

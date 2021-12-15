@@ -151,8 +151,7 @@ Widget _getCleanState({
   return ProviderScope(
     overrides: [
       // Break firebaseProvider to force all firebase connections to be mocked
-      firebaseProvider
-          .overrideWithValue(const AsyncValue.error('Not Implemented')),
+      firebaseProvider.overrideWithValue(AsyncValue.error('Not Implemented')),
       themeModeProvider.overrideWithValue(themeMode),
       ...?extraOverrides,
     ],

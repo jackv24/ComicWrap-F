@@ -17,12 +17,12 @@ class ComicInfoCard extends ConsumerWidget {
       : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, ScopedReader watch) {
     final loc = AppLocalizations.of(context)!;
 
-    final sharedComicAsync = ref.watch(sharedComicFamily(comicId));
-    final newFromPageAsync = ref.watch(newFromPageFamily(comicId));
-    final newestPageAsync = ref.watch(newestPageFamily(comicId));
+    final sharedComicAsync = watch(sharedComicFamily(comicId));
+    final newFromPageAsync = watch(newFromPageFamily(comicId));
+    final newestPageAsync = watch(newestPageFamily(comicId));
 
     final newFromTime = newFromPageAsync.maybeWhen(
         data: (data) => data?.data()?.scrapeTime, orElse: () => null);
