@@ -51,7 +51,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
         with:
-          flutter-version: 2.5.3
+          flutter-version: 2.8.0
       # Run build with build number added for Google Play
       - uses: ./.github/actions/setup-flutter-build
       - name: Build AppBundle
@@ -88,7 +88,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
         with:
-          flutter-version: 2.5.3
+          flutter-version: 2.8.0
       # Build will fail without google-services.json, but our tests will mock Firebase
       - name: Secret google-services.json to file
         run: echo $GOOGLE_SERVICES_ANDROID | base64 --decode > android/app/google-services.json
