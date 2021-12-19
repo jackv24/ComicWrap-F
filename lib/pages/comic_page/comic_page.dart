@@ -340,7 +340,7 @@ class _ComicPageState extends State<ComicPage> {
   }
 
   Future<void> _getPages(_ScrollDirection scrollDir,
-      {DocumentSnapshot? centredOnDoc}) async {
+      {DocumentSnapshot<SharedComicPageModel>? centredOnDoc}) async {
     if (_isLoadingUp || _isLoadingDown || _isPagesOverridden) {
       return;
     }
@@ -401,6 +401,7 @@ class _ComicPageState extends State<ComicPage> {
 
           // Insert into pages list
           _addPagesToStart(upQuerySnapshot.docs, halfDocLimit);
+          _pages.add(centredOnDoc);
           _addPagesToEnd(downQuerySnapshot.docs, downDocLimit);
 
           // Jump to position centred
