@@ -2,7 +2,17 @@
 
 An open source webcomic reader and tracker for Android and iOS.
 
-It's basically all functional at this point, but I wont release a public build until I've done everything in my [Public Beta Release](https://github.com/jackv24/ComicWrap-F/projects/1) project board!
+It is intended for reading webcomics that are published on their own websites, and keep track of read pages and new updates.
+
+This app is not intended to scrape comic websites. Instead, comics are read directly on the website like a normal web browser. This ensures that the app does not have a negative effect on things such as ad revenue for the webcomic creator.
+
+>It's basically all functional at this point, but I wont release a public build until I've done everything in my [Public Beta Release](https://github.com/jackv24/ComicWrap-F/projects/1) project board!
+
+## Main Features
+- Read tracking (remembers the page you're up to)
+- Update tracking (shows any new pages since it was added to your Library)
+- In-site reading and tracking (navigate within the website and automatically track last read page)
+- Android/iOS realtime sync
 
 # Building and Running
 
