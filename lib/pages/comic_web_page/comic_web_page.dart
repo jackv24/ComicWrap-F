@@ -236,6 +236,11 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
                     // Get data for the new page (don't wait)
                     pageRef?.get().then((value) {
+                      if (!value.exists) {
+                        print('Page does not exist: ' + pageId);
+                        return;
+                      }
+
                       // Update page display
                       setState(() {
                         _newPage = value;
