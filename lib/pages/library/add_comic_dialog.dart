@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,6 +21,19 @@ class _AddComicDialogState extends State<AddComicDialog> {
   bool _preventPop = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    // Auto-fill URL field with clipboard text
+    Clipboard.getData('text/plain').then((data) {
+      final text = data?.text;
+      if (text == null || text.isEmpty) return;
+      _url.text = text;
+      _url.selection = TextSelection.collapsed(offset: text.length);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
     final loc = AppLocalizations.of(context)!;
@@ -33,13 +47,14 @@ class _AddComicDialogState extends State<AddComicDialog> {
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.web),
               labelText: loc.addComicUrl,
-              hintText: 'http://www.example.com/',
+              hintText: 'https://www.example.com/',
               errorText: _urlErrorText,
             ),
             keyboardType: TextInputType.url,
             onEditingComplete: () => node.nextFocus(),
             controller: _url,
             enabled: !_preventPop,
+            autofocus: true,
           ),
         ),
         actions: <Widget>[
