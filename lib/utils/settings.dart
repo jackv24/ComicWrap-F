@@ -12,16 +12,17 @@ final _settingsBoxProvider = FutureProvider<Box>((ref) async {
 final themeModeProvider =
     StateNotifierProvider<ThemeSettingNotifier, ThemeMode>((ref) {
   final box = ref.watch(_settingsBoxProvider);
-  return ThemeSettingNotifier(box.data?.value);
+  return ThemeSettingNotifier(box.data?.value, ThemeMode.system);
 });
 
 class ThemeSettingNotifier extends StateNotifier<ThemeMode> {
   final Box? box;
 
-  ThemeSettingNotifier(this.box) : super(ThemeMode.system) {
+  ThemeSettingNotifier(this.box, ThemeMode defaultThemeMode)
+      : super(defaultThemeMode) {
     final b = box;
     if (b == null) return;
-    state = b.get('themeMode', defaultValue: ThemeMode.system);
+    state = b.get('themeMode', defaultValue: defaultThemeMode);
   }
 
   void setTheme(ThemeMode themeMode) async {

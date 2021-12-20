@@ -148,11 +148,13 @@ Widget _getCleanState({
   List<Override>? extraOverrides,
 }) {
   WidgetsApp.debugAllowBannerOverride = false;
+
   return ProviderScope(
     overrides: [
       // Break firebaseProvider to force all firebase connections to be mocked
       firebaseProvider.overrideWithValue(AsyncValue.error('Not Implemented')),
-      themeModeProvider.overrideWithValue(themeMode),
+      themeModeProvider
+          .overrideWithValue(ThemeSettingNotifier(null, themeMode)),
       ...?extraOverrides,
     ],
     child: child,
