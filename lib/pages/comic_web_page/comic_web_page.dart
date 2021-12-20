@@ -33,7 +33,6 @@ class _ComicWebPageState extends State<ComicWebPage> {
   DocumentSnapshot<SharedComicPageModel>? _currentPage;
 
   late String rootUrl;
-  late String _initialUrl;
   final Completer<WebViewController> _webViewController =
       Completer<WebViewController>();
 
@@ -46,10 +45,21 @@ class _ComicWebPageState extends State<ComicWebPage> {
     // Enable hybrid composition on Android
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
 
-    // Construct url from comic and page ID
-    rootUrl = 'https://${widget.comicId}/';
-    final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
-    _initialUrl = rootUrl + pagePath;
+    // Construct url from comic scrape URL and page ID
+    context.read(sharedComicFamily(widget.comicId).last).then((sharedComic) {
+      if (sharedComic == null) return;
+
+      String scrapeUrl = sharedComic.scrapeUrl;
+      if (!scrapeUrl.endsWith('/')) scrapeUrl += '/';
+      rootUrl = scrapeUrl;
+
+      final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
+
+      // Navigate to page after URL is constructed
+      _webViewController.future.then((webViewController) {
+        webViewController.loadUrl(scrapeUrl + pagePath);
+      });
+    });
 
     _progressSubject = BehaviorSubject.seeded(0);
   }
@@ -189,7 +199,6 @@ class _ComicWebPageState extends State<ComicWebPage> {
                 );
 
                 return WebView(
-                  initialUrl: _initialUrl,
                   javascriptMode: JavascriptMode.unrestricted,
                   zoomEnabled: true,
                   onWebViewCreated: (webViewController) {

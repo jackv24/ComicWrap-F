@@ -9,7 +9,8 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "debug",
-            "define": [
+            "args": [
+                "--dart-define",
                 "USE_EMULATORS=true",
             ]
         },
