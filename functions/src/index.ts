@@ -25,7 +25,7 @@ async function appRequest(route: string) {
 
   // Remove trailing slash (route will have leading slash)
   if (url.endsWith('/')) {
-    url = url.substr(0, url.length - 1);
+    url = url.substring(0, url.length - 1);
   }
 
   // Make sure route has leading slash

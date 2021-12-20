@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import express from 'express';
 import * as metadata from 'gcp-metadata';
 import {OAuth2Client} from 'google-auth-library';
+import * as url from 'url';
 
 import * as scraper from './comic-scraper';
 import * as helper from './helper';
@@ -56,7 +57,7 @@ async function startComicImport(comicDocName: string) {
 }
 
 async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>) {
-  const scrapeUrl: string = snapshot.get('scrapeUrl');
+  let scrapeUrl: string = snapshot.get('scrapeUrl');
   const collection = snapshot.ref.collection('pages');
 
   // Mark comic as importing so we don't run multiple at once
@@ -71,6 +72,9 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
 
   // Assume if it already has a cover image that it's "good"
   let foundGoodCover = !!coverImageUrl;
+
+  // Assume scrape URL is wrong, it'll be updated by the first scraped page
+  let foundScrapeUrl = false;
 
   let lastPageQuery = await collection.orderBy('scrapeTime', 'desc').limit(1).get();
   let lastPage = lastPageQuery.docs.length > 0 ? lastPageQuery.docs[0] : null;
@@ -97,6 +101,29 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
                 {name: splitTitle.comicTitle},
                 {merge: true},
             );
+          }
+        }
+
+        // First scraped page should define the root URL that URLs are constructed from
+        // (handles case where provided URL redirects to another root)
+        if (!foundScrapeUrl && page.link) {
+          console.log('Test page link for scrape URL: ' + page.link);
+          const u = url.parse(page.link);
+          const protocol = u.protocol;
+          const host = u.host;
+          const newScrapeUrl = protocol && host ? `${protocol}//${host}` : null;
+          if (newScrapeUrl && newScrapeUrl != scrapeUrl) {
+            console.log('Found new scrapeUrl: ' + newScrapeUrl);
+
+            foundScrapeUrl = true;
+            scrapeUrl = newScrapeUrl;
+            comicInfo.scrapeUrl = newScrapeUrl;
+
+            // Save new root URL for comic so in-site navigation works properly
+            await snapshot.ref.set(
+              {scrapeUrl: newScrapeUrl},
+              {merge: true},
+          );
           }
         }
 

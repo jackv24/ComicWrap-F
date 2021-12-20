@@ -10,6 +10,7 @@ export type ReturnPage = {
   text: string,
   docName: string,
   wasCrawled: boolean,
+  link: string | undefined,
 }
 
 type FoundPage = {
@@ -32,7 +33,7 @@ export type ComicInfo = {
 export async function scrapeComicPages(
     comicDoc: ComicInfo,
     lastPageId: string | null,
-    onPageFound: (page: ReturnPage) => Promise<FoundPageResult>
+    onPageFound: (page: ReturnPage) => Promise<FoundPageResult>,
 ) {
   // Don't re-save previous pages before last page
   let startKeepingPages = lastPageId === null;
@@ -62,6 +63,7 @@ export async function scrapeComicPages(
       text: foundPage.text,
       docName: docName,
       wasCrawled: foundPage.wasCrawled,
+      link: foundPage.link,
     };
 
     // Save page
