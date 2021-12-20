@@ -1,0 +1,100 @@
+{
+    "appTitle": "ComicWrap",
+    "signingIn": "Signing in...",
+    "signInError": "Error signing in",
+    "githubLinkPrompt": "Have an issue? Want to help out? Follow the link below!",
+    "githubLinkLabel": "ComicWrap GitHub",
+    "timeAgoNever": "never",
+    "signOut": "Sign Out",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "loadingText": "Loading...",
+    "refresh": "Refresh",
+    "ok": "OK",
+
+    "errorTitle": "Error",
+    "errorRequired": "Required",
+    "errorNoUser": "Email is not registered",
+    "errorWrongPass": "Wrong password",
+    "errorInvalidEmail": "Email is invalid",
+    "errorPassMatch": "Does not match",
+
+    "emailVerifyUserNull": "{userEmail} is signed in but not verified.",
+    "@emailVerifyUserNull": {
+        "placeholders": {
+            "userEmail": {
+                "type": "String"
+            }
+        }
+    },
+    "emailVerifySend": "Send verification email",
+    "emailVerifyRefresh": "Already verified? Refresh!",
+
+    "signInTitle": "Sign In",
+    "signInEmail": "Email",
+    "signInPassword": "Password",
+    "signInButton": "Sign In",
+    "signUpEmailButton": "Sign Up with Email",
+    "resetPassword": "Reset Password",
+    "resetPassDialogTitle": "Reset Password?",
+    "resetPassDialogText": "Are you sure you want to reset the password for {userEmail}?",
+    "@resetPassDialogText": {
+        "placeholders": {
+            "userEmail": {
+                "type": "String"
+            }
+        }
+    },
+    "resetPassSent": "Password reset email sent",
+
+    "signUpTitle": "Email Sign Up",
+    "signUpPassConfirm": "Confirm Password",
+    "signUpButton": "Sign Up",
+
+    "infoRead": "Read: {readTime}",
+    "@infoRead": {
+        "placeholders": {
+            "readTime": {
+                "type": "String"
+            }
+        }
+    },
+    "infoUpdated": "Updated: {updateTime}",
+    "@infoUpdated": {
+        "placeholders": {
+            "updateTime": {
+                "type": "String"
+            }
+        }
+    },
+    "infoNoBookmark": "No bookmark",
+    "buttonFirst": "First",
+    "buttonLast": "Last",
+
+    "comicDeleteFail": "Failed to delete: couldn't get user comic.",
+    "comicNoPages": "No pages...",
+    "comicSetBookmark": "Set Bookmark",
+    "comicSetBookmarkFail": "Failed to set page as current: couldn't get user comic ref.",
+
+    "webOpenBrowser": "Open Browser",
+    "webErrorUrl": "Could not open URL: {url}",
+    "@webErrorUrl": {
+        "placeholders": {
+            "url": {
+                "type": "String"
+            }
+        }
+    },
+
+    "addComicTitle": "Add Comic",
+    "addComicUrl": "URL",
+    "addComicAddButton": "Add",
+    "addComicCancelButton": "Cancel",
+
+    "libraryTitle": "Library",
+    "libraryLoading": "Loading user comics...",
+    "libraryError": "Error loading user comics.",
+    "libraryEmpty": "User has no comics.",
+
+    "settingsTitle": "Settings"
+}

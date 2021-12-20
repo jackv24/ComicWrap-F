@@ -13,6 +13,7 @@ import 'package:rxdart/subjects.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ComicWebPage extends StatefulWidget {
   final String comicId;
@@ -32,7 +33,6 @@ class _ComicWebPageState extends State<ComicWebPage> {
   DocumentSnapshot<SharedComicPageModel>? _currentPage;
 
   late String rootUrl;
-  late String _initialUrl;
   final Completer<WebViewController> _webViewController =
       Completer<WebViewController>();
 
@@ -45,10 +45,21 @@ class _ComicWebPageState extends State<ComicWebPage> {
     // Enable hybrid composition on Android
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
 
-    // Construct url from comic and page ID
-    rootUrl = 'https://${widget.comicId}/';
-    final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
-    _initialUrl = rootUrl + pagePath;
+    // Construct url from comic scrape URL and page ID
+    context.read(sharedComicFamily(widget.comicId).last).then((sharedComic) {
+      if (sharedComic == null) return;
+
+      String scrapeUrl = sharedComic.scrapeUrl;
+      if (!scrapeUrl.endsWith('/')) scrapeUrl += '/';
+      rootUrl = scrapeUrl;
+
+      final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
+
+      // Navigate to page after URL is constructed
+      _webViewController.future.then((webViewController) {
+        webViewController.loadUrl(scrapeUrl + pagePath);
+      });
+    });
 
     _progressSubject = BehaviorSubject.seeded(0);
   }
@@ -62,6 +73,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     final pageData = _newPage?.data();
     final pageTitle = pageData?.text ?? '';
 
@@ -80,18 +93,18 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
               return MoreActionButton(actions: [
                 FunctionListItem(
-                  child: const ListTile(
-                    title: Text('Refresh'),
-                    trailing: Icon(Icons.refresh),
+                  child: ListTile(
+                    title: Text(loc.refresh),
+                    trailing: const Icon(Icons.refresh),
                   ),
                   onSelected: (context) async {
                     await controller.reload();
                   },
                 ),
                 FunctionListItem(
-                  child: const ListTile(
-                    title: Text('Open Browser'),
-                    trailing: Icon(Icons.open_in_browser),
+                  child: ListTile(
+                    title: Text(loc.webOpenBrowser),
+                    trailing: const Icon(Icons.open_in_browser),
                   ),
                   onSelected: (context) async {
                     final url = await snapshot.data!.currentUrl();
@@ -106,66 +119,75 @@ class _ComicWebPageState extends State<ComicWebPage> {
       body: Stack(
         children: [
           // WebView wrapper
-          WillPopScope(
-            onWillPop: () async {
-              final userComicAsync =
-                  context.read(userComicFamily(widget.comicId));
-              final userComicSnapshot = userComicAsync.when(
-                data: (data) => data,
-                loading: () => null,
-                error: (err, stack) {
-                  debugPrintStack(label: err.toString(), stackTrace: stack);
-                  return null;
-                },
-              );
+          Consumer(
+            builder: (context, watch, child) {
+              return WillPopScope(
+                onWillPop: () async {
+                  final userComicAsync =
+                      context.read(userComicFamily(widget.comicId));
+                  final userComicSnapshot = userComicAsync.when(
+                    data: (data) => data,
+                    loading: () => null,
+                    error: (err, stack) {
+                      debugPrintStack(label: err.toString(), stackTrace: stack);
+                      return null;
+                    },
+                  );
 
-              // Just pop if we couldn't get a ref to the user comic
-              if (userComicSnapshot == null) return true;
+                  // Just pop if we couldn't get a ref to the user comic
+                  if (userComicSnapshot == null) return true;
 
-              EasyLoading.show();
-              // Update read stats when exiting, to avoid many doc updates while binge-reading
-              if (_currentPage != null) {
-                var newFromPageId = userComicSnapshot.data()?.newFromPageId;
-                if (newFromPageId == null) {
-                  // If there is no "new from page" just set it to the last page
-                  final lastPage =
-                      await context.read(newestPageFamily(widget.comicId).last);
-                  newFromPageId = lastPage?.id;
-                } else {
-                  // If reading into the new pages, then set them as not new
-                  final newFromPage = await getSharedComicPage(
-                          context, widget.comicId, newFromPageId)
-                      ?.get();
-                  final newScrapeTime = newFromPage?.data()?.scrapeTime;
-                  final currentScrapeTime = _currentPage!.data()?.scrapeTime;
+                  EasyLoading.show();
+                  // Update read stats when exiting, to avoid many doc updates while binge-reading
+                  if (_currentPage != null) {
+                    var newFromPageId = userComicSnapshot.data()?.newFromPageId;
+                    if (newFromPageId == null) {
+                      // If there is no "new from page" just set it to the last page
+                      final lastPage = await context
+                          .read(newestPageFamily(widget.comicId).last);
+                      newFromPageId = lastPage?.id;
+                    } else {
+                      final newFromPageRef = context.read(
+                          sharedComicPageRefFamily(SharedComicPageInfo(
+                              comicId: widget.comicId, pageId: newFromPageId)));
 
-                  // Can only compare scrape times if both pages have them
-                  if (newScrapeTime != null &&
-                      currentScrapeTime != null &&
-                      currentScrapeTime.compareTo(newScrapeTime) > 0) {
-                    newFromPageId = _currentPage!.id;
+                      // If reading into the new pages, then set them as not new
+                      final newFromPage = await newFromPageRef?.get();
+                      final newScrapeTime = newFromPage?.data()?.scrapeTime;
+                      final currentScrapeTime =
+                          _currentPage!.data()?.scrapeTime;
+
+                      // Can only compare scrape times if both pages have them
+                      if (newScrapeTime != null &&
+                          currentScrapeTime != null &&
+                          currentScrapeTime.compareTo(newScrapeTime) > 0) {
+                        newFromPageId = _currentPage!.id;
+                      }
+                    }
+
+                    await userComicSnapshot.reference.update({
+                      'lastReadTime': Timestamp.now(),
+                      'currentPageId': _currentPage!.id,
+                      'newFromPageId': newFromPageId,
+                    });
+                  } else {
+                    // Don't set currentPage reference if it's null
+                    await userComicSnapshot.reference.update({
+                      'lastReadTime': Timestamp.now(),
+                    });
                   }
-                }
+                  EasyLoading.dismiss();
 
-                await userComicSnapshot.reference.update({
-                  'lastReadTime': Timestamp.now(),
-                  'currentPageId': _currentPage!.id,
-                  'newFromPageId': newFromPageId,
-                });
-              } else {
-                // Don't set currentPage reference if it's null
-                await userComicSnapshot.reference.update({
-                  'lastReadTime': Timestamp.now(),
-                });
-              }
-              EasyLoading.dismiss();
+                  // Pop with value of current page
+                  Navigator.of(context).pop(_newValidPage);
 
-              // Pop with value of current page
-              Navigator.of(context).pop(_newValidPage);
-
-              // We manually handle popping above
-              return false;
+                  // We manually handle popping above
+                  return false;
+                },
+                child: child!,
+              );
             },
+            // Webview child doesn't need to rebuild with parent Consumer
             child: Consumer(
               builder: (context, watch, child) {
                 final userComicDocAsync =
@@ -177,8 +199,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
                 );
 
                 return WebView(
-                  initialUrl: _initialUrl,
                   javascriptMode: JavascriptMode.unrestricted,
+                  zoomEnabled: true,
                   onWebViewCreated: (webViewController) {
                     _webViewController.complete(webViewController);
                   },
@@ -217,10 +239,17 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
                     if (userComicDoc == null) return;
 
+                    final pageRef = context.read(sharedComicPageRefFamily(
+                        SharedComicPageInfo(
+                            comicId: widget.comicId, pageId: pageId)));
+
                     // Get data for the new page (don't wait)
-                    getSharedComicPage(context, widget.comicId, pageId)
-                        ?.get()
-                        .then((value) {
+                    pageRef?.get().then((value) {
+                      if (!value.exists) {
+                        print('Page does not exist: ' + pageId);
+                        return;
+                      }
+
                       // Update page display
                       setState(() {
                         _newPage = value;
@@ -265,9 +294,11 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (_currentPage == null) {
       final currentPageId = userComic.data()!.currentPageId;
       if (currentPageId != null) {
-        _currentPage =
-            await getSharedComicPage(context, userComic.id, currentPageId)
-                ?.get();
+        final pageRef = context.read(sharedComicPageRefFamily(
+            SharedComicPageInfo(
+                comicId: widget.comicId, pageId: currentPageId)));
+
+        _currentPage = await pageRef?.get();
       }
     }
 
@@ -294,8 +325,9 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (url != null && await canLaunch(url)) {
       await launch(url);
     } else {
+      final loc = AppLocalizations.of(context)!;
       final displayUrl = url ?? 'null';
-      await showErrorDialog(context, 'Could not open URL: $displayUrl');
+      await showErrorDialog(context, loc.webErrorUrl(displayUrl));
     }
   }
 }

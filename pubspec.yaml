@@ -1,9 +1,9 @@
 name: comicwrap_f
-description: A rebuild of ComicWrap in Flutter.
+description: An open source webcomic reader and tracker for Android and iOS
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -18,26 +18,25 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 0.0.0+1
 
 environment:
-  sdk: '>=2.14.0 <3.0.0'
+  sdk: ">=2.15.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.17.0
   cupertino_icons: ^1.0.2
   firebase_core: ^1.0.2
   firebase_auth: ^3.1.1
-  cloud_firestore: ^2.2.0
+  cloud_firestore: ^2.5.4
   cloud_functions: ^3.0.3
   google_sign_in: ^5.0.1
   flutter_signin_button: ^2.0.0
   flutter_staggered_animations: ^1.0.0
   rxdart: ^0.27.0
   flutter_cache_manager: ^3.0.1
-  webview_flutter:
-    git:
-      url: https://github.com/jackv24/plugins.git
-      ref: custom-webview_flutter-comicwrap
-      path: packages/webview_flutter/webview_flutter
+  webview_flutter: ^3.0.0
   universal_io: ^2.0.4
   json_serializable: ^6.0.0
   json_annotation: ^4.3.0
@@ -46,13 +45,6 @@ dependencies:
   flutter_riverpod: ^0.14.0+3
   url_launcher: ^6.0.9
   badges: ^2.0.1
-
-dependency_overrides:
-  webview_flutter_android:
-    git:
-      url: https://github.com/jackv24/plugins.git
-      ref: custom-webview_flutter-comicwrap
-      path: packages/webview_flutter/webview_flutter_android
 
 dev_dependencies:
   build_runner: ^2.0.4
@@ -71,11 +63,15 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - integration_test/assets/
 
 flutter_icons:
   android: true

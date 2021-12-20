@@ -56,24 +56,18 @@ export const addUserComic = functions.https
       }
 
       // Automatically fixed up provided url if we can
-      const inputUrl = helper.getValidUrl(data);
+      const inputUrl = helper.addMissingUrlProtocol(data);
 
-      const parsedUrl = url.parse(inputUrl);
-      let hostName = parsedUrl.hostname;
-      if (!hostName) {
+      // Validate url
+      if (!helper.isValidUrl(inputUrl)) {
         throw new functions.https.HttpsError(
             'invalid-argument',
             'Invalid URL'
         );
       }
 
-      // Actually ping url and see if it exists
-      // if ((await urlExist(inputUrl)) == false) {
-      //   throw new functions.https.HttpsError(
-      //       'invalid-argument',
-      //       'URL does not exist'
-      //   );
-      // }
+      const parsedUrl = new url.URL(inputUrl);
+      let hostName = parsedUrl.hostname;
 
       // Reference to document of comic (existing or yet to be created below)
       let sharedComicRef = db.collection('comics').doc(hostName);

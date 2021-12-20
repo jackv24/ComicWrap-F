@@ -8,8 +8,13 @@ class SharedComicModel {
   final String? name;
   final String? coverImageUrl;
   final String scrapeUrl;
+  final bool isImporting;
 
-  SharedComicModel({this.name, this.coverImageUrl, required this.scrapeUrl});
+  SharedComicModel(
+      {this.name,
+      this.coverImageUrl,
+      required this.scrapeUrl,
+      this.isImporting = false});
 
   factory SharedComicModel.fromJson(Json json) =>
       _$SharedComicModelFromJson(json);

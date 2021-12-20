@@ -1,6 +1,8 @@
+import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SignUpScreen extends StatefulWidget {
   final String? initialEmail;
@@ -35,63 +37,66 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
+    final loc = AppLocalizations.of(context)!;
 
     return MainPageScaffold(
-      title: 'Email Sign Up',
-      bodySliver: SliverPadding(
-        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-        sliver: SliverList(
-          delegate: SliverChildListDelegate.fixed([
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.email),
-                labelText: 'Email',
-                hintText: 'you@example.com',
-                errorText: _emailErrorText,
+      title: loc.signUpTitle,
+      bodySliver: MainPageInner(
+        sliver: SliverPadding(
+          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate.fixed([
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.email),
+                  labelText: loc.signInEmail,
+                  hintText: 'you@example.com',
+                  errorText: _emailErrorText,
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                onEditingComplete: () => node.nextFocus(),
+                controller: _email,
+                enabled: !_inProgress,
               ),
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              onEditingComplete: () => node.nextFocus(),
-              controller: _email,
-              enabled: !_inProgress,
-            ),
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.security),
-                labelText: 'Password',
-                errorText: _passAErrorText,
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.security),
+                  labelText: loc.signInPassword,
+                  errorText: _passAErrorText,
+                ),
+                obscureText: true,
+                onEditingComplete: () => node.nextFocus(),
+                controller: _passA,
+                enabled: !_inProgress,
               ),
-              obscureText: true,
-              onEditingComplete: () => node.nextFocus(),
-              controller: _passA,
-              enabled: !_inProgress,
-            ),
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.security),
-                labelText: 'Confirm Password',
-                errorText: _passBErrorText,
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.security),
+                  labelText: loc.signUpPassConfirm,
+                  errorText: _passBErrorText,
+                ),
+                obscureText: true,
+                onSubmitted: (_) {
+                  node.unfocus();
+                  _submit(context);
+                },
+                controller: _passB,
+                enabled: !_inProgress,
               ),
-              obscureText: true,
-              onSubmitted: (_) {
-                node.unfocus();
-                _submit(context);
-              },
-              controller: _passB,
-              enabled: !_inProgress,
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  child: const Text('Sign Up'),
-                  onPressed: _inProgress ? null : () => _submit(context),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20.0, horizontal: 20.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    child: Text(loc.signUpButton),
+                    onPressed: _inProgress ? null : () => _submit(context),
+                  ),
                 ),
               ),
-            ),
-          ]),
+            ]),
+          ),
         ),
       ),
     );
@@ -113,29 +118,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _inProgress = false;
     });
 
+    final loc = AppLocalizations.of(context)!;
+
     switch (errorCode) {
       case 'empty-auth':
         setState(() {
-          _emailErrorText = 'Required';
-          _passAErrorText = 'Required';
+          _emailErrorText = loc.errorRequired;
+          _passAErrorText = loc.errorRequired;
         });
         break;
 
       case 'empty-email':
         setState(() {
-          _emailErrorText = 'Required';
+          _emailErrorText = loc.errorRequired;
         });
         break;
 
       case 'empty-pass':
         setState(() {
-          _passAErrorText = 'Required';
+          _passAErrorText = loc.errorRequired;
         });
         break;
 
       case 'pass-not-match':
         setState(() {
-          _passBErrorText = 'Does not match';
+          _passBErrorText = loc.errorPassMatch;
         });
         break;
 

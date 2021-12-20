@@ -1,3 +1,4 @@
+import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/widgets/github_link_button.dart';
@@ -5,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class EmailVerifyScreen extends StatefulWidget {
   const EmailVerifyScreen({Key? key}) : super(key: key);
@@ -18,64 +20,72 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return MainPageScaffold(
       title: 'Verify Email',
-      bodySliver: SliverList(
-        delegate: SliverChildListDelegate.fixed([
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-            child: Consumer(
-              builder: (context, watch, child) {
-                final user = watch(userChangesProvider)
-                    .maybeWhen(data: (data) => data, orElse: () => null);
+      bodySliver: MainPageInner(
+        sliver: SliverList(
+          delegate: SliverChildListDelegate.fixed([
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
+              child: Consumer(
+                builder: (context, watch, child) {
+                  final user = watch(userChangesProvider)
+                      .maybeWhen(data: (data) => data, orElse: () => null);
 
-                // Should never show screen when user is not signed in
-                if (user == null) return ErrorWidget('User is null');
+                  // Should never show screen when user is not signed in
+                  if (user == null) return ErrorWidget('User is null');
 
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0),
-                      child: Text(
-                        '${user.email} is signed in but not verified.',
-                        style: Theme.of(context).textTheme.subtitle1,
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20.0),
+                        child: Text(
+                          loc.emailVerifyUserNull(user.email!),
+                          style: Theme.of(context).textTheme.subtitle1,
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        child: const Text('Send verification email'),
-                        // Only send verification once
-                        onPressed: _sentVerification
-                            ? null
-                            : () => _sendVerification(context, user),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          child: Text(loc.emailVerifySend),
+                          // Only send verification once
+                          onPressed: _sentVerification
+                              ? null
+                              : () => _sendVerification(user),
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        child: const Text('Already verified? Refresh!'),
-                        onPressed: () => _reloadUser(context, user),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Consumer(
+                          builder: (context, watch, child) {
+                            return ElevatedButton(
+                              child: Text(loc.emailVerifyRefresh),
+                              onPressed: () => _reloadUser(context, user),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                    TextButton(
-                      child: const Text('Sign Out'),
-                      onPressed: () => signOut(context),
-                    )
-                  ],
-                );
-              },
+                      TextButton(
+                        child: Text(loc.signOut),
+                        onPressed: () => signOut(context),
+                      )
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
-          const Divider(),
-          const GitHubLinkButton(),
-        ]),
+            const Divider(),
+            const GitHubLinkButton(),
+          ]),
+        ),
       ),
     );
   }
 
-  Future<void> _sendVerification(BuildContext context, User user) async {
+  Future<void> _sendVerification(User user) async {
     EasyLoading.show();
     await user.sendEmailVerification();
     EasyLoading.dismiss();

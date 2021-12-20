@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddComicDialog extends StatefulWidget {
@@ -20,36 +21,51 @@ class _AddComicDialogState extends State<AddComicDialog> {
   bool _preventPop = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    // Auto-fill URL field with clipboard text
+    Clipboard.getData('text/plain').then((data) {
+      final text = data?.text;
+      if (text == null || text.isEmpty) return;
+      _url.text = text;
+      _url.selection = TextSelection.collapsed(offset: text.length);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
+    final loc = AppLocalizations.of(context)!;
 
     return WillPopScope(
       onWillPop: () async => !_preventPop,
       child: AlertDialog(
-        title: const Text('Add Comic'),
+        title: Text(loc.addComicTitle),
         content: SingleChildScrollView(
           child: TextField(
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.web),
-              labelText: 'URL',
-              hintText: 'http://www.example.com/',
+              labelText: loc.addComicUrl,
+              hintText: 'https://www.example.com/',
               errorText: _urlErrorText,
             ),
             keyboardType: TextInputType.url,
             onEditingComplete: () => node.nextFocus(),
             controller: _url,
             enabled: !_preventPop,
+            autofocus: true,
           ),
         ),
         actions: <Widget>[
           TextButton(
-            child: const Text('Add'),
-            onPressed: _preventPop ? null : () => _submit(context),
-          ),
-          TextButton(
-            child: const Text('Cancel'),
+            child: Text(loc.addComicCancelButton),
             onPressed:
                 _preventPop ? null : () => Navigator.of(context).pop(null),
+          ),
+          TextButton(
+            child: Text(loc.addComicAddButton),
+            onPressed: _preventPop ? null : () => _submit(context),
           ),
         ],
       ),

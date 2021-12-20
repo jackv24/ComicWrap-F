@@ -1,95 +1,72 @@
-import 'dart:async';
-
+import 'package:comicwrap_f/utils/download.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CardImageButton extends StatefulWidget {
+class CardImageButton extends ConsumerWidget {
   final String? coverImageUrl;
   final Function()? onTap;
+  final bool isImporting;
 
-  const CardImageButton({Key? key, this.coverImageUrl, this.onTap})
+  const CardImageButton(
+      {Key? key, this.coverImageUrl, this.onTap, this.isImporting = false})
       : super(key: key);
 
   @override
-  _CardImageButtonState createState() => _CardImageButtonState();
-}
-
-class _CardImageButtonState extends State<CardImageButton> {
-  FileInfo? _cachedImage;
-  DownloadProgress? _imageDownloadProgress;
-  StreamSubscription<FileResponse>? _imageDownloadSub;
-
-  void _subImageDownload() {
-    // Stream for cached cover image
-    if (widget.coverImageUrl != null) {
-      _imageDownloadSub = DefaultCacheManager()
-          .getImageFile(widget.coverImageUrl!, withProgress: true)
-          .listen((fileResponse) {
-        if (fileResponse is FileInfo) {
-          setState(() {
-            _cachedImage = fileResponse;
-            _imageDownloadProgress = null;
-          });
-        } else if (fileResponse is DownloadProgress) {
-          setState(() {
-            _imageDownloadProgress = fileResponse;
-          });
-        }
-      });
+  Widget build(BuildContext context, ScopedReader watch) {
+    final url = coverImageUrl;
+    if (url == null) {
+      return _getEmptyImageButton();
     }
-  }
 
-  @override
-  void initState() {
-    super.initState();
-
-    _subImageDownload();
-  }
-
-  @override
-  void didUpdateWidget(covariant CardImageButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.coverImageUrl != oldWidget.coverImageUrl) {
-      _imageDownloadSub?.cancel();
-      _subImageDownload();
-    }
-  }
-
-  @override
-  void dispose() {
-    _imageDownloadSub?.cancel();
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_cachedImage == null) {
-      if (_imageDownloadProgress == null) {
-        return InkWell(
-          onTap: widget.onTap,
-          child: const Icon(Icons.error, color: Colors.red),
-        );
-      } else {
-        return Stack(
-          alignment: AlignmentDirectional.bottomCenter,
-          children: [
-            LinearProgressIndicator(
-              value: _imageDownloadProgress!.progress,
-              minHeight: 8.0,
+    final progress = watch(downloadImageProvider(url));
+    final card = progress.when(
+      data: (data) {
+        if (data is ImageResponse) {
+          // Image downloaded, display image
+          return Ink.image(
+            image: data.image,
+            fit: BoxFit.cover,
+            child: InkWell(
+              onTap: onTap,
             ),
-          ],
-        );
-      }
-    } else {
-      return Ink.image(
-        image: FileImage(_cachedImage!.file),
-        fit: BoxFit.cover,
-        child: InkWell(
-          onTap: widget.onTap,
-        ),
-      );
-    }
+          );
+        } else if (data is DownloadProgress) {
+          // Image is still downloading, display progress
+          return Stack(
+            alignment: AlignmentDirectional.bottomCenter,
+            children: [
+              LinearProgressIndicator(
+                value: data.progress,
+                minHeight: 8.0,
+              ),
+            ],
+          );
+        } else {
+          return ErrorWidget('FileResponse is not of known type.');
+        }
+      },
+      loading: () => _getEmptyImageButton(),
+      error: (error, stack) => ErrorWidget(error),
+    );
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        if (isImporting)
+          Container(
+            color: Colors.white.withAlpha(170),
+          ),
+        if (isImporting) const CircularProgressIndicator(),
+        card,
+      ],
+    );
+  }
+
+  Widget _getEmptyImageButton() {
+    return InkWell(
+      onTap: onTap,
+      child: const Icon(Icons.error, color: Colors.red),
+    );
   }
 }

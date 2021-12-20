@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'add_comic_dialog.dart';
 
@@ -16,27 +17,23 @@ class LibraryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
+    final loc = AppLocalizations.of(context)!;
+
     final asyncComicsList = watch(userComicsListProvider);
     final comicsListWidget = asyncComicsList.when(
-      loading: () => const SliverToBoxAdapter(
-        child: Text('Loading user comics...'),
+      loading: () => SliverToBoxAdapter(
+        child: Text(loc.loadingText),
       ),
-      error: (err, stack) => const SliverToBoxAdapter(
-        child: Text('Error loading user comics.'),
+      error: (err, stack) => SliverToBoxAdapter(
+        child: Text(loc.libraryError),
       ),
       data: (comicsList) {
-        if (comicsList == null) {
-          return const SliverToBoxAdapter(
-            child: Text('User has no comics list.'),
-          );
-        }
-
         return _getBodySliver(context, comicsList);
       },
     );
 
     return MainPageScaffold(
-      title: 'Library',
+      title: loc.libraryTitle,
       appBarActions: [
         IconButton(
             icon: const Icon(
@@ -73,11 +70,13 @@ class LibraryScreen extends ConsumerWidget {
     ));
   }
 
-  Widget _getBodySliver(
-      BuildContext context, List<DocumentSnapshot<UserComicModel>> userComics) {
-    if (userComics.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: Text('User has no comics.'),
+  Widget _getBodySliver(BuildContext context,
+      List<DocumentSnapshot<UserComicModel>>? userComics) {
+    final loc = AppLocalizations.of(context)!;
+
+    if (userComics == null || userComics.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Text(loc.libraryEmpty),
       );
     }
 

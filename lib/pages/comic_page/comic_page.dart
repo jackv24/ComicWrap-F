@@ -2,18 +2,26 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_info_section.dart';
 import 'package:comicwrap_f/pages/comic_web_page/comic_web_page.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/error.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 const listItemHeight = 50.0;
+
+final pageListOverrideProvider = Provider.autoDispose
+    .family<List<DocumentSnapshot<SharedComicPageModel>>?, String>(
+        (ref, comicId) {
+  // To be overridden for tests
+  return null;
+});
 
 class ComicPage extends StatefulWidget {
   final String comicId;
@@ -34,7 +42,8 @@ class _ComicPageState extends State<ComicPage> {
   final int _initialDocLimit = 30;
   final int _moreDocLimit = 10;
 
-  final List<DocumentSnapshot<SharedComicPageModel>> _pages = [];
+  late List<DocumentSnapshot<SharedComicPageModel>> _pages;
+  late bool _isPagesOverridden;
   ScrollController? _scrollController;
   bool _hasMoreDown = true;
   bool _hasMoreUp = true;
@@ -47,29 +56,18 @@ class _ComicPageState extends State<ComicPage> {
   void initState() {
     super.initState();
 
+    final pageListOverride =
+        context.read(pageListOverrideProvider(widget.comicId));
+    if (pageListOverride == null) {
+      _pages = [];
+      _isPagesOverridden = false;
+    } else {
+      // If custom list provided just use that, don't load any more
+      _pages = pageListOverride;
+      _isPagesOverridden = true;
+    }
+
     _scrollController = ScrollController();
-
-    // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
-    context.read(userComicFamily(widget.comicId).last).then((userComicDoc) {
-      final currentPageId = userComicDoc?.data()?.currentPageId;
-
-      // Get ref to current page once for centering pages on start
-      final currentPageRef = currentPageId != null
-          ? getSharedComicPage(context, widget.comicId, currentPageId)
-          : null;
-
-      if (currentPageRef != null) {
-        // Centre on current page
-        _centerPagesOnRef(currentPageRef);
-      } else {
-        // Start at top if no current page
-        _getPages(_ScrollDirection.none);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     _scrollController!.addListener(() {
       final maxScroll = _scrollController!.position.maxScrollExtent;
       final minScroll = _scrollController!.position.minScrollExtent;
@@ -90,14 +88,38 @@ class _ComicPageState extends State<ComicPage> {
       }
     });
 
+    // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
+    context.read(userComicFamily(widget.comicId).last).then((userComicDoc) {
+      final currentPageId = userComicDoc?.data()?.currentPageId;
+
+      // Get ref to current page once for centering pages on start
+      final currentPageRef = currentPageId != null
+          ? context.read(sharedComicPageRefFamily(SharedComicPageInfo(
+              comicId: widget.comicId, pageId: currentPageId)))
+          : null;
+
+      if (currentPageRef != null) {
+        // Centre on current page
+        _centerPagesOnRef(currentPageRef);
+      } else {
+        // Start at top if no current page
+        _getPages(_ScrollDirection.none);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         actions: [
           MoreActionButton(actions: [
             FunctionListItem(
-              child: const ListTile(
-                title: Text('Delete'),
-                trailing: Icon(Icons.delete),
+              child: ListTile(
+                title: Text(loc.delete),
+                trailing: const Icon(Icons.delete),
               ),
               onSelected: (context) async {
                 final userComicAsync =
@@ -116,8 +138,7 @@ class _ComicPageState extends State<ComicPage> {
                   // This comic has now been removed, so close it's page
                   Navigator.of(context).pop();
                 } else {
-                  await showErrorDialog(
-                      context, 'Failed to delete: couldn\'t get user comic');
+                  await showErrorDialog(context, loc.comicDeleteFail);
                 }
               },
             ),
@@ -130,12 +151,13 @@ class _ComicPageState extends State<ComicPage> {
             comicId: widget.comicId,
             onCurrentPressed: _centerPagesOnDoc,
             onFirstPressed:
-                _pages.isNotEmpty ? () => _goToEndPage(false) : null,
-            onLastPressed: _pages.isNotEmpty ? () => _goToEndPage(true) : null,
+                _pages.isNotEmpty ? () => _goToEndPage(context, false) : null,
+            onLastPressed:
+                _pages.isNotEmpty ? () => _goToEndPage(context, true) : null,
           );
 
           // Draw extra info as side bar on large screens
-          if (constraints.maxWidth > 600) {
+          if (constraints.maxWidth > wideScreenThreshold) {
             return Row(
               children: [
                 // Extra info side bar
@@ -172,6 +194,8 @@ class _ComicPageState extends State<ComicPage> {
   }
 
   Widget _buildList(BuildContext context, EdgeInsetsGeometry listPadding) {
+    final loc = AppLocalizations.of(context)!;
+
     return Card(
       elevation: 5,
       margin: EdgeInsetsDirectional.zero,
@@ -181,7 +205,7 @@ class _ComicPageState extends State<ComicPage> {
           alignment: AlignmentDirectional.bottomCenter,
           children: [
             _pages.isEmpty
-                ? const Center(child: Text('No pages...'))
+                ? Center(child: Text(loc.comicNoPages))
                 : ListView.builder(
                     controller: _scrollController,
                     itemCount: _pages.length,
@@ -259,6 +283,8 @@ class _ComicPageState extends State<ComicPage> {
       return Text(title);
     });
 
+    final loc = AppLocalizations.of(context)!;
+
     return GestureDetector(
       onTapDown: (details) => _listTapDownDetails = details,
       child: ListTile(
@@ -270,7 +296,7 @@ class _ComicPageState extends State<ComicPage> {
               context: context,
               position: RelativeRect.fromLTRB(offset.dx, offset.dy, 0, 0),
               items: [
-                PopupMenuItem(value: page.id, child: const Text('Set Bookmark'))
+                PopupMenuItem(value: page.id, child: Text(loc.comicSetBookmark))
               ]);
           if (val != null) _setPageAsCurrent(val);
         },
@@ -298,25 +324,24 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  void _goToEndPage(bool descending) async {
-    final pagesQuery = getSharedComicPagesQuery(context, widget.comicId,
-        descending: descending);
-    if (pagesQuery == null) return;
-
+  void _goToEndPage(BuildContext context, bool descending) async {
     EasyLoading.show();
 
-    final snapshot = await pagesQuery.limit(1).get();
+    final doc = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: descending,
+    )).future);
 
-    if (snapshot.docs.isNotEmpty) {
-      await _centerPagesOnDoc(snapshot.docs[0]);
+    if (doc != null) {
+      await _centerPagesOnDoc(doc);
     }
 
     EasyLoading.dismiss();
   }
 
   Future<void> _getPages(_ScrollDirection scrollDir,
-      {DocumentSnapshot? centredOnDoc}) async {
-    if (_isLoadingUp || _isLoadingDown) {
+      {DocumentSnapshot<SharedComicPageModel>? centredOnDoc}) async {
+    if (_isLoadingUp || _isLoadingDown || _isPagesOverridden) {
       return;
     }
 
@@ -340,7 +365,10 @@ class _ComicPageState extends State<ComicPage> {
     print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
     final pagesQuery =
-        getSharedComicPagesQuery(context, widget.comicId, descending: true);
+        context.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: true,
+    )));
     if (pagesQuery == null) return;
 
     switch (scrollDir) {
@@ -373,6 +401,7 @@ class _ComicPageState extends State<ComicPage> {
 
           // Insert into pages list
           _addPagesToStart(upQuerySnapshot.docs, halfDocLimit);
+          _pages.add(centredOnDoc);
           _addPagesToEnd(downQuerySnapshot.docs, downDocLimit);
 
           // Jump to position centred
@@ -438,6 +467,8 @@ class _ComicPageState extends State<ComicPage> {
 
   Future<void> _centerPagesOnDoc(
       DocumentSnapshot<SharedComicPageModel> centreDoc) async {
+    if (_isPagesOverridden) return;
+
     _pages.clear();
     await _getPages(_ScrollDirection.none, centredOnDoc: centreDoc);
   }
@@ -468,8 +499,8 @@ class _ComicPageState extends State<ComicPage> {
     final userComic = context.read(userComicRefFamily(widget.comicId));
 
     if (userComic == null) {
-      await showErrorDialog(context,
-          'Failed to set page as current: couldn\'t get user comic ref.');
+      final loc = AppLocalizations.of(context)!;
+      await showErrorDialog(context, loc.comicSetBookmarkFail);
       return;
     }
 
