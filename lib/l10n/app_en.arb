@@ -96,5 +96,9 @@
     "libraryError": "Error loading user comics.",
     "libraryEmpty": "User has no comics.",
 
-    "settingsTitle": "Settings"
+    "settingsTitle": "Settings",
+    "settingsThemeLabel": "Theme",
+    "settingsThemeModeSystem": "System",
+    "settingsThemeModeLight": "Light",
+    "settingsThemeModeDark": "Dark"
 }
