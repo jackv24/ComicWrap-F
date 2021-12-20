@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class CardImageButton extends ConsumerWidget {
   final String? coverImageUrl;
   final Function()? onTap;
+  final bool isImporting;
 
-  const CardImageButton({Key? key, this.coverImageUrl, this.onTap})
+  const CardImageButton(
+      {Key? key, this.coverImageUrl, this.onTap, this.isImporting = false})
       : super(key: key);
 
   @override
@@ -18,7 +20,7 @@ class CardImageButton extends ConsumerWidget {
     }
 
     final progress = watch(downloadImageProvider(url));
-    return progress.when(
+    final card = progress.when(
       data: (data) {
         if (data is ImageResponse) {
           // Image downloaded, display image
@@ -46,6 +48,18 @@ class CardImageButton extends ConsumerWidget {
       },
       loading: () => _getEmptyImageButton(),
       error: (error, stack) => ErrorWidget(error),
+    );
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        if (isImporting)
+          Container(
+            color: Colors.white.withAlpha(170),
+          ),
+        if (isImporting) const CircularProgressIndicator(),
+        card,
+      ],
     );
   }
 

@@ -42,6 +42,7 @@ class ComicInfoSection extends StatelessWidget {
             return sharedComicAsync.when(
               data: (data) => CardImageButton(
                 coverImageUrl: data?.coverImageUrl,
+                isImporting: data?.isImporting ?? false,
               ),
               loading: () => const CardImageButton(),
               error: (error, stack) => ErrorWidget(error),
@@ -57,18 +58,10 @@ class ComicInfoSection extends StatelessWidget {
         Consumer(builder: (context, watch, child) {
           final sharedComicAsync = watch(sharedComicFamily(comicId));
           return sharedComicAsync.when(
-            data: (data) => Row(
-              children: [
-                // Show an indicator when still importing or no data
-                if (data?.isImporting ?? true) const Icon(Icons.warning),
-                Expanded(
-                  child: Text(
-                    data?.name ?? comicId,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headline5,
-                  ),
-                )
-              ],
+            data: (data) => Text(
+              data?.name ?? comicId,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.headline5,
             ),
             loading: () => Text(loc.loadingText),
             error: (error, stack) => ErrorWidget(error),
@@ -175,6 +168,7 @@ class ComicInfoSection extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12, top: 6),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       infoSection,
                       const Spacer(),
