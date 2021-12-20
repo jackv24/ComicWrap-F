@@ -65,6 +65,7 @@ describe('comic-scraper', () => {
           text: 'Page 1',
           docName: 'comic page-1',
           wasCrawled: false,
+          link: "comic/page-1",
         }]);
       });
 
@@ -86,6 +87,7 @@ describe('comic-scraper', () => {
           text: 'Page 1',
           docName: 'comic page-1',
           wasCrawled: false,
+          link: "comic/page-1",
         }]);
       });
     });
@@ -109,6 +111,7 @@ describe('comic-scraper', () => {
           text: 'Page 1',
           docName: 'comic page-1',
           wasCrawled: false,
+          link: "/comic/page-1",
         }]);
       });
 
@@ -130,6 +133,7 @@ describe('comic-scraper', () => {
           text: 'Page 1',
           docName: 'comic page-1',
           wasCrawled: false,
+          link: "/comic/page-1",
         }]);
       });
     });
@@ -154,16 +158,19 @@ describe('comic-scraper', () => {
             text: 'Misfile - Hell High - 2019-08-29',
             docName: 'hell-high 2019-08-29',
             wasCrawled: true,
+            link: "https://www.misfile.com/hell-high/2019-08-29",
           },
           {
             text: 'Misfile - Hell High - 2019-08-30',
             docName: 'hell-high 2019-08-30',
             wasCrawled: true,
+            link: "https://www.misfile.com/hell-high/2019-08-30",
           },
           {
             text: 'Misfile - Hell High - 2019-08-31',
             docName: 'hell-high 2019-08-31',
             wasCrawled: true,
+            link: "https://www.misfile.com/hell-high/2019-08-31",
           },
         ]);
       });
@@ -196,11 +203,13 @@ describe('comic-scraper', () => {
             text: 'Kill Six Billion Demons » KILL SIX BILLION DEMONS – Chapter 1',
             docName: 'comic kill-six-billion-demons-chapter-1',
             wasCrawled: true,
+            link: 'https://killsixbilliondemons.com/comic/kill-six-billion-demons-chapter-1/'
           },
           {
             text: 'Kill Six Billion Demons » KSBD 1-1',
             docName: 'comic ksbd-chapter-1-1',
             wasCrawled: true,
+            link: 'https://killsixbilliondemons.com/comic/ksbd-chapter-1-1/'
           },
         ]);
       });
@@ -232,11 +241,13 @@ describe('comic-scraper', () => {
               text: 'Hop 01 Page 01 – CROAKINGBOUND',
               docName: 'comics hop-01-page-01',
               wasCrawled: true,
+              link: 'https://croakingbound.com/comics/hop-01-page-01/'
             },
             {
               text: 'Hop 01 Page 02 – CROAKINGBOUND',
               docName: 'comics hop-01-page-02',
               wasCrawled: true,
+              link: 'https://croakingbound.com/comics/hop-01-page-02/'
             },
           ]);
         });
