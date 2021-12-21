@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:comicwrap_f/utils/analytics.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -88,6 +89,15 @@ class _AddComicDialogState extends State<AddComicDialog> {
       });
       return;
     }
+
+    // Log analytics event so we can tell how popular certain URLs are,
+    // so we know what to prioritize.
+    (await context.read(analyticsProvider.future)).logEvent(
+      name: 'add_comic',
+      parameters: {
+        'url': _url.text,
+      },
+    ).then((value) => print('Logged add comic event: ${_url.text}'));
 
     final callable = functions.httpsCallable('addUserComic');
 
