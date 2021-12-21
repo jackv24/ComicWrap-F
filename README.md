@@ -6,13 +6,15 @@ It is intended for reading webcomics that are published on their own websites, a
 
 This app is not intended to scrape comic websites. Instead, comics are read directly on the website like a normal web browser. This ensures that the app does not have a negative effect on things such as ad revenue for the webcomic creator.
 
->It's basically all functional at this point, but I wont release a public build until I've done everything in my [Public Beta Release](https://github.com/jackv24/ComicWrap-F/projects/1) project board!
-
 ## Main Features
 - Read tracking (remembers the page you're up to)
 - Update tracking (shows any new pages since it was added to your Library)
 - In-site reading and tracking (navigate within the website and automatically track last read page)
 - Android/iOS realtime sync
+
+<img src='.github/promo/readme_cover.png'/>
+
+<a href='https://play.google.com/store/apps/details?id=com.jackvine.comicwrapf&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='200px'/></a>
 
 # Building and Running
 
@@ -58,4 +60,14 @@ To run the comic scraping service, cd into the `service_scrape-comic` directory.
 - (from project root) run `flutter pub get` to get dependencies
 - run `flutter pub run build_runner build` to generate code (will sometimes need to run this again after editing certain files)
 
-You should now be ready for development! There are a few run configurations for Android Studio in `.run/`.
+You should now be ready for development! There are a few run configurations for Android Studio in `.run/`, and run configurations for VS Code in `.vscode/launch.json`.
+
+# Contributing
+
+At this stage there's no real contributing guidelines besides "be nice, use common sense".
+
+Feel free to [create an Issue](https://github.com/jackv24/ComicWrap-F/issues/new/choose) with any bugs, features requests, etc!
+
+## Localisation
+
+All in-app text strings are link to a [POEditor project](https://poeditor.com/join/project?hash=ZXq5B7LDqL).
