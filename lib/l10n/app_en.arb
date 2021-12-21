@@ -75,6 +75,7 @@
     "comicNoPages": "No pages...",
     "comicSetBookmark": "Set Bookmark",
     "comicSetBookmarkFail": "Failed to set page as current: couldn't get user comic ref.",
+    "comicReportIssue": "Report Issue",
 
     "webOpenBrowser": "Open Browser",
     "webErrorUrl": "Could not open URL: {url}",

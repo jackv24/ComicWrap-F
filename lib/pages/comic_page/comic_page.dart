@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const listItemHeight = 50.0;
 
@@ -116,6 +117,14 @@ class _ComicPageState extends State<ComicPage> {
       appBar: AppBar(
         actions: [
           MoreActionButton(actions: [
+            FunctionListItem(
+              child: ListTile(
+                title: Text(loc.comicReportIssue),
+                trailing: const Icon(Icons.report),
+              ),
+              onSelected: (context) => launch(
+                  'https://github.com/jackv24/ComicWrap-F/issues/new/choose'),
+            ),
             FunctionListItem(
               child: ListTile(
                 title: Text(loc.delete),
