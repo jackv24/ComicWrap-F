@@ -1,6 +1,4 @@
-import 'package:comicwrap_f/utils/analytics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -21,14 +19,8 @@ class GitHubLinkButton extends StatelessWidget {
         TextButton.icon(
           icon: const Icon(Icons.open_in_browser),
           label: Text(loc.githubLinkLabel),
-          onPressed: () {
-            context.read(analyticsProvider.future).then((analytics) async {
-              await analytics.logEvent(name: 'github_link_button_clicked');
-              print('Analytics logged github_link_button_clicked');
-            });
-
-            launch('https://github.com/jackv24/ComicWrap-F#readme');
-          },
+          onPressed: () =>
+              launch('https://github.com/jackv24/ComicWrap-F#readme'),
         ),
       ],
     );

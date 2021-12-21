@@ -1,7 +1,6 @@
 import 'package:comicwrap_f/pages/auth/email_verify_screen.dart';
 import 'package:comicwrap_f/pages/auth/sign_in_screen.dart';
 import 'package:comicwrap_f/pages/library/library_screen.dart';
-import 'package:comicwrap_f/utils/analytics.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:comicwrap_f/utils/settings.dart';
@@ -23,33 +22,15 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class _MyAppState extends State<MyApp> {
   @override
   void initState() {
-    super.initState();
-
     // Setup global style for loading blocker
     EasyLoading.instance
       ..userInteractions = false
       ..maskType = EasyLoadingMaskType.black;
 
-    _logAppOpen(context);
-
-    WidgetsBinding.instance!.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Log App Open event when app is moved to the foreground
-    if (state == AppLifecycleState.resumed) {
-      _logAppOpen(context);
-    }
+    super.initState();
   }
 
   @override
@@ -124,11 +105,5 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ],
       ),
     );
-  }
-
-  void _logAppOpen(BuildContext context) async {
-    final analytics = await context.read(analyticsProvider.future);
-    await analytics.logAppOpen();
-    print('Analytics logged app open');
   }
 }
