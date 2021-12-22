@@ -72,7 +72,7 @@ class ComicInfoSection extends StatelessWidget {
           final userComicAsync = watch(userComicFamily(comicId));
           return userComicAsync.when(
             data: (data) => TimeAgoText(
-                time: data?.data()?.lastReadTime?.toDate(),
+                time: data?.data()?.lastReadTime,
                 builder: (text) {
                   return Text(
                     loc.infoRead(text),
@@ -88,7 +88,7 @@ class ComicInfoSection extends StatelessWidget {
           final newestPageAsync = watch(newestPageFamily(comicId));
           return newestPageAsync.when(
             data: (data) => TimeAgoText(
-                time: data?.data()?.scrapeTime?.toDate(),
+                time: data?.data()?.scrapeTime,
                 builder: (text) {
                   return Text(
                     loc.infoUpdated(text),

@@ -91,7 +91,7 @@ class ComicInfoCard extends ConsumerWidget {
             ),
             const SizedBox(height: 2.0),
             TimeAgoText(
-                time: userComic.lastReadTime?.toDate(),
+                time: userComic.lastReadTime,
                 builder: (text) {
                   return Text(
                     text,

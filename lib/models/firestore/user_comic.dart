@@ -1,23 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/common.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'user_comic.freezed.dart';
 part 'user_comic.g.dart';
 
-@JsonSerializable()
-class UserComicModel {
-  // Type not supported by code generator
-  @JsonKey(ignore: true)
-  late Timestamp? lastReadTime;
+@freezed
+class UserComicModel with _$UserComicModel {
+  factory UserComicModel({
+    String? currentPageId,
+    String? newFromPageId,
+    @TimestampNullConverter() DateTime? lastReadTime,
+  }) = _UserComicModel;
 
-  final String? currentPageId;
-  final String? newFromPageId;
-
-  UserComicModel({this.lastReadTime, this.currentPageId, this.newFromPageId});
-
-  factory UserComicModel.fromJson(Json json) =>
-      _$UserComicModelFromJson(json)..lastReadTime = json['lastReadTime'];
-
-  Json toJson() =>
-      _$UserComicModelToJson(this)..['lastReadTime'] = lastReadTime;
+  factory UserComicModel.fromJson(Json json) => _$UserComicModelFromJson(json);
 }

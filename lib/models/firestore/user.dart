@@ -1,14 +1,13 @@
 import 'package:comicwrap_f/models/common.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'user.freezed.dart';
 part 'user.g.dart';
 
-@JsonSerializable()
-class UserModel {
+@freezed
+class UserModel with _$UserModel {
   // Empty for now - just for type safety
-  UserModel();
+  factory UserModel() = _UserModel;
 
   factory UserModel.fromJson(Json json) => _$UserModelFromJson(json);
-
-  Json toJson() => _$UserModelToJson(this);
 }

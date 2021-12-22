@@ -1,23 +1,18 @@
 import 'package:comicwrap_f/models/common.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'shared_comic.freezed.dart';
 part 'shared_comic.g.dart';
 
-@JsonSerializable()
-class SharedComicModel {
-  final String? name;
-  final String? coverImageUrl;
-  final String scrapeUrl;
-  final bool isImporting;
-
-  SharedComicModel(
-      {this.name,
-      this.coverImageUrl,
-      required this.scrapeUrl,
-      this.isImporting = false});
+@freezed
+class SharedComicModel with _$SharedComicModel {
+  factory SharedComicModel({
+    String? name,
+    String? coverImageUrl,
+    required String scrapeUrl,
+    @Default(false) bool isImporting,
+  }) = _SharedComicModel;
 
   factory SharedComicModel.fromJson(Json json) =>
       _$SharedComicModelFromJson(json);
-
-  Json toJson() => _$SharedComicModelToJson(this);
 }

@@ -286,8 +286,8 @@ _MockComicData _generateMockComic(
     String? coverImageFile}) {
   final userDoc = MockDocumentSnapshot<UserComicModel>();
   when(userDoc.id).thenReturn(name);
-  when(userDoc.data()).thenReturn(UserComicModel(
-      lastReadTime: Timestamp.fromDate(DateTime.now().subtract(age))));
+  when(userDoc.data())
+      .thenReturn(UserComicModel(lastReadTime: DateTime.now().subtract(age)));
 
   final pages = _generateMockPages();
 
@@ -313,8 +313,7 @@ List<MockDocumentSnapshot<SharedComicPageModel>> _generateMockPages() {
     when(page.id).thenReturn('comic page$i');
     when(page.data()).thenReturn(SharedComicPageModel(
         text: 'Page $i',
-        scrapeTime: Timestamp.fromDate(
-            DateTime.now().subtract(Duration(days: pageCount - i)))));
+        scrapeTime: DateTime.now().subtract(Duration(days: pageCount - i))));
     list.add(page);
   }
   return list;
