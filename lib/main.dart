@@ -9,9 +9,12 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -25,12 +28,12 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   void initState() {
+    super.initState();
+
     // Setup global style for loading blocker
     EasyLoading.instance
       ..userInteractions = false
       ..maskType = EasyLoadingMaskType.black;
-
-    super.initState();
   }
 
   @override

@@ -9,48 +9,128 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'add_comic_dialog.dart';
 
-class LibraryScreen extends ConsumerWidget {
+const String bannerAdId = String.fromEnvironment(
+  'AD_ID_LIBRARY_BANNER_BOT',
+  // Default is the Admob Banner Ad test ID
+  defaultValue: 'ca-app-pub-3940256099942544/6300978111',
+);
+
+class LibraryScreen extends StatefulWidget {
   const LibraryScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, ScopedReader watch) {
+  _LibraryScreenState createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  BannerAd? bannerAd;
+  bool isBannerAdLoaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    bannerAd?.dispose();
+    isBannerAdLoaded = false;
+    _loadAd();
+  }
+
+  @override
+  void dispose() {
+    bannerAd?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    final asyncComicsList = watch(userComicsListProvider);
-    final comicsListWidget = asyncComicsList.when(
-      loading: () => SliverToBoxAdapter(
-        child: Text(loc.loadingText),
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: MainPageScaffold(
+              title: loc.libraryTitle,
+              appBarActions: [
+                IconButton(
+                    icon: const Icon(
+                      Icons.library_add,
+                    ),
+                    onPressed: () => _onAddPressed(context)),
+                IconButton(
+                    icon: const Icon(
+                      Icons.settings_rounded,
+                    ),
+                    onPressed: () => _onSettingsPressed(context)),
+              ],
+              bodySliver: SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 15.0, horizontal: 15.0),
+                sliver: Consumer(
+                  builder: (context, watch, child) {
+                    final asyncComicsList = watch(userComicsListProvider);
+                    return asyncComicsList.when(
+                      loading: () => SliverToBoxAdapter(
+                        child: Text(loc.loadingText),
+                      ),
+                      error: (err, stack) => SliverToBoxAdapter(
+                        child: Text(loc.libraryError),
+                      ),
+                      data: (comicsList) {
+                        return _getBodySliver(context, comicsList);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+          if (bannerAd != null && isBannerAdLoaded)
+            Container(
+              alignment: Alignment.center,
+              child: AdWidget(ad: bannerAd!),
+              width: bannerAd!.size.width.toDouble(),
+              height: bannerAd!.size.height.toDouble(),
+            )
+        ],
       ),
-      error: (err, stack) => SliverToBoxAdapter(
-        child: Text(loc.libraryError),
+    );
+  }
+
+  Future<void> _loadAd() async {
+    final width = MediaQuery.of(context).size.width.truncate();
+    final size =
+        await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+
+    if (size == null) {
+      print('Unable to get height of anchored banner.');
+      return;
+    }
+
+    bannerAd = BannerAd(
+      adUnitId: bannerAdId,
+      size: size,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            isBannerAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, err) {
+          print('Banner ad failed to load: $err');
+          ad.dispose();
+        },
       ),
-      data: (comicsList) {
-        return _getBodySliver(context, comicsList);
-      },
     );
 
-    return MainPageScaffold(
-      title: loc.libraryTitle,
-      appBarActions: [
-        IconButton(
-            icon: const Icon(
-              Icons.library_add,
-            ),
-            onPressed: () => _onAddPressed(context)),
-        IconButton(
-            icon: const Icon(
-              Icons.settings_rounded,
-            ),
-            onPressed: () => _onSettingsPressed(context)),
-      ],
-      bodySliver: SliverPadding(
-        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-        sliver: comicsListWidget,
-      ),
-    );
+    return bannerAd!.load();
   }
 
   void _onAddPressed(BuildContext context) {

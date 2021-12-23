@@ -32,8 +32,10 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+def adMobAppId = localProperties.getProperty('adMob.appId')
+
 android {
-    compileSdkVersion 29
+    compileSdkVersion 31
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
@@ -46,10 +48,11 @@ android {
     defaultConfig {
         applicationId "com.jackvine.comicwrapf"
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 31
         multiDexEnabled true
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        manifestPlaceholders = [adMobAppId: adMobAppId]
     }
 
     signingConfigs {
