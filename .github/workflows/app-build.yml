@@ -62,7 +62,7 @@ jobs:
         run: |
           flutter build appbundle -v --build-name=$BUILD_NAME \
           --build-number=${{github.run_number}} \
-          --dart-define=$AD_ID_LIBRARY_BANNER_BOT
+          --dart-define AD_ID_LIBRARY_BANNER_BOT=$AD_ID_LIBRARY_BANNER_BOT
         env:
           AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
 
