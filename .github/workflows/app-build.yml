@@ -42,10 +42,6 @@ jobs:
         run: echo $ANDROID_KEY_PROPERTIES | base64 --decode > android/key.properties
         env:
           ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
-      - name: Append AdMob App ID to local.properties
-        run: printf $ANDROID_ADMOB_APPID >> android/local.properties
-        env:
-          ANDROID_ADMOB_APPID: ${{ secrets.ANDROID_ADMOB_APPID }}
       # Setup required tools
       - name: Setup Java
         uses: actions/setup-java@v2
@@ -61,8 +57,7 @@ jobs:
       - name: Build AppBundle
         run: |
           flutter build appbundle -v --build-name=$BUILD_NAME \
-          --build-number=${{github.run_number}} \
-          --dart-define AD_ID_LIBRARY_BANNER_BOT=$AD_ID_LIBRARY_BANNER_BOT
+          --build-number=${{github.run_number}}
         env:
           AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
 
