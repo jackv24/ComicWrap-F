@@ -2,6 +2,7 @@ import 'package:badges/badges.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
 import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/download.dart';
 import 'package:comicwrap_f/widgets/card_image_button.dart';
 import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
@@ -39,15 +40,8 @@ class ComicInfoCard extends ConsumerWidget {
       data: (sharedComic) {
         if (sharedComic == null) return const Text('Shared Comic is null');
 
-        var coverImageUrl = sharedComic.coverImageUrl;
-
-        // If cover url is relative, make it absolute
-        if (coverImageUrl != null && !coverImageUrl.startsWith('http')) {
-          final scrapeUrl = sharedComic.scrapeUrl;
-          if (scrapeUrl.isNotEmpty) {
-            coverImageUrl = scrapeUrl + coverImageUrl;
-          }
-        }
+        final coverImageUrl = getValidCoverImageUrl(
+            sharedComic.coverImageUrl, sharedComic.scrapeUrl);
 
         final theme = Theme.of(context);
 

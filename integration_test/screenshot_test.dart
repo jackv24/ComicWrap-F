@@ -232,7 +232,7 @@ Future<String> _pumpPromoMock(WidgetTester tester, ThemeMode themeMode) async {
       endPageFamily(SharedComicPagesQueryInfo(comicId: id, descending: true))
           .overrideWithValue(AsyncValue.data(pages.last)),
       if (coverImageProvider != null)
-        downloadImageProvider(coverImageUrl!).overrideWithValue(
+        downloadImageFamily(coverImageUrl!).overrideWithValue(
             AsyncValue.data(ImageResponse(coverImageProvider, coverImageUrl))),
     ]);
   }

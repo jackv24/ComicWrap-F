@@ -19,7 +19,7 @@ class CardImageButton extends ConsumerWidget {
       return _getEmptyImageButton();
     }
 
-    final progress = watch(downloadImageProvider(url));
+    final progress = watch(downloadImageFamily(url));
     final card = progress.when(
       data: (data) {
         if (data is ImageResponse) {

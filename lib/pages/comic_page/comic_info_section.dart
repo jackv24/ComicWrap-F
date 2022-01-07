@@ -6,19 +6,22 @@ import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:palette_generator/palette_generator.dart';
 
 class ComicInfoSection extends StatelessWidget {
   final String comicId;
   final void Function(DocumentSnapshot<SharedComicPageModel>)? onCurrentPressed;
   final void Function()? onFirstPressed;
   final void Function()? onLastPressed;
+  final PaletteGenerator? paletteGenerator;
 
   const ComicInfoSection(
       {Key? key,
       required this.comicId,
       this.onCurrentPressed,
       this.onFirstPressed,
-      this.onLastPressed})
+      this.onLastPressed,
+      this.paletteGenerator})
       : super(key: key);
 
   @override
@@ -107,6 +110,26 @@ class ComicInfoSection extends StatelessWidget {
       ],
     );
 
+    final Color? buttonColor;
+    switch (Theme.of(context).brightness) {
+      case Brightness.dark:
+        buttonColor = paletteGenerator?.lightVibrantColor?.color;
+        break;
+      case Brightness.light:
+        buttonColor = paletteGenerator?.vibrantColor?.color;
+        break;
+      default:
+        buttonColor = null;
+        break;
+    }
+
+    final ButtonStyle? buttonStyle;
+    if (buttonColor != null) {
+      buttonStyle = ElevatedButton.styleFrom(primary: buttonColor);
+    } else {
+      buttonStyle = null;
+    }
+
     final buttonsSection = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -123,6 +146,7 @@ class ComicInfoSection extends StatelessWidget {
                   data?.data()?.text ?? loc.infoNoBookmark,
                   overflow: TextOverflow.ellipsis,
                 ),
+                style: buttonStyle,
               ),
               loading: () => ElevatedButton.icon(
                 onPressed: null,
@@ -131,6 +155,7 @@ class ComicInfoSection extends StatelessWidget {
                   loc.loadingText,
                   overflow: TextOverflow.ellipsis,
                 ),
+                style: buttonStyle,
               ),
               error: (error, stack) => ErrorWidget(error),
             );
@@ -140,16 +165,20 @@ class ComicInfoSection extends StatelessWidget {
           children: [
             Expanded(
               child: ElevatedButton.icon(
-                  onPressed: onFirstPressed,
-                  icon: const Icon(Icons.first_page),
-                  label: Text(loc.buttonFirst)),
+                onPressed: onFirstPressed,
+                icon: const Icon(Icons.first_page),
+                label: Text(loc.buttonFirst),
+                style: buttonStyle,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton.icon(
-                  onPressed: onLastPressed,
-                  icon: const Icon(Icons.last_page),
-                  label: Text(loc.buttonLast)),
+                onPressed: onLastPressed,
+                icon: const Icon(Icons.last_page),
+                label: Text(loc.buttonLast),
+                style: buttonStyle,
+              ),
             )
           ],
         )

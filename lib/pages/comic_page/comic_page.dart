@@ -7,6 +7,7 @@ import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_info_section.dart';
 import 'package:comicwrap_f/pages/comic_web_page/comic_web_page.dart';
 import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/download.dart';
 import 'package:comicwrap_f/utils/error.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/material.dart';
@@ -113,92 +114,122 @@ class _ComicPageState extends State<ComicPage> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        actions: [
-          MoreActionButton(actions: [
-            FunctionListItem(
-              child: ListTile(
-                title: Text(loc.comicReportIssue),
-                trailing: const Icon(Icons.report),
-              ),
-              onSelected: (context) => launch(
-                  'https://github.com/jackv24/ComicWrap-F/issues/new/choose'),
-            ),
-            FunctionListItem(
-              child: ListTile(
-                title: Text(loc.delete),
-                trailing: const Icon(Icons.delete),
-              ),
-              onSelected: (context) async {
-                final userComicAsync =
-                    context.read(userComicFamily(widget.comicId));
-                final userComicSnapshot = userComicAsync.when(
-                  data: (data) => data,
-                  loading: () => null,
-                  error: (error, stack) => null,
+    return Consumer(
+      // Page color scheme changes to match cover image
+      builder: (context, watch, child) {
+        final paletteGenAsync =
+            watch(downloadCoverImagePaletteFamily(widget.comicId));
+        final paletteGen = paletteGenAsync.when(
+          data: (data) => data,
+          loading: () => null,
+          error: (error, stack) => null,
+        );
+
+        final Color? appBarColor;
+        switch (Theme.of(context).brightness) {
+          case Brightness.dark:
+            appBarColor = paletteGen?.dominantColor?.color;
+            break;
+          case Brightness.light:
+            appBarColor = paletteGen?.mutedColor?.color;
+            break;
+          default:
+            appBarColor = null;
+            break;
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: appBarColor,
+            actions: [
+              MoreActionButton(actions: [
+                FunctionListItem(
+                  child: ListTile(
+                    title: Text(loc.comicReportIssue),
+                    trailing: const Icon(Icons.report),
+                  ),
+                  onSelected: (context) => launch(
+                      'https://github.com/jackv24/ComicWrap-F/issues/new/choose'),
+                ),
+                FunctionListItem(
+                  child: ListTile(
+                    title: Text(loc.delete),
+                    trailing: const Icon(Icons.delete),
+                  ),
+                  onSelected: (context) async {
+                    final userComicAsync =
+                        context.read(userComicFamily(widget.comicId));
+                    final userComicSnapshot = userComicAsync.when(
+                      data: (data) => data,
+                      loading: () => null,
+                      error: (error, stack) => null,
+                    );
+
+                    if (userComicSnapshot != null) {
+                      EasyLoading.show();
+                      await userComicSnapshot.reference.delete();
+                      EasyLoading.dismiss();
+
+                      // This comic has now been removed, so close it's page
+                      Navigator.of(context).pop();
+                    } else {
+                      await showErrorDialog(context, loc.comicDeleteFail);
+                    }
+                  },
+                ),
+              ]),
+            ],
+          ),
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final comicInfo = ComicInfoSection(
+                comicId: widget.comicId,
+                onCurrentPressed: _centerPagesOnDoc,
+                onFirstPressed: _pages.isNotEmpty
+                    ? () => _goToEndPage(context, false)
+                    : null,
+                onLastPressed: _pages.isNotEmpty
+                    ? () => _goToEndPage(context, true)
+                    : null,
+                paletteGenerator: paletteGen,
+              );
+
+              // Draw extra info as side bar on large screens
+              if (constraints.maxWidth > wideScreenThreshold) {
+                return Row(
+                  children: [
+                    // Extra info side bar
+                    Container(
+                      width: 300,
+                      alignment: AlignmentDirectional.topStart,
+                      child: comicInfo,
+                    ),
+                    // Page List
+                    Expanded(
+                        child: _buildList(
+                            context, const EdgeInsets.symmetric(horizontal: 8)))
+                  ],
                 );
-
-                if (userComicSnapshot != null) {
-                  EasyLoading.show();
-                  await userComicSnapshot.reference.delete();
-                  EasyLoading.dismiss();
-
-                  // This comic has now been removed, so close it's page
-                  Navigator.of(context).pop();
-                } else {
-                  await showErrorDialog(context, loc.comicDeleteFail);
-                }
-              },
-            ),
-          ]),
-        ],
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final comicInfo = ComicInfoSection(
-            comicId: widget.comicId,
-            onCurrentPressed: _centerPagesOnDoc,
-            onFirstPressed:
-                _pages.isNotEmpty ? () => _goToEndPage(context, false) : null,
-            onLastPressed:
-                _pages.isNotEmpty ? () => _goToEndPage(context, true) : null,
-          );
-
-          // Draw extra info as side bar on large screens
-          if (constraints.maxWidth > wideScreenThreshold) {
-            return Row(
-              children: [
-                // Extra info side bar
-                Container(
-                  width: 300,
-                  alignment: AlignmentDirectional.topStart,
-                  child: comicInfo,
-                ),
-                // Page List
-                Expanded(
-                    child: _buildList(
-                        context, const EdgeInsets.symmetric(horizontal: 8)))
-              ],
-            );
-          } else {
-            return Column(
-              children: [
-                // Extra info top bar
-                Container(
-                  height: 200,
-                  alignment: AlignmentDirectional.topStart,
-                  child: comicInfo,
-                ),
-                // Page List
-                Expanded(
-                    child: _buildList(
-                        context, const EdgeInsets.symmetric(vertical: 4)))
-              ],
-            );
-          }
-        },
-      ),
+              } else {
+                return Column(
+                  children: [
+                    // Extra info top bar
+                    Container(
+                      height: 200,
+                      alignment: AlignmentDirectional.topStart,
+                      child: comicInfo,
+                    ),
+                    // Page List
+                    Expanded(
+                        child: _buildList(
+                            context, const EdgeInsets.symmetric(vertical: 4)))
+                  ],
+                );
+              }
+            },
+          ),
+        );
+      },
     );
   }
 
