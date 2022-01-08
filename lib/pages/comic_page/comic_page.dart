@@ -91,7 +91,9 @@ class _ComicPageState extends State<ComicPage> {
     });
 
     // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
-    context.read(userComicFamily(widget.comicId).last).then((userComicDoc) {
+    context
+        .read(userComicFamily(widget.comicId).last)
+        .then((userComicDoc) async {
       final currentPageId = userComicDoc?.data()?.currentPageId;
 
       // Get ref to current page once for centering pages on start
@@ -104,8 +106,18 @@ class _ComicPageState extends State<ComicPage> {
         // Centre on current page
         _centerPagesOnRef(currentPageRef);
       } else {
-        // Start at top if no current page
-        _getPages(_ScrollDirection.none);
+        final firstPage =
+            await context.read(endPageFamily(SharedComicPagesQueryInfo(
+          comicId: widget.comicId,
+          descending: false,
+        )).future);
+
+        // Start at first page if no current page
+        if (firstPage != null) {
+          _centerPagesOnDoc(firstPage);
+        } else {
+          _getPages(_ScrollDirection.none);
+        }
       }
     });
   }
