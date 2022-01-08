@@ -41,8 +41,8 @@ enum _ScrollDirection {
 }
 
 class _ComicPageState extends State<ComicPage> {
-  final int _initialDocLimit = 30;
-  final int _moreDocLimit = 10;
+  final int _initialDocLimit = 50;
+  final int _moreDocLimit = 20;
 
   late List<DocumentSnapshot<SharedComicPageModel>> _pages;
   late bool _isPagesOverridden;

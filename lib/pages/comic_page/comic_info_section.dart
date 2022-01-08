@@ -133,41 +133,47 @@ class ComicInfoSection extends StatelessWidget {
     final buttonsSection = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Consumer(
-          builder: (context, watch, child) {
-            final currentPageAsync = watch(currentPageFamily(comicId));
-            return currentPageAsync.when(
-              data: (data) => ElevatedButton.icon(
-                onPressed: data == null || onCurrentPressed == null
-                    ? null
-                    : () => onCurrentPressed!(data),
-                icon: const Icon(Icons.bookmark),
-                label: Text(
-                  data?.data()?.text ?? loc.infoNoBookmark,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                style: buttonStyle,
-              ),
-              loading: () => ElevatedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.bookmark),
-                label: Text(
-                  loc.loadingText,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                style: buttonStyle,
-              ),
-              error: (error, stack) => ErrorWidget(error),
-            );
-          },
+        Flex(
+          direction: Axis.horizontal,
+          children: [
+            Expanded(child: Consumer(
+              builder: (context, watch, child) {
+                final currentPageAsync = watch(currentPageFamily(comicId));
+                return currentPageAsync.when(
+                  data: (data) => ElevatedButton.icon(
+                    onPressed: data == null || onCurrentPressed == null
+                        ? null
+                        : () => onCurrentPressed!(data),
+                    icon: const Icon(Icons.bookmark),
+                    label: Text(
+                      data?.data()?.text ?? loc.infoNoBookmark,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: buttonStyle,
+                  ),
+                  loading: () => ElevatedButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.bookmark),
+                    label: Text(
+                      loc.loadingText,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: buttonStyle,
+                  ),
+                  error: (error, stack) => ErrorWidget(error),
+                );
+              },
+            ))
+          ],
         ),
-        Row(
+        Flex(
+          direction: Axis.horizontal,
           children: [
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: onFirstPressed,
                 icon: const Icon(Icons.first_page),
-                label: Text(loc.buttonFirst),
+                label: Text(loc.buttonFirst, overflow: TextOverflow.ellipsis),
                 style: buttonStyle,
               ),
             ),
@@ -176,7 +182,7 @@ class ComicInfoSection extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: onLastPressed,
                 icon: const Icon(Icons.last_page),
-                label: Text(loc.buttonLast),
+                label: Text(loc.buttonLast, overflow: TextOverflow.ellipsis),
                 style: buttonStyle,
               ),
             )
@@ -216,6 +222,7 @@ class ComicInfoSection extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       infoSection,
                       const SizedBox(height: 6),
