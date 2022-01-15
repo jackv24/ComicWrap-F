@@ -29,22 +29,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
               InputDecorator(
                 decoration:
                     InputDecoration(label: Text(loc.settingsThemeLabel)),
-                child: Consumer(builder: (context, watch, child) {
-                  final currentTheme = watch(themeModeProvider);
-                  return DropdownButton<ThemeMode>(
-                    value: currentTheme,
-                    items: ThemeMode.values
-                        .map((val) => DropdownMenuItem(
-                              value: val,
-                              child: Text(_getThemeModeName(val, loc)),
-                            ))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val == null) return;
-                      context.read(themeModeProvider.notifier).setTheme(val);
-                    },
-                  );
-                }),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Consumer(builder: (context, watch, child) {
+                      final currentTheme = watch(themeModeProvider);
+                      const borderWidth = 1.0;
+                      return ToggleButtons(
+                        borderWidth: borderWidth,
+                        constraints: BoxConstraints.expand(
+                          width: (constraints.maxWidth - borderWidth * 2) /
+                                  ThemeMode.values.length -
+                              borderWidth * 2,
+                          height: 48.0,
+                        ),
+                        children: ThemeMode.values
+                            .map((val) => TextButton.icon(
+                                  onPressed: null,
+                                  icon: Icon(_getThemeModeIcon(val)),
+                                  label: Text(_getThemeModeName(val, loc)),
+                                ))
+                            .toList(),
+                        isSelected: ThemeMode.values
+                            .map((val) => currentTheme == val)
+                            .toList(),
+                        onPressed: (index) => context
+                            .read(themeModeProvider.notifier)
+                            .setTheme(ThemeMode.values[index]),
+                      );
+                    });
+                  },
+                ),
               ),
               TextButton(
                 onPressed: () async {
@@ -62,6 +76,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  IconData? _getThemeModeIcon(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return Icons.brightness_4;
+      case ThemeMode.light:
+        return Icons.light_mode;
+      case ThemeMode.dark:
+        return Icons.dark_mode;
+    }
+  }
+
   String _getThemeModeName(ThemeMode mode, AppLocalizations loc) {
     switch (mode) {
       case ThemeMode.system:
@@ -70,8 +95,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return loc.settingsThemeModeLight;
       case ThemeMode.dark:
         return loc.settingsThemeModeDark;
-      default:
-        return mode.name;
     }
   }
 }
