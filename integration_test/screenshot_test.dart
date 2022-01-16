@@ -179,27 +179,27 @@ Future<String> _pumpPromoMock(WidgetTester tester, ThemeMode themeMode) async {
 
   final comics = [
     _generateMockComic(
-      name: 'Tim & Jim: Adventure Bros',
+      name: 'Merry Crisis',
       age: const Duration(hours: 3),
       newFromPage: 1,
       currentPage: 5,
-      coverImageFile: 'integration_test/assets/comic_cover_bros.png',
+      coverImageFile: 'integration_test/assets/comic_cover_couple.jpg',
     ),
     _generateMockComic(
-      name: 'Fight!',
+      name: 'Journey to Nowhere',
       age: const Duration(days: 5),
       currentPage: 2,
-      coverImageFile: 'integration_test/assets/comic_cover_fight.png',
+      coverImageFile: 'integration_test/assets/comic_cover_signpost.jpg',
     ),
     _generateMockComic(
-      name: 'Summer Time',
+      name: 'Friend Goals',
       age: const Duration(days: 12),
-      coverImageFile: 'integration_test/assets/comic_cover_summer.png',
+      coverImageFile: 'integration_test/assets/comic_cover_support.jpg',
     ),
     _generateMockComic(
-      name: 'Cool Shirts and Black Caps',
+      name: 'Scary Stuff',
       age: const Duration(days: 15),
-      coverImageFile: 'integration_test/assets/comic_cover_shirt.png',
+      coverImageFile: 'integration_test/assets/comic_cover_halloween.jpg',
     ),
   ];
 
