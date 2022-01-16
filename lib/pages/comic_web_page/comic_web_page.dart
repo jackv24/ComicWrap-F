@@ -8,12 +8,19 @@ import 'package:comicwrap_f/utils/error.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+const String interstitialAdId = String.fromEnvironment(
+  'AD_ID_COMIC_WEB_PAGE_INTERSTITIAL',
+  // Default is the Admob Interstitial Video Ad test ID
+  defaultValue: 'ca-app-pub-3940256099942544/8691691433',
+);
 
 class ComicWebPage extends StatefulWidget {
   final String comicId;
@@ -32,11 +39,13 @@ class _ComicWebPageState extends State<ComicWebPage> {
   DocumentSnapshot<SharedComicPageModel>? _newValidPage;
   DocumentSnapshot<SharedComicPageModel>? _currentPage;
 
-  late String rootUrl;
+  late String _rootUrl;
   final Completer<WebViewController> _webViewController =
       Completer<WebViewController>();
 
   late final BehaviorSubject<int> _progressSubject;
+
+  bool _isShowingAd = false;
 
   @override
   void initState() {
@@ -51,7 +60,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
       String scrapeUrl = sharedComic.scrapeUrl;
       if (!scrapeUrl.endsWith('/')) scrapeUrl += '/';
-      rootUrl = scrapeUrl;
+      _rootUrl = scrapeUrl;
 
       final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
 
@@ -138,44 +147,15 @@ class _ComicWebPageState extends State<ComicWebPage> {
                   if (userComicSnapshot == null) return true;
 
                   EasyLoading.show();
-                  // Update read stats when exiting, to avoid many doc updates while binge-reading
-                  if (_currentPage != null) {
-                    var newFromPageId = userComicSnapshot.data()?.newFromPageId;
-                    if (newFromPageId == null) {
-                      // If there is no "new from page" just set it to the last page
-                      final lastPage = await context
-                          .read(newestPageFamily(widget.comicId).last);
-                      newFromPageId = lastPage?.id;
-                    } else {
-                      final newFromPageRef = context.read(
-                          sharedComicPageRefFamily(SharedComicPageInfo(
-                              comicId: widget.comicId, pageId: newFromPageId)));
+                  List<Future> futures = [];
 
-                      // If reading into the new pages, then set them as not new
-                      final newFromPage = await newFromPageRef?.get();
-                      final newScrapeTime = newFromPage?.data()?.scrapeTime;
-                      final currentScrapeTime =
-                          _currentPage!.data()?.scrapeTime;
+                  // Wait for ad to (maybe) show before popping screen
+                  futures.add(_showInterstitialAd());
 
-                      // Can only compare scrape times if both pages have them
-                      if (newScrapeTime != null &&
-                          currentScrapeTime != null &&
-                          currentScrapeTime.compareTo(newScrapeTime) > 0) {
-                        newFromPageId = _currentPage!.id;
-                      }
-                    }
+                  // Update read status when exiting, to avoid many doc updates while binge-reading
+                  futures.add(_updateReadStatus(userComicSnapshot));
 
-                    await userComicSnapshot.reference.update({
-                      'lastReadTime': Timestamp.now(),
-                      'currentPageId': _currentPage!.id,
-                      'newFromPageId': newFromPageId,
-                    });
-                  } else {
-                    // Don't set currentPage reference if it's null
-                    await userComicSnapshot.reference.update({
-                      'lastReadTime': Timestamp.now(),
-                    });
-                  }
+                  await Future.wait(futures);
                   EasyLoading.dismiss();
 
                   // Pop with value of current page
@@ -205,18 +185,27 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     _webViewController.complete(webViewController);
                   },
                   navigationDelegate: (request) async {
+                    // Fix some cases where WebView auto-navigates to some weird URL
+                    if (request.url.startsWith('blob')) {
+                      return NavigationDecision.prevent;
+                    }
+
                     // Ignore iframes
                     if (!request.isForMainFrame) {
                       return NavigationDecision.navigate;
                     }
 
-                    final rootHost = Uri.parse(rootUrl).host;
+                    final rootHost = Uri.parse(_rootUrl).host;
                     final toHost = Uri.parse(request.url).host;
 
                     // Allow navigation within same website
                     // (check both in case one has www. and one doesn't)
                     if (rootHost.endsWith(toHost) ||
                         toHost.endsWith(rootHost)) {
+                      // (maybe) show ad on navigation to new page
+                      // (don't await, so page can load behind ad)
+                      _showInterstitialAd();
+
                       return NavigationDecision.navigate;
                     }
 
@@ -224,14 +213,16 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     await _tryLaunchUrl(request.url);
                     return NavigationDecision.prevent;
                   },
-                  onPageStarted: (currentPage) {
-                    final pageId = currentPage.split('/').skip(3).join(' ');
+                  onPageStarted: (pageUrl) {
+                    print('onPageStarted URL: $pageUrl');
+
+                    final pageId = pageUrl.split('/').skip(3).join(' ');
                     if (_newPage != null && pageId == _newPage!.id) {
                       // Don't trigger rebuild if we haven't changed page
-                      print('Already on page: ' + pageId);
+                      print('Already on page: $pageId');
                       return;
                     } else {
-                      print('Navigating to page: ' + pageId);
+                      print('Navigating to page: $pageId');
                       setState(() {
                         _newPage = null;
                       });
@@ -246,7 +237,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     // Get data for the new page (don't wait)
                     pageRef?.get().then((value) {
                       if (!value.exists) {
-                        print('Page does not exist: ' + pageId);
+                        print('Page does not exist: $pageId');
                         return;
                       }
 
@@ -254,7 +245,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
                       setState(() {
                         _newPage = value;
                         _newValidPage = value;
-                        print('Got data for page: ' + pageId);
+                        print('Got data for page: $pageId');
                       });
 
                       // Don't need to wait for this, just let it happen whenever
@@ -328,6 +319,85 @@ class _ComicWebPageState extends State<ComicWebPage> {
       final loc = AppLocalizations.of(context)!;
       final displayUrl = url ?? 'null';
       await showErrorDialog(context, loc.webErrorUrl(displayUrl));
+    }
+  }
+
+  Future<void> _showInterstitialAd() async {
+    // Don't try and show more than one ad
+    if (_isShowingAd) return;
+    _isShowingAd = true;
+
+    // Handle completion in ad callbacks since load method call below
+    // completes before ad has actually been closed
+    final completer = Completer<void>();
+    void adCompleted(InterstitialAd ad) {
+      ad.dispose();
+      _isShowingAd = false;
+      completer.complete();
+    }
+
+    // Try load ad (may not load due to limits defined in AdMob console)
+    await InterstitialAd.load(
+      adUnitId: interstitialAdId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) async {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) => adCompleted(ad),
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              print('$ad failed to show fullscreen content: $error');
+              adCompleted(ad);
+            },
+          );
+
+          await ad.show();
+        },
+        onAdFailedToLoad: (error) {
+          print('InterstitialAd failed to load: $error');
+        },
+      ),
+    );
+
+    return completer.future;
+  }
+
+  Future<void> _updateReadStatus(
+      DocumentSnapshot<UserComicModel?> userComicSnapshot) async {
+    if (_currentPage != null) {
+      var newFromPageId = userComicSnapshot.data()?.newFromPageId;
+      if (newFromPageId == null) {
+        // If there is no "new from page" just set it to the last page
+        final lastPage =
+            await context.read(newestPageFamily(widget.comicId).last);
+        newFromPageId = lastPage?.id;
+      } else {
+        final newFromPageRef = context.read(sharedComicPageRefFamily(
+            SharedComicPageInfo(
+                comicId: widget.comicId, pageId: newFromPageId)));
+
+        // If reading into the new pages, then set them as not new
+        final newFromPage = await newFromPageRef?.get();
+        final newScrapeTime = newFromPage?.data()?.scrapeTime;
+        final currentScrapeTime = _currentPage!.data()?.scrapeTime;
+
+        // Can only compare scrape times if both pages have them
+        if (newScrapeTime != null &&
+            currentScrapeTime != null &&
+            currentScrapeTime.compareTo(newScrapeTime) > 0) {
+          newFromPageId = _currentPage!.id;
+        }
+      }
+
+      await userComicSnapshot.reference.update({
+        'lastReadTime': Timestamp.now(),
+        'currentPageId': _currentPage!.id,
+        'newFromPageId': newFromPageId,
+      });
+    } else {
+      // Don't set currentPage reference if it's null
+      await userComicSnapshot.reference.update({
+        'lastReadTime': Timestamp.now(),
+      });
     }
   }
 }

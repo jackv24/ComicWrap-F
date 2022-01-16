@@ -63,8 +63,10 @@ jobs:
           flutter build appbundle -v --build-name=$BUILD_NAME \
           --build-number=${{github.run_number}} \
           --dart-define AD_ID_LIBRARY_BANNER_BOT=$AD_ID_LIBRARY_BANNER_BOT
+          --dart-define AD_ID_COMIC_WEB_PAGE_INTERSTITIAL=$AD_ID_COMIC_WEB_PAGE_INTERSTITIAL
         env:
           AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
+          AD_ID_COMIC_WEB_PAGE_INTERSTITIAL: ${{ secrets.ANDROID_AD_ID_COMIC_WEB_PAGE_INTERSTITIAL }}
 
       # Run Fastlane upload if a tagged version
       - name: Setup Fastlane (Ruby)
