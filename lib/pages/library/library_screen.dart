@@ -31,12 +31,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
   bool isBannerAdLoaded = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-    bannerAd?.dispose();
-    isBannerAdLoaded = false;
-    _loadAd();
+    // Only load ad once (this method is called when modal dialogs pop up also)
+    if (bannerAd == null) {
+      _loadAd();
+    }
   }
 
   @override
