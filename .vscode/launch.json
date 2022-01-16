@@ -5,13 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Emulators (debug mode)",
+            "name": "Local (debug mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "debug",
             "args": [
                 "--dart-define",
-                "USE_EMULATORS=true",
+                "USE_LOCAL_APPWRITE=true",
             ]
         },
         {

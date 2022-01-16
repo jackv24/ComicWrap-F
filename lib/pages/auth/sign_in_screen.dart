@@ -1,15 +1,15 @@
 import 'package:comicwrap_f/pages/auth/sign_up_screen.dart';
 import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
+import 'package:comicwrap_f/utils/appwrite.dart';
 import 'package:comicwrap_f/utils/auth.dart';
-import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:comicwrap_f/widgets/github_link_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);

@@ -1,13 +1,10 @@
 import 'dart:async';
 
-import 'package:comicwrap_f/utils/error.dart';
-import 'package:comicwrap_f/utils/firebase.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:appwrite/models.dart';
+import 'package:comicwrap_f/utils/appwrite.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class EmailSignInDetails {
   String email;
@@ -24,78 +21,69 @@ class EmailSignUpDetails {
   EmailSignUpDetails(this.email, this.passA, this.passB);
 }
 
-final userChangesProvider = StreamProvider<User?>((ref) {
-  // Firebase needs to be initialised before we can use it
-  return ref.watch(authProvider).when(
-        data: (auth) => auth?.authStateChanges() ?? const Stream.empty(),
-        loading: () => const Stream.empty(),
-        error: (err, stack) => Stream.error(err, stack),
-      );
+final userChangesProvider = StreamProvider.autoDispose<User>((ref) {
+  final realtime = ref.watch(realtimeProvider);
+  final subscription = realtime.subscribe(['account']);
+
+  ref.onDispose(() => subscription.close());
+
+  return subscription.stream.map((event) => User.fromMap(event.payload));
 });
 
-Future<void> linkGoogleAuth(BuildContext context) async {
-  //_isChangingAuth = true;
-
-  final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
-  if (auth == null) {
-    await _showGetAuthError(context);
-    return;
-  }
-
-  final GoogleSignInAccount? googleUser;
-  try {
-    // Google auth flow
-    googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) {
-      // Google sign in was canceled
-      return;
-    }
-  } on PlatformException catch (e) {
-    print('Google sign in failed with error code: ${e.code}');
-    return;
-  }
-
-  final googleAuth = await googleUser.authentication;
-  final credential = GoogleAuthProvider.credential(
-    accessToken: googleAuth.accessToken,
-    idToken: googleAuth.idToken,
-  );
-
-  try {
-    await auth.signInWithCredential(credential);
-  } on FirebaseAuthException catch (e) {
-    print('Firebase google auth failed with error code: ${e.code}');
-  }
-}
+// Future<void> linkGoogleAuth(BuildContext context) async {
+//   //_isChangingAuth = true;
+//
+//   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
+//   final auth = asyncAuth.data?.value;
+//   if (auth == null) {
+//     await _showGetAuthError(context);
+//     return;
+//   }
+//
+//   final GoogleSignInAccount? googleUser;
+//   try {
+//     // Google auth flow
+//     googleUser = await GoogleSignIn().signIn();
+//     if (googleUser == null) {
+//       // Google sign in was canceled
+//       return;
+//     }
+//   } on PlatformException catch (e) {
+//     print('Google sign in failed with error code: ${e.code}');
+//     return;
+//   }
+//
+//   final googleAuth = await googleUser.authentication;
+//   final credential = GoogleAuthProvider.credential(
+//     accessToken: googleAuth.accessToken,
+//     idToken: googleAuth.idToken,
+//   );
+//
+//   try {
+//     await auth.signInWithCredential(credential);
+//   } on FirebaseAuthException catch (e) {
+//     print('Firebase google auth failed with error code: ${e.code}');
+//   }
+// }
 
 Future<void> signOut(BuildContext context) async {
-  final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
-  if (auth == null) {
-    await _showGetAuthError(context);
-    return;
-  }
+  final account = ProviderScope.containerOf(context).read(accountProvider);
 
   EasyLoading.show();
-  await auth.signOut();
+  final sessions = await account.getSessions();
+  final List<Future> futures = [];
+  for (final session in sessions.sessions) {
+    // Only delete the current session
+    if (!session.current) continue;
+    futures.add(account.deleteSession(sessionId: session.$id));
+  }
+  await Future.wait(futures);
   EasyLoading.dismiss();
-}
-
-Future<void> _showGetAuthError(BuildContext context) {
-  return showErrorDialog(context, 'Couldn\'t get FirebaseAuth!');
 }
 
 Future<String?> submitSignIn(
     BuildContext context, EmailSignInDetails authDetails) async {
-  final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
-  if (auth == null) {
-    await _showGetAuthError(context);
-    return 'no-auth-provider';
-  }
-
-  // Firebase just gives unknown error if any details are empty
+  // Don't allow fields to be empty
   if (authDetails.email.isEmpty) {
     if (authDetails.pass.isEmpty) {
       return 'empty-auth';
@@ -106,27 +94,18 @@ Future<String?> submitSignIn(
     return 'empty-pass';
   }
 
-  try {
-    await auth.signInWithCredential(EmailAuthProvider.credential(
-        email: authDetails.email, password: authDetails.pass));
-  } on FirebaseAuthException catch (e) {
-    print('Account link failed with error code: ${e.code}');
-    // Return error back to dialog to handle
-    return e.code;
-  }
+  final account = ProviderScope.containerOf(context).read(accountProvider);
+  final session = await account.createSession(
+      email: authDetails.email, password: authDetails.pass);
+
+  // TODO: Do anything with session?
+
   // No errors! :D
   return null;
 }
 
 Future<String?> submitSignUp(
     BuildContext context, EmailSignUpDetails authDetails) async {
-  final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
-  if (auth == null) {
-    await _showGetAuthError(context);
-    return 'no-auth-provider';
-  }
-
   final String matchingPass;
 
   // Firebase just gives unknown error if any details are empty
@@ -145,14 +124,12 @@ Future<String?> submitSignUp(
     matchingPass = authDetails.passA;
   }
 
-  try {
-    await auth.createUserWithEmailAndPassword(
-        email: authDetails.email, password: matchingPass);
-  } on FirebaseAuthException catch (e) {
-    print('Account create failed with error code: ${e.code}');
-    // Return error back to dialog to handle
-    return e.code;
-  }
+  final account = ProviderScope.containerOf(context).read(accountProvider);
+  final result = await account.create(
+      userId: 'unique()', email: authDetails.email, password: matchingPass);
+
+  // TODO: Do something with result?
+
   // No errors! :D
   return null;
 }

@@ -6,10 +6,10 @@ import 'package:comicwrap_f/models/firestore/shared_comic.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
+import 'package:comicwrap_f/utils/appwrite.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/download.dart';
-import 'package:comicwrap_f/utils/firebase.dart';
 import 'package:comicwrap_f/utils/settings.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -152,7 +152,7 @@ Widget _getCleanState({
   return ProviderScope(
     overrides: [
       // Break firebaseProvider to force all firebase connections to be mocked
-      firebaseProvider.overrideWithValue(AsyncValue.error('Not Implemented')),
+      clientProvider.overrideWithValue(AsyncValue.error('Not Implemented')),
       themeModeProvider
           .overrideWithValue(ThemeSettingNotifier(null, themeMode)),
       ...?extraOverrides,
