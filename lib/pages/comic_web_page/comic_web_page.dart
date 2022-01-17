@@ -45,7 +45,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
   late final BehaviorSubject<int> _progressSubject;
 
-  bool _isShowingAd = false;
+  InterstitialAd? _queuedInterstitialAd;
 
   @override
   void initState() {
@@ -71,6 +71,11 @@ class _ComicWebPageState extends State<ComicWebPage> {
     });
 
     _progressSubject = BehaviorSubject.seeded(0);
+
+    // Load ad immediately so it's ready when we need it
+    _loadInterstitialAd().then((value) {
+      _queuedInterstitialAd = value;
+    });
   }
 
   @override
@@ -149,8 +154,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
                   EasyLoading.show();
                   List<Future> futures = [];
 
-                  // Wait for ad to (maybe) show before popping screen
-                  futures.add(_showInterstitialAd());
+                  // Wait for queued ad to show before popping screen
+                  futures.add(_showInterstitialAd(_queuedInterstitialAd));
 
                   // Update read status when exiting, to avoid many doc updates while binge-reading
                   futures.add(_updateReadStatus(userComicSnapshot));
@@ -204,7 +209,10 @@ class _ComicWebPageState extends State<ComicWebPage> {
                         toHost.endsWith(rootHost)) {
                       // (maybe) show ad on navigation to new page
                       // (don't await, so page can load behind ad)
-                      _showInterstitialAd();
+                      _showInterstitialAd(_queuedInterstitialAd)
+                          // After ad has been shown, queue up another
+                          .then((value) => _loadInterstitialAd())
+                          .then((value) => _queuedInterstitialAd = value);
 
                       return NavigationDecision.navigate;
                     }
@@ -322,45 +330,6 @@ class _ComicWebPageState extends State<ComicWebPage> {
     }
   }
 
-  Future<void> _showInterstitialAd() async {
-    // Don't try and show more than one ad
-    if (_isShowingAd) return;
-    _isShowingAd = true;
-
-    // Handle completion in ad callbacks since load method call below
-    // completes before ad has actually been closed
-    final completer = Completer<void>();
-    void adCompleted(InterstitialAd ad) {
-      ad.dispose();
-      _isShowingAd = false;
-      completer.complete();
-    }
-
-    // Try load ad (may not load due to limits defined in AdMob console)
-    await InterstitialAd.load(
-      adUnitId: interstitialAdId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) async {
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (ad) => adCompleted(ad),
-            onAdFailedToShowFullScreenContent: (ad, error) {
-              print('$ad failed to show fullscreen content: $error');
-              adCompleted(ad);
-            },
-          );
-
-          await ad.show();
-        },
-        onAdFailedToLoad: (error) {
-          print('InterstitialAd failed to load: $error');
-        },
-      ),
-    );
-
-    return completer.future;
-  }
-
   Future<void> _updateReadStatus(
       DocumentSnapshot<UserComicModel?> userComicSnapshot) async {
     if (_currentPage != null) {
@@ -399,5 +368,51 @@ class _ComicWebPageState extends State<ComicWebPage> {
         'lastReadTime': Timestamp.now(),
       });
     }
+  }
+
+  Future<InterstitialAd?> _loadInterstitialAd() async {
+    // Handle completion in ad callbacks since load method doesn't return ad
+    final completer = Completer<InterstitialAd?>();
+
+    // Try load ad (may not load due to limits defined in AdMob console)
+    await InterstitialAd.load(
+      adUnitId: interstitialAdId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          print('InterstitialAd loaded: $ad');
+          completer.complete(ad);
+        },
+        onAdFailedToLoad: (error) {
+          print('InterstitialAd failed to load: $error');
+          completer.complete(null);
+        },
+      ),
+    );
+
+    return completer.future;
+  }
+
+  Future<void> _showInterstitialAd(InterstitialAd? ad) async {
+    if (ad == null) return;
+
+    final completer = Completer<void>();
+
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        print('Ad dismissed: $ad');
+        completer.complete();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        print('$ad failed to show fullscreen content: $error');
+        completer.complete();
+      },
+    );
+
+    // Ad is preloaded so add a short delay to make it's appearance less jarring
+    await Future.delayed(const Duration(milliseconds: 100));
+    await ad.show();
+
+    return completer.future;
   }
 }
