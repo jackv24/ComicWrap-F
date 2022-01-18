@@ -34,3 +34,8 @@ Runner/GeneratedPluginRegistrant.*
 
 # Secrets files
 GoogleService-Info.plist
+
+# Built files
+*.ipa
+*.app*
+report.xml
