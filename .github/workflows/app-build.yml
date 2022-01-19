@@ -94,6 +94,10 @@ jobs:
         run: echo $GOOGLE_SERVICES_IOS | base64 --decode > ios/GoogleService-Info.plist
         env:
           GOOGLE_SERVICES_IOS: ${{ secrets.GOOGLE_SERVICES_IOS }}
+      - name: App Store Connect API key P8
+        run: echo $KEY_BASE64 | base64 --decode > ios/AuthKey_API.p8
+        env:
+          KEY_BASE64: ${{ secrets.APPSTORE_CONNECT_API_P8 }}
       # Setup required tools
       - name: Setup Java
         uses: actions/setup-java@v2
@@ -147,10 +151,11 @@ jobs:
           FASTLANE_USER: ${{ secrets.IOS_FASTLANE_USER }}
           FASTLANE_PASSWORD: ${{ secrets.IOS_FASTLANE_PASSWORD }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.IOS_FASTLANE_APP_SPECIFIC_PASSWORD }}
-          FASTLANE_SESSION: ${{ secrets.IOS_FASTLANE_SESSION }}
           MATCH_PASSWORD: ${{ secrets.IOS_MATCH_PASSWORD }}
           MATCH_KEYCHAIN_NAME: keychain
           MATCH_KEYCHAIN_PASSWORD: password
+          APPSTORE_CONNECT_API_ID: ${{ secrets.APPSTORE_CONNECT_API_ID }}
+          APPSTORE_CONNECT_API_ISSUER: ${{ secrets.APPSTORE_CONNECT_API_ISSUER }}
           #DELIVER_ITMSTRANSPORTER_ADDITIONAL_UPLOAD_PARAMETERS: -t Signiant
           BUILD_NUMBER: ${{github.run_number}}
           BUILD_NAME: $BUILD_NAME
