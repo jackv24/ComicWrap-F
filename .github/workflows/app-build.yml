@@ -18,62 +18,60 @@ on:
       - "build.yaml"
 
 jobs:
-  # Commented out while testing iOS job
-  # build-android:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     # Set build name conditionally
-  #     - name: Set Build name
-  #       run: |
-  #         case $GITHUB_REF in
-  #           "refs/tags/"*) echo "BUILD_NAME=${GITHUB_REF/refs\/tags\/v}" >> $GITHUB_ENV ;;
-  #           *) echo "BUILD_NAME=$GITHUB_REF" >> $GITHUB_ENV ;;
-  #         esac
-  #     # Write decoded secrets files
-  #     - name: Secret google-services.json to file
-  #       run: echo $GOOGLE_SERVICES_ANDROID | base64 --decode > android/app/google-services.json
-  #       env:
-  #         GOOGLE_SERVICES_ANDROID: ${{ secrets.GOOGLE_SERVICES_ANDROID }}
-  #     - name: Decode Play Store Upload Key to Keyfile
-  #       run: echo $PLAY_STORE_UPLOAD_KEY | base64 --decode > android/app/upload-keystore.jks
-  #       env:
-  #         PLAY_STORE_UPLOAD_KEY: ${{ secrets.PLAY_STORE_UPLOAD_KEY }}
-  #     - name: Secret key.properties to file
-  #       run: echo $ANDROID_KEY_PROPERTIES | base64 --decode > android/key.properties
-  #       env:
-  #         ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
-  #     # Setup required tools
-  #     - name: Setup Java
-  #       uses: actions/setup-java@v2
-  #       with:
-  #         distribution: "zulu"
-  #         java-version: "12"
-  #     - name: Setup Flutter
-  #       uses: subosito/flutter-action@v1
-  #       with:
-  #         flutter-version: 2.8.0
-  #     - uses: ./.github/actions/setup-flutter-build
-  #     - name: Setup Fastlane (Ruby)
-  #       uses: ruby/setup-ruby@v1
-  #       with:
-  #         ruby-version: "2.7.2"
-  #         bundler-cache: true
-  #         working-directory: android
-  #     # Run build with build number added for Google Play
-  #     - name: Build AppBundle
-  #       run: |
-  #         flutter build appbundle -v --build-name=$BUILD_NAME \
-  #         --build-number=${{github.run_number}}
-  #       env:
-  #         AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
-
-  #     # Run Fastlane upload if a tagged version
-  #     - run: bundle exec fastlane internal
-  #       if: startsWith(github.ref, 'refs/tags/v')
-  #       env:
-  #         FASTLANE_SERVICE_ACCOUNT_KEY: ${{ secrets.FASTLANE_SERVICE_ACCOUNT_KEY }}
-  #       working-directory: android
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Set build name conditionally
+      - name: Set Build name
+        run: |
+          case $GITHUB_REF in
+            "refs/tags/"*) echo "BUILD_NAME=${GITHUB_REF/refs\/tags\/v}" >> $GITHUB_ENV ;;
+            *) echo "BUILD_NAME=$GITHUB_REF" >> $GITHUB_ENV ;;
+          esac
+      # Write decoded secrets files
+      - name: Secret google-services.json to file
+        run: echo $GOOGLE_SERVICES_ANDROID | base64 --decode > android/app/google-services.json
+        env:
+          GOOGLE_SERVICES_ANDROID: ${{ secrets.GOOGLE_SERVICES_ANDROID }}
+      - name: Decode Play Store Upload Key to Keyfile
+        run: echo $PLAY_STORE_UPLOAD_KEY | base64 --decode > android/app/upload-keystore.jks
+        env:
+          PLAY_STORE_UPLOAD_KEY: ${{ secrets.PLAY_STORE_UPLOAD_KEY }}
+      - name: Secret key.properties to file
+        run: echo $ANDROID_KEY_PROPERTIES | base64 --decode > android/key.properties
+        env:
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+      # Setup required tools
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: "zulu"
+          java-version: "12"
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: 2.8.0
+      - uses: ./.github/actions/setup-flutter-build
+      - name: Setup Fastlane (Ruby)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.7.2"
+          bundler-cache: true
+          working-directory: android
+      # Run build with build number added for Google Play
+      - name: Build AppBundle
+        run: |
+          flutter build appbundle -v --build-name=$BUILD_NAME \
+          --build-number=${{github.run_number}}
+        env:
+          AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
+      # Run Fastlane upload if a tagged version
+      - run: bundle exec fastlane internal
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          FASTLANE_SERVICE_ACCOUNT_KEY: ${{ secrets.FASTLANE_SERVICE_ACCOUNT_KEY }}
+        working-directory: android
 
   build-ios:
     runs-on: macos-latest
@@ -135,6 +133,8 @@ jobs:
           ruby-version: "2.7.2"
           bundler-cache: true
           working-directory: ios
+      # This build is long and redundant (built again directly below) but is the only way I've found
+      # so far that I can set the build name and number
       - name: Build ios to set build-name and build-number
         run: |
           flutter build ios --release --no-codesign -v --build-name=$BUILD_NAME \
