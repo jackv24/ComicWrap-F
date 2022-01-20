@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:comicwrap_f/pages/auth/sign_up_screen.dart';
 import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
@@ -32,6 +34,13 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
     final loc = AppLocalizations.of(context)!;
+
+    final brightness = Theme.of(context).brightness;
+
+    late final googleButtonType =
+        brightness == Brightness.dark ? Buttons.GoogleDark : Buttons.Google;
+    late final appleButtonType =
+        brightness == Brightness.dark ? Buttons.AppleDark : Buttons.Apple;
 
     return MainPageScaffold(
       title: loc.signInTitle,
@@ -84,7 +93,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: AbsorbPointer(
                         absorbing: _inProgress,
                         child:
-                            SignInButton(Buttons.Google, onPressed: () async {
+                            SignInButton(googleButtonType, onPressed: () async {
                           setState(() {
                             _inProgress = true;
                           });
@@ -95,6 +104,23 @@ class _SignInScreenState extends State<SignInScreen> {
                         }),
                       ),
                     ),
+                    if (Platform.isIOS)
+                      SizedBox(
+                        width: double.infinity,
+                        child: AbsorbPointer(
+                          absorbing: _inProgress,
+                          child: SignInButton(appleButtonType,
+                              onPressed: () async {
+                            setState(() {
+                              _inProgress = true;
+                            });
+                            await linkAppleAuth(context);
+                            setState(() {
+                              _inProgress = false;
+                            });
+                          }),
+                        ),
+                      ),
                     TextButton(
                       child: Text(loc.signUpEmailButton),
                       onPressed:
