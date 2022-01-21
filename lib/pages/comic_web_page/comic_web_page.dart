@@ -53,12 +53,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
       if (!scrapeUrl.endsWith('/')) scrapeUrl += '/';
       rootUrl = scrapeUrl;
 
-      final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
-
-      // Navigate to page after URL is constructed
-      _webViewController.future.then((webViewController) {
-        webViewController.loadUrl(scrapeUrl + pagePath);
-      });
+      _navigateToPageId(widget.initialPageId);
     });
 
     _progressSubject = BehaviorSubject.seeded(0);
@@ -79,6 +74,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
     final pageTitle = pageData?.text ?? '';
 
     return Scaffold(
+      // Hide single while pixel around webview
+      backgroundColor: Theme.of(context).colorScheme.primaryVariant,
       appBar: AppBar(
         title: Text(pageTitle),
         actions: [
@@ -115,6 +112,13 @@ class _ComicWebPageState extends State<ComicWebPage> {
             },
           ),
         ],
+      ),
+      bottomNavigationBar: _NavigationBar(
+        onNext: _newPage != null ? () => _goToNextPage(_newPage!) : null,
+        onPrevious:
+            _newPage != null ? () => _goToPreviousPage(_newPage!) : null,
+        onFirst: () => _goToFirstPage(context),
+        onLast: () => _goToLastPage(context),
       ),
       body: Stack(
         children: [
@@ -329,5 +333,121 @@ class _ComicWebPageState extends State<ComicWebPage> {
       final displayUrl = url ?? 'null';
       await showErrorDialog(context, loc.webErrorUrl(displayUrl));
     }
+  }
+
+  Future<void> _navigateToPageId(String pageId) async {
+    final pagePath = pageId.trim().replaceAll(' ', '/');
+
+    // Wait for webview controller to be initialised
+    final controller = await _webViewController.future;
+
+    controller.loadUrl(rootUrl + pagePath);
+  }
+
+  Future<void> _goToFirstPage(BuildContext context) async {
+    final page = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: false,
+    )).future);
+
+    if (page == null) return;
+
+    _navigateToPageId(page.id);
+  }
+
+  Future<void> _goToLastPage(BuildContext context) async {
+    final page = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: true,
+    )).future);
+
+    if (page == null) return;
+
+    _navigateToPageId(page.id);
+  }
+
+  Future<QuerySnapshot<SharedComicPageModel>?> _goToQueriedPage(
+    Query<SharedComicPageModel> Function(Query<SharedComicPageModel>)
+        getSubQuery,
+  ) async {
+    if (_newPage == null) return null;
+
+    final pagesQuery =
+        context.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: true,
+    )));
+
+    if (pagesQuery == null) return null;
+
+    // Get pages below bottom
+    final snapshot = await getSubQuery(pagesQuery).get();
+
+    if (snapshot.docs.isEmpty) return null;
+
+    _navigateToPageId(snapshot.docs[0].id);
+  }
+
+  Future<void> _goToNextPage(DocumentSnapshot<SharedComicPageModel> fromPage) {
+    return _goToQueriedPage(
+        (rootQuery) => rootQuery.endBeforeDocument(fromPage).limitToLast(1));
+  }
+
+  Future<void> _goToPreviousPage(
+      DocumentSnapshot<SharedComicPageModel> fromPage) {
+    return _goToQueriedPage(
+        (rootQuery) => rootQuery.startAfterDocument(fromPage).limit(1));
+  }
+}
+
+class _NavigationBar extends StatelessWidget {
+  final void Function()? onPrevious;
+  final void Function()? onNext;
+  final void Function()? onFirst;
+  final void Function()? onLast;
+
+  const _NavigationBar({
+    Key? key,
+    this.onPrevious,
+    this.onNext,
+    this.onFirst,
+    this.onLast,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: colorScheme.primaryVariant,
+      child: SizedBox(
+        height: kBottomNavigationBarHeight,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.first_page),
+              color: colorScheme.onPrimary,
+              onPressed: onFirst,
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              color: colorScheme.onPrimary,
+              onPressed: onPrevious,
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_forward),
+              color: colorScheme.onPrimary,
+              onPressed: onNext,
+            ),
+            IconButton(
+              icon: const Icon(Icons.last_page),
+              color: colorScheme.onPrimary,
+              onPressed: onLast,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
