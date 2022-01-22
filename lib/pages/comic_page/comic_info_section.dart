@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/download.dart';
 import 'package:comicwrap_f/widgets/card_image_button.dart';
 import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
@@ -13,16 +14,14 @@ class ComicInfoSection extends StatelessWidget {
   final void Function(DocumentSnapshot<SharedComicPageModel>)? onCurrentPressed;
   final void Function()? onFirstPressed;
   final void Function()? onLastPressed;
-  final PaletteGenerator? paletteGenerator;
 
-  const ComicInfoSection(
-      {Key? key,
-      required this.comicId,
-      this.onCurrentPressed,
-      this.onFirstPressed,
-      this.onLastPressed,
-      this.paletteGenerator})
-      : super(key: key);
+  const ComicInfoSection({
+    Key? key,
+    required this.comicId,
+    this.onCurrentPressed,
+    this.onFirstPressed,
+    this.onLastPressed,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -110,86 +109,95 @@ class ComicInfoSection extends StatelessWidget {
       ],
     );
 
-    final Color? buttonColor;
-    switch (Theme.of(context).brightness) {
-      case Brightness.dark:
-        buttonColor = paletteGenerator?.lightVibrantColor?.color;
-        break;
-      case Brightness.light:
-        buttonColor = paletteGenerator?.vibrantColor?.color;
-        break;
-      default:
-        buttonColor = null;
-        break;
-    }
+    final buttonsSection = Consumer(builder: (context, watch, child) {
+      final paletteGenAsync = watch(downloadCoverImagePaletteFamily(comicId));
+      final paletteGen = paletteGenAsync.when(
+        data: (data) => data,
+        loading: () => null,
+        error: (error, stack) => null,
+      );
 
-    final ButtonStyle? buttonStyle;
-    if (buttonColor != null) {
-      buttonStyle = ElevatedButton.styleFrom(primary: buttonColor);
-    } else {
-      buttonStyle = null;
-    }
+      final Color? buttonColor;
+      switch (Theme.of(context).brightness) {
+        case Brightness.dark:
+          buttonColor = paletteGen?.lightVibrantColor?.color;
+          break;
+        case Brightness.light:
+          buttonColor = paletteGen?.vibrantColor?.color;
+          break;
+        default:
+          buttonColor = null;
+          break;
+      }
 
-    final buttonsSection = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Flex(
-          direction: Axis.horizontal,
-          children: [
-            Expanded(child: Consumer(
-              builder: (context, watch, child) {
-                final currentPageAsync = watch(currentPageFamily(comicId));
-                return currentPageAsync.when(
-                  data: (data) => ElevatedButton.icon(
-                    onPressed: data == null || onCurrentPressed == null
-                        ? null
-                        : () => onCurrentPressed!(data),
-                    icon: const Icon(Icons.bookmark),
-                    label: Text(
-                      data?.data()?.text ?? loc.infoNoBookmark,
-                      overflow: TextOverflow.ellipsis,
+      final ButtonStyle? buttonStyle;
+      if (buttonColor != null) {
+        buttonStyle = ElevatedButton.styleFrom(primary: buttonColor);
+      } else {
+        buttonStyle = null;
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Flex(
+            direction: Axis.horizontal,
+            children: [
+              Expanded(child: Consumer(
+                builder: (context, watch, child) {
+                  final currentPageAsync = watch(currentPageFamily(comicId));
+                  return currentPageAsync.when(
+                    data: (data) => ElevatedButton.icon(
+                      onPressed: data == null || onCurrentPressed == null
+                          ? null
+                          : () => onCurrentPressed!(data),
+                      icon: const Icon(Icons.bookmark),
+                      label: Text(
+                        data?.data()?.text ?? loc.infoNoBookmark,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      style: buttonStyle,
                     ),
-                    style: buttonStyle,
-                  ),
-                  loading: () => ElevatedButton.icon(
-                    onPressed: null,
-                    icon: const Icon(Icons.bookmark),
-                    label: Text(
-                      loc.loadingText,
-                      overflow: TextOverflow.ellipsis,
+                    loading: () => ElevatedButton.icon(
+                      onPressed: null,
+                      icon: const Icon(Icons.bookmark),
+                      label: Text(
+                        loc.loadingText,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      style: buttonStyle,
                     ),
-                    style: buttonStyle,
-                  ),
-                  error: (error, stack) => ErrorWidget(error),
-                );
-              },
-            ))
-          ],
-        ),
-        Flex(
-          direction: Axis.horizontal,
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: onFirstPressed,
-                icon: const Icon(Icons.first_page),
-                label: Text(loc.buttonFirst, overflow: TextOverflow.ellipsis),
-                style: buttonStyle,
+                    error: (error, stack) => ErrorWidget(error),
+                  );
+                },
+              ))
+            ],
+          ),
+          Flex(
+            direction: Axis.horizontal,
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onFirstPressed,
+                  icon: const Icon(Icons.first_page),
+                  label: Text(loc.buttonFirst, overflow: TextOverflow.ellipsis),
+                  style: buttonStyle,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: onLastPressed,
-                icon: const Icon(Icons.last_page),
-                label: Text(loc.buttonLast, overflow: TextOverflow.ellipsis),
-                style: buttonStyle,
-              ),
-            )
-          ],
-        )
-      ],
-    );
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onLastPressed,
+                  icon: const Icon(Icons.last_page),
+                  label: Text(loc.buttonLast, overflow: TextOverflow.ellipsis),
+                  style: buttonStyle,
+                ),
+              )
+            ],
+          )
+        ],
+      );
+    });
 
     return Container(
       padding: const EdgeInsets.all(12),

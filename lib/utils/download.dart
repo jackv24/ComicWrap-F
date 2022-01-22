@@ -52,6 +52,36 @@ final downloadCoverImagePaletteFamily = StreamProvider.autoDispose
   );
 });
 
+class AppBarColorParams {
+  final String comicId;
+  final Brightness brightness;
+
+  const AppBarColorParams({
+    required this.comicId,
+    required this.brightness,
+  });
+}
+
+final appBarColorProvider =
+    Provider.autoDispose.family<Color?, AppBarColorParams>((ref, params) {
+  final paletteGenAsync =
+      ref.watch(downloadCoverImagePaletteFamily(params.comicId));
+  final paletteGen = paletteGenAsync.when(
+    data: (data) => data,
+    loading: () => null,
+    error: (error, stack) => null,
+  );
+
+  switch (params.brightness) {
+    case Brightness.dark:
+      return paletteGen?.dominantColor?.color;
+    case Brightness.light:
+      return paletteGen?.mutedColor?.color;
+    default:
+      return null;
+  }
+});
+
 String? getValidCoverImageUrl(String? coverImageUrl, String scrapeUrl) {
   // If cover url is relative, make it absolute
   if (coverImageUrl != null && !coverImageUrl.startsWith('http')) {

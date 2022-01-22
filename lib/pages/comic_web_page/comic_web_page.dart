@@ -5,6 +5,7 @@ import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/download.dart';
 import 'package:comicwrap_f/utils/error.dart';
 import 'package:comicwrap_f/utils/settings.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
@@ -75,80 +76,93 @@ class _ComicWebPageState extends State<ComicWebPage> {
     final pageData = _newPage?.data();
     final pageTitle = pageData?.text ?? '';
 
-    return Scaffold(
-      // Hide single while pixel around webview
-      backgroundColor: Theme.of(context).colorScheme.primaryVariant,
-      appBar: AppBar(
-        title: Text(pageTitle),
-        actions: [
-          FutureBuilder<WebViewController>(
-            future: _webViewController.future,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Icon(Icons.more);
-              }
+    return Consumer(
+      builder: (context, watch, child) {
+        final appBarColor = watch(appBarColorProvider(AppBarColorParams(
+          comicId: widget.comicId,
+          brightness: Theme.of(context).brightness,
+        )));
 
-              final controller = snapshot.data!;
+        return Scaffold(
+          // Hide single while pixel around webview
+          backgroundColor: Theme.of(context).colorScheme.primaryVariant,
+          appBar: AppBar(
+            title: Text(pageTitle),
+            backgroundColor: appBarColor,
+            actions: [
+              FutureBuilder<WebViewController>(
+                future: _webViewController.future,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Icon(Icons.more);
+                  }
 
-              return MoreActionButton(actions: [
-                FunctionListItem(
-                  child: ListTile(
-                    title: Text(loc.refresh),
-                    trailing: const Icon(Icons.refresh),
-                  ),
-                  onSelected: (context) async {
-                    await controller.reload();
-                  },
-                ),
-                FunctionListItem(
-                  child: ListTile(
-                    title: Text(loc.webOpenBrowser),
-                    trailing: const Icon(Icons.open_in_browser),
-                  ),
-                  onSelected: (context) async {
-                    final url = await snapshot.data!.currentUrl();
-                    await _tryLaunchUrl(url);
-                  },
-                ),
-                FunctionListItem(
-                  child: ListTile(
-                    title: Text(loc.webToggleNavBar),
-                    trailing: Consumer(builder: (context, watch, child) {
-                      final value =
-                          watch(comicNavBarToggleProvider(widget.comicId));
-                      return Icon(
-                          value ? Icons.toggle_on : Icons.toggle_off_outlined);
-                    }),
-                  ),
-                  onSelected: (context) async {
-                    final notifier = context.read(
-                        comicNavBarToggleProvider(widget.comicId).notifier);
-                    final value =
-                        context.read(comicNavBarToggleProvider(widget.comicId));
-                    notifier.setValue(!value);
-                  },
-                ),
-              ]);
-            },
+                  final controller = snapshot.data!;
+
+                  return MoreActionButton(actions: [
+                    FunctionListItem(
+                      child: ListTile(
+                        title: Text(loc.refresh),
+                        trailing: const Icon(Icons.refresh),
+                      ),
+                      onSelected: (context) async {
+                        await controller.reload();
+                      },
+                    ),
+                    FunctionListItem(
+                      child: ListTile(
+                        title: Text(loc.webOpenBrowser),
+                        trailing: const Icon(Icons.open_in_browser),
+                      ),
+                      onSelected: (context) async {
+                        final url = await snapshot.data!.currentUrl();
+                        await _tryLaunchUrl(url);
+                      },
+                    ),
+                    FunctionListItem(
+                      child: ListTile(
+                        title: Text(loc.webToggleNavBar),
+                        trailing: Consumer(builder: (context, watch, child) {
+                          final value =
+                              watch(comicNavBarToggleProvider(widget.comicId));
+                          return Icon(value
+                              ? Icons.toggle_on
+                              : Icons.toggle_off_outlined);
+                        }),
+                      ),
+                      onSelected: (context) async {
+                        final notifier = context.read(
+                            comicNavBarToggleProvider(widget.comicId).notifier);
+                        final value = context
+                            .read(comicNavBarToggleProvider(widget.comicId));
+                        notifier.setValue(!value);
+                      },
+                    ),
+                  ]);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      // Optionally show navigation bar
-      bottomNavigationBar: Consumer(builder: (context, watch, child) {
-        final value = watch(comicNavBarToggleProvider(widget.comicId));
+          // Optionally show navigation bar
+          bottomNavigationBar: Consumer(builder: (context, watch, child) {
+            final value = watch(comicNavBarToggleProvider(widget.comicId));
 
-        // Can't return null here, so return empty widget
-        if (!value) return const SizedBox.shrink();
+            // Can't return null here, so return empty widget
+            if (!value) return const SizedBox.shrink();
 
-        return _NavigationBar(
-          onNext: _newPage != null ? () => _goToNextPage(_newPage!) : null,
-          onPrevious:
-              _newPage != null ? () => _goToPreviousPage(_newPage!) : null,
-          onFirst: () => _goToFirstPage(context),
-          onLast: () => _goToLastPage(context),
+            return _NavigationBar(
+              comicId: widget.comicId,
+              onNext: _newPage != null ? () => _goToNextPage(_newPage!) : null,
+              onPrevious:
+                  _newPage != null ? () => _goToPreviousPage(_newPage!) : null,
+              onFirst: () => _goToFirstPage(context),
+              onLast: () => _goToLastPage(context),
+            );
+          }),
+          body: child,
         );
-      }),
-      body: Stack(
+      },
+      child: Stack(
         children: [
           // WebView wrapper
           Consumer(
@@ -428,49 +442,56 @@ class _ComicWebPageState extends State<ComicWebPage> {
   }
 }
 
-class _NavigationBar extends StatelessWidget {
+class _NavigationBar extends ConsumerWidget {
+  final String comicId;
   final void Function()? onPrevious;
   final void Function()? onNext;
   final void Function()? onFirst;
   final void Function()? onLast;
 
   const _NavigationBar({
-    Key? key,
+    required this.comicId,
     this.onPrevious,
     this.onNext,
     this.onFirst,
     this.onLast,
+    Key? key,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget build(BuildContext context, ScopedReader watch) {
+    final appBarColor = watch(appBarColorProvider(AppBarColorParams(
+      comicId: comicId,
+      brightness: Theme.of(context).brightness,
+    )));
 
     return Material(
-      color: colorScheme.primaryVariant,
+      color: appBarColor,
       child: LayoutBuilder(builder: (context, constraints) {
+        final buttonColor = Theme.of(context).primaryIconTheme.color;
+
         final buttons = Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
               icon: const Icon(Icons.first_page),
-              color: colorScheme.onPrimary,
               onPressed: onFirst,
+              color: buttonColor,
             ),
             IconButton(
               icon: const Icon(Icons.arrow_back),
-              color: colorScheme.onPrimary,
               onPressed: onPrevious,
+              color: buttonColor,
             ),
             IconButton(
               icon: const Icon(Icons.arrow_forward),
-              color: colorScheme.onPrimary,
               onPressed: onNext,
+              color: buttonColor,
             ),
             IconButton(
               icon: const Icon(Icons.last_page),
-              color: colorScheme.onPrimary,
               onPressed: onLast,
+              color: buttonColor,
             ),
           ],
         );
