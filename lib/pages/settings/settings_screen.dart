@@ -54,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             .toList(),
                         onPressed: (index) => context
                             .read(themeModeProvider.notifier)
-                            .setTheme(ThemeMode.values[index]),
+                            .setValue(ThemeMode.values[index]),
                       );
                     });
                   },

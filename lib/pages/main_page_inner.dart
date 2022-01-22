@@ -9,13 +9,12 @@ class MainPageInner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverLayoutBuilder(builder: (context, constraints) {
-      const double extraPadding = 50;
       final width = constraints.crossAxisExtent;
       if (width > wideScreenThreshold) {
         final totalPadding = width - wideScreenThreshold;
         return SliverPadding(
           padding: EdgeInsets.symmetric(
-              horizontal: (totalPadding / 2) + extraPadding),
+              horizontal: (totalPadding / 2) + wideScreenExtraPadding),
           sliver: sliver,
         );
       } else {

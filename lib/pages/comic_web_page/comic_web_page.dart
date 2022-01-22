@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/error.dart';
+import 'package:comicwrap_f/utils/settings.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -108,18 +110,44 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     await _tryLaunchUrl(url);
                   },
                 ),
+                FunctionListItem(
+                  child: ListTile(
+                    title: Text(loc.webToggleNavBar),
+                    trailing: Consumer(builder: (context, watch, child) {
+                      final value =
+                          watch(comicNavBarToggleProvider(widget.comicId));
+                      return Icon(
+                          value ? Icons.toggle_on : Icons.toggle_off_outlined);
+                    }),
+                  ),
+                  onSelected: (context) async {
+                    final notifier = context.read(
+                        comicNavBarToggleProvider(widget.comicId).notifier);
+                    final value =
+                        context.read(comicNavBarToggleProvider(widget.comicId));
+                    notifier.setValue(!value);
+                  },
+                ),
               ]);
             },
           ),
         ],
       ),
-      bottomNavigationBar: _NavigationBar(
-        onNext: _newPage != null ? () => _goToNextPage(_newPage!) : null,
-        onPrevious:
-            _newPage != null ? () => _goToPreviousPage(_newPage!) : null,
-        onFirst: () => _goToFirstPage(context),
-        onLast: () => _goToLastPage(context),
-      ),
+      // Optionally show navigation bar
+      bottomNavigationBar: Consumer(builder: (context, watch, child) {
+        final value = watch(comicNavBarToggleProvider(widget.comicId));
+
+        // Can't return null here, so return empty widget
+        if (!value) return const SizedBox.shrink();
+
+        return _NavigationBar(
+          onNext: _newPage != null ? () => _goToNextPage(_newPage!) : null,
+          onPrevious:
+              _newPage != null ? () => _goToPreviousPage(_newPage!) : null,
+          onFirst: () => _goToFirstPage(context),
+          onLast: () => _goToLastPage(context),
+        );
+      }),
       body: Stack(
         children: [
           // WebView wrapper
@@ -420,9 +448,8 @@ class _NavigationBar extends StatelessWidget {
 
     return Material(
       color: colorScheme.primaryVariant,
-      child: SizedBox(
-        height: kBottomNavigationBarHeight,
-        child: Row(
+      child: LayoutBuilder(builder: (context, constraints) {
+        final buttons = Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
@@ -446,8 +473,20 @@ class _NavigationBar extends StatelessWidget {
               onPressed: onLast,
             ),
           ],
-        ),
-      ),
+        );
+
+        final width = constraints.maxWidth;
+        if (width > wideScreenThreshold) {
+          final totalPadding = width - wideScreenThreshold;
+          return Padding(
+            padding: EdgeInsets.symmetric(
+                horizontal: (totalPadding / 2) + wideScreenExtraPadding),
+            child: buttons,
+          );
+        } else {
+          return buttons;
+        }
+      }),
     );
   }
 }

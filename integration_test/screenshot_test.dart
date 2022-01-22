@@ -154,7 +154,7 @@ Widget _getCleanState({
       // Break firebaseProvider to force all firebase connections to be mocked
       firebaseProvider.overrideWithValue(AsyncValue.error('Not Implemented')),
       themeModeProvider
-          .overrideWithValue(ThemeSettingNotifier(null, themeMode)),
+          .overrideWithValue(HiveSettingNotifier(null, 'themeMode', themeMode)),
       ...?extraOverrides,
     ],
     child: child,

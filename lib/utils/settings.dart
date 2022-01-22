@@ -5,35 +5,43 @@ import 'package:hive_flutter/hive_flutter.dart';
 final _settingsBoxProvider = FutureProvider<Box>((ref) async {
   await Hive.initFlutter();
 
-  Hive.registerAdapter(ThemeModeAdapter());
+  Hive.registerAdapter(_ThemeModeAdapter());
   return await Hive.openBox('settings');
 });
 
 final themeModeProvider =
-    StateNotifierProvider<ThemeSettingNotifier, ThemeMode>((ref) {
+    StateNotifierProvider<HiveSettingNotifier<ThemeMode>, ThemeMode>((ref) {
   final box = ref.watch(_settingsBoxProvider);
-  return ThemeSettingNotifier(box.data?.value, ThemeMode.system);
+  return HiveSettingNotifier(box.data?.value, 'themeMode', ThemeMode.system);
 });
 
-class ThemeSettingNotifier extends StateNotifier<ThemeMode> {
-  final Box? box;
+final comicNavBarToggleProvider = StateNotifierProvider.autoDispose
+    .family<HiveSettingNotifier<bool>, bool, String>((ref, comicId) {
+  final box = ref.watch(_settingsBoxProvider);
+  return HiveSettingNotifier(
+      box.data?.value, 'comicNavBarToggle_$comicId', false);
+});
 
-  ThemeSettingNotifier(this.box, ThemeMode defaultThemeMode)
-      : super(defaultThemeMode) {
+class HiveSettingNotifier<T> extends StateNotifier<T> {
+  final Box? box;
+  final String key;
+
+  HiveSettingNotifier(this.box, this.key, T defaultValue)
+      : super(defaultValue) {
     final b = box;
     if (b == null) return;
-    state = b.get('themeMode', defaultValue: defaultThemeMode);
+    state = b.get(key, defaultValue: defaultValue);
   }
 
-  void setTheme(ThemeMode themeMode) async {
+  void setValue(T themeMode) async {
     final b = box;
     if (b == null) return;
-    b.put('themeMode', themeMode);
+    b.put(key, themeMode);
     state = themeMode;
   }
 }
 
-class ThemeModeAdapter extends TypeAdapter<ThemeMode> {
+class _ThemeModeAdapter extends TypeAdapter<ThemeMode> {
   @override
   final typeId = 0;
 
