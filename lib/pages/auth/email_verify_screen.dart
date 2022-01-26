@@ -20,7 +20,7 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return MainPageScaffold(
       title: 'Verify Email',

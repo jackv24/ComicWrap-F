@@ -7,7 +7,6 @@ import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:palette_generator/palette_generator.dart';
 
 class ComicInfoSection extends StatelessWidget {
   final String comicId;
@@ -25,7 +24,7 @@ class ComicInfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     final coverSection = Material(
       color: Colors.white,

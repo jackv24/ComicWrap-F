@@ -17,7 +17,7 @@ class LibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return Center(
       child: Column(
@@ -85,7 +85,7 @@ class LibraryScreen extends StatelessWidget {
 
   Widget _getBodySliver(BuildContext context,
       List<DocumentSnapshot<UserComicModel>>? userComics) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     if (userComics == null || userComics.isEmpty) {
       return SliverToBoxAdapter(

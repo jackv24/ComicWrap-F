@@ -71,7 +71,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     final pageData = _newPage?.data();
     final pageTitle = pageData?.text ?? '';
@@ -371,7 +371,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (url != null && await canLaunch(url)) {
       await launch(url);
     } else {
-      final loc = AppLocalizations.of(context)!;
+      final loc = AppLocalizations.of(context);
       final displayUrl = url ?? 'null';
       await showErrorDialog(context, loc.webErrorUrl(displayUrl));
     }

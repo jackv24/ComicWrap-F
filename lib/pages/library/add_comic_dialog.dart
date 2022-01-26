@@ -36,7 +36,7 @@ class _AddComicDialogState extends State<AddComicDialog> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return WillPopScope(
       onWillPop: () async => !_preventPop,

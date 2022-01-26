@@ -37,7 +37,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return MainPageScaffold(
       title: loc.signUpTitle,
@@ -118,7 +118,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _inProgress = false;
     });
 
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     switch (errorCode) {
       case 'empty-auth':

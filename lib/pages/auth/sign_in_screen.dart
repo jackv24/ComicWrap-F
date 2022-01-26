@@ -33,7 +33,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     final brightness = Theme.of(context).brightness;
 
@@ -168,7 +168,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _showErrorCode(BuildContext context, String? errorCode) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     switch (errorCode) {
       case 'empty-auth':
@@ -245,7 +245,7 @@ class _SignInScreenState extends State<SignInScreen> {
       return;
     }
 
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     final response = await showDialog(
         context: context,

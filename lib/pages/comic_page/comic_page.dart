@@ -124,7 +124,7 @@ class _ComicPageState extends State<ComicPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return Consumer(
       // Page color scheme changes to match cover image
@@ -229,7 +229,7 @@ class _ComicPageState extends State<ComicPage> {
   }
 
   Widget _buildList(BuildContext context, EdgeInsetsGeometry listPadding) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return Card(
       elevation: 5,
@@ -318,7 +318,7 @@ class _ComicPageState extends State<ComicPage> {
       return Text(title);
     });
 
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return GestureDetector(
       onTapDown: (details) => _listTapDownDetails = details,
@@ -534,7 +534,7 @@ class _ComicPageState extends State<ComicPage> {
     final userComic = context.read(userComicRefFamily(widget.comicId));
 
     if (userComic == null) {
-      final loc = AppLocalizations.of(context)!;
+      final loc = AppLocalizations.of(context);
       await showErrorDialog(context, loc.comicSetBookmarkFail);
       return;
     }

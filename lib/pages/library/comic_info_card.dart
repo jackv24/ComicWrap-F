@@ -19,7 +19,7 @@ class ComicInfoCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     final sharedComicAsync = watch(sharedComicFamily(comicId));
     final newFromPageAsync = watch(newFromPageFamily(comicId));

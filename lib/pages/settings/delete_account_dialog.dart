@@ -1,8 +1,6 @@
 import 'package:comicwrap_f/utils/auth.dart';
-import 'package:comicwrap_f/utils/error.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DeleteAccountDialogue extends StatefulWidget {
   const DeleteAccountDialogue({Key? key}) : super(key: key);
@@ -37,7 +35,7 @@ class _DeleteAccountDialogueState extends State<DeleteAccountDialogue> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return AlertDialog(
       title: Text(loc.settingsDeleteAccount),

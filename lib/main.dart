@@ -39,7 +39,7 @@ class _MyAppState extends State<MyApp> {
       builder: (context, watch, child) {
         final themeMode = watch(themeModeProvider);
         return MaterialApp(
-          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
@@ -65,7 +65,7 @@ class _MyAppState extends State<MyApp> {
       },
       child: Consumer(
         builder: (context, watch, child) {
-          final loc = AppLocalizations.of(context)!;
+          final loc = AppLocalizations.of(context);
           final asyncUser = watch(userChangesProvider);
           return asyncUser.when(
             loading: () => _loadingScreen(loc.signingIn),
