@@ -49,6 +49,8 @@ dependencies:
   freezed_annotation: ^0.14.0
   palette_generator: ^0.3.2
   google_mobile_ads: ^1.0.1
+  sign_in_with_apple: ^3.3.0
+  crypto: ^3.0.1
 
 dev_dependencies:
   build_runner: ^2.0.4

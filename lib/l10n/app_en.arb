@@ -78,6 +78,7 @@
     "comicReportIssue": "Report Issue",
 
     "webOpenBrowser": "Open Browser",
+    "webToggleNavBar": "Navigation Bar",
     "webErrorUrl": "Could not open URL: {url}",
     "@webErrorUrl": {
         "placeholders": {

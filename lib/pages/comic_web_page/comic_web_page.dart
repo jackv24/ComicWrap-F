@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/download.dart';
 import 'package:comicwrap_f/utils/error.dart';
+import 'package:comicwrap_f/utils/settings.dart';
 import 'package:comicwrap_f/widgets/more_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -62,12 +65,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
       if (!scrapeUrl.endsWith('/')) scrapeUrl += '/';
       _rootUrl = scrapeUrl;
 
-      final pagePath = widget.initialPageId.trim().replaceAll(' ', '/');
-
-      // Navigate to page after URL is constructed
-      _webViewController.future.then((webViewController) {
-        webViewController.loadUrl(scrapeUrl + pagePath);
-      });
+      _navigateToPageId(widget.initialPageId, wasViaClick: false);
     });
 
     _progressSubject = BehaviorSubject.seeded(0);
@@ -92,45 +90,93 @@ class _ComicWebPageState extends State<ComicWebPage> {
     final pageData = _newPage?.data();
     final pageTitle = pageData?.text ?? '';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(pageTitle),
-        actions: [
-          FutureBuilder<WebViewController>(
-            future: _webViewController.future,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Icon(Icons.more);
-              }
+    return Consumer(
+      builder: (context, watch, child) {
+        final appBarColor = watch(appBarColorProvider(AppBarColorParams(
+          comicId: widget.comicId,
+          brightness: Theme.of(context).brightness,
+        )));
 
-              final controller = snapshot.data!;
+        return Scaffold(
+          // Hide single while pixel around webview
+          backgroundColor: Theme.of(context).colorScheme.primaryVariant,
+          appBar: AppBar(
+            title: Text(pageTitle),
+            backgroundColor: appBarColor,
+            actions: [
+              FutureBuilder<WebViewController>(
+                future: _webViewController.future,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Icon(Icons.more);
+                  }
 
-              return MoreActionButton(actions: [
-                FunctionListItem(
-                  child: ListTile(
-                    title: Text(loc.refresh),
-                    trailing: const Icon(Icons.refresh),
-                  ),
-                  onSelected: (context) async {
-                    await controller.reload();
-                  },
-                ),
-                FunctionListItem(
-                  child: ListTile(
-                    title: Text(loc.webOpenBrowser),
-                    trailing: const Icon(Icons.open_in_browser),
-                  ),
-                  onSelected: (context) async {
-                    final url = await snapshot.data!.currentUrl();
-                    await _tryLaunchUrl(url);
-                  },
-                ),
-              ]);
-            },
+                  final controller = snapshot.data!;
+
+                  return MoreActionButton(actions: [
+                    FunctionListItem(
+                      child: ListTile(
+                        title: Text(loc.refresh),
+                        trailing: const Icon(Icons.refresh),
+                      ),
+                      onSelected: (context) async {
+                        await controller.reload();
+                      },
+                    ),
+                    FunctionListItem(
+                      child: ListTile(
+                        title: Text(loc.webOpenBrowser),
+                        trailing: const Icon(Icons.open_in_browser),
+                      ),
+                      onSelected: (context) async {
+                        final url = await snapshot.data!.currentUrl();
+                        await _tryLaunchUrl(url);
+                      },
+                    ),
+                    FunctionListItem(
+                      child: ListTile(
+                        title: Text(loc.webToggleNavBar),
+                        trailing: Consumer(builder: (context, watch, child) {
+                          final value =
+                              watch(comicNavBarToggleProvider(widget.comicId));
+                          return Icon(value
+                              ? Icons.toggle_on
+                              : Icons.toggle_off_outlined);
+                        }),
+                      ),
+                      onSelected: (context) async {
+                        final notifier = context.read(
+                            comicNavBarToggleProvider(widget.comicId).notifier);
+                        final value = context
+                            .read(comicNavBarToggleProvider(widget.comicId));
+                        notifier.setValue(!value);
+                      },
+                    ),
+                  ]);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      body: Stack(
+          // Optionally show navigation bar
+          bottomNavigationBar: Consumer(builder: (context, watch, child) {
+            final value = watch(comicNavBarToggleProvider(widget.comicId));
+
+            // Can't return null here, so return empty widget
+            if (!value) return const SizedBox.shrink();
+
+            return _NavigationBar(
+              comicId: widget.comicId,
+              onNext: _newPage != null ? () => _goToNextPage(_newPage!) : null,
+              onPrevious:
+                  _newPage != null ? () => _goToPreviousPage(_newPage!) : null,
+              onFirst: () => _goToFirstPage(context),
+              onLast: () => _goToLastPage(context),
+            );
+          }),
+          body: child,
+        );
+      },
+      child: Stack(
         children: [
           // WebView wrapper
           Consumer(
@@ -207,12 +253,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     // (check both in case one has www. and one doesn't)
                     if (rootHost.endsWith(toHost) ||
                         toHost.endsWith(rootHost)) {
-                      // (maybe) show ad on navigation to new page
-                      // (don't await, so page can load behind ad)
-                      _showInterstitialAd(_queuedInterstitialAd)
-                          // After ad has been shown, queue up another
-                          .then((value) => _loadInterstitialAd())
-                          .then((value) => _queuedInterstitialAd = value);
+                      _pageNavigatedViaClick();
 
                       return NavigationDecision.navigate;
                     }
@@ -370,6 +411,81 @@ class _ComicWebPageState extends State<ComicWebPage> {
     }
   }
 
+  Future<void> _navigateToPageId(String pageId,
+      {required bool wasViaClick}) async {
+    final pagePath = pageId.trim().replaceAll(' ', '/');
+
+    // Wait for webview controller to be initialised
+    final controller = await _webViewController.future;
+    controller.loadUrl(_rootUrl + pagePath);
+
+    if (wasViaClick) _pageNavigatedViaClick();
+  }
+
+  Future<void> _goToFirstPage(BuildContext context) async {
+    final page = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: false,
+    )).future);
+
+    if (page == null) return;
+
+    _navigateToPageId(page.id, wasViaClick: true);
+  }
+
+  Future<void> _goToLastPage(BuildContext context) async {
+    final page = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: true,
+    )).future);
+
+    if (page == null) return;
+
+    _navigateToPageId(page.id, wasViaClick: true);
+  }
+
+  Future<QuerySnapshot<SharedComicPageModel>?> _goToQueriedPage(
+    Query<SharedComicPageModel> Function(Query<SharedComicPageModel>)
+        getSubQuery,
+  ) async {
+    if (_newPage == null) return null;
+
+    final pagesQuery =
+        context.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: true,
+    )));
+
+    if (pagesQuery == null) return null;
+
+    // Get pages below bottom
+    final snapshot = await getSubQuery(pagesQuery).get();
+
+    if (snapshot.docs.isEmpty) return null;
+
+    _navigateToPageId(snapshot.docs[0].id, wasViaClick: true);
+  }
+
+  Future<void> _goToNextPage(DocumentSnapshot<SharedComicPageModel> fromPage) {
+    return _goToQueriedPage(
+        (rootQuery) => rootQuery.endBeforeDocument(fromPage).limitToLast(1));
+  }
+
+  Future<void> _goToPreviousPage(
+      DocumentSnapshot<SharedComicPageModel> fromPage) {
+    return _goToQueriedPage(
+        (rootQuery) => rootQuery.startAfterDocument(fromPage).limit(1));
+  }
+
+  void _pageNavigatedViaClick() {
+    // (maybe) show ad on navigation to new page
+    // (don't await, so page can load behind ad)
+    _showInterstitialAd(_queuedInterstitialAd)
+        // After ad has been shown, queue up another
+        .then((value) => _loadInterstitialAd())
+        .then((value) => _queuedInterstitialAd = value);
+  }
+
   Future<InterstitialAd?> _loadInterstitialAd() async {
     // Handle completion in ad callbacks since load method doesn't return ad
     final completer = Completer<InterstitialAd?>();
@@ -414,5 +530,75 @@ class _ComicWebPageState extends State<ComicWebPage> {
     await ad.show();
 
     return completer.future;
+  }
+}
+
+class _NavigationBar extends ConsumerWidget {
+  final String comicId;
+  final void Function()? onPrevious;
+  final void Function()? onNext;
+  final void Function()? onFirst;
+  final void Function()? onLast;
+
+  const _NavigationBar({
+    required this.comicId,
+    this.onPrevious,
+    this.onNext,
+    this.onFirst,
+    this.onLast,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, ScopedReader watch) {
+    final appBarColor = watch(appBarColorProvider(AppBarColorParams(
+      comicId: comicId,
+      brightness: Theme.of(context).brightness,
+    )));
+
+    return Material(
+      color: appBarColor,
+      child: LayoutBuilder(builder: (context, constraints) {
+        final buttonColor = Theme.of(context).primaryIconTheme.color;
+
+        final buttons = Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.first_page),
+              onPressed: onFirst,
+              color: buttonColor,
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: onPrevious,
+              color: buttonColor,
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_forward),
+              onPressed: onNext,
+              color: buttonColor,
+            ),
+            IconButton(
+              icon: const Icon(Icons.last_page),
+              onPressed: onLast,
+              color: buttonColor,
+            ),
+          ],
+        );
+
+        final width = constraints.maxWidth;
+        if (width > wideScreenThreshold) {
+          final totalPadding = width - wideScreenThreshold;
+          return Padding(
+            padding: EdgeInsets.symmetric(
+                horizontal: (totalPadding / 2) + wideScreenExtraPadding),
+            child: buttons,
+          );
+        } else {
+          return buttons;
+        }
+      }),
+    );
   }
 }

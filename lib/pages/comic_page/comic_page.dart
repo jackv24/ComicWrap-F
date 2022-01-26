@@ -129,26 +129,10 @@ class _ComicPageState extends State<ComicPage> {
     return Consumer(
       // Page color scheme changes to match cover image
       builder: (context, watch, child) {
-        final paletteGenAsync =
-            watch(downloadCoverImagePaletteFamily(widget.comicId));
-        final paletteGen = paletteGenAsync.when(
-          data: (data) => data,
-          loading: () => null,
-          error: (error, stack) => null,
-        );
-
-        final Color? appBarColor;
-        switch (Theme.of(context).brightness) {
-          case Brightness.dark:
-            appBarColor = paletteGen?.dominantColor?.color;
-            break;
-          case Brightness.light:
-            appBarColor = paletteGen?.mutedColor?.color;
-            break;
-          default:
-            appBarColor = null;
-            break;
-        }
+        final appBarColor = watch(appBarColorProvider(AppBarColorParams(
+          comicId: widget.comicId,
+          brightness: Theme.of(context).brightness,
+        )));
 
         return Scaffold(
           appBar: AppBar(
@@ -203,7 +187,6 @@ class _ComicPageState extends State<ComicPage> {
                 onLastPressed: _pages.isNotEmpty
                     ? () => _goToEndPage(context, true)
                     : null,
-                paletteGenerator: paletteGen,
               );
 
               // Draw extra info as side bar on large screens

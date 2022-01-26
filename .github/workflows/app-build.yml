@@ -56,8 +56,14 @@ jobs:
         uses: subosito/flutter-action@v1
         with:
           flutter-version: 2.8.0
-      # Run build with build number added for Google Play
       - uses: ./.github/actions/setup-flutter-build
+      - name: Setup Fastlane (Ruby)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.7.2"
+          bundler-cache: true
+          working-directory: android
+      # Run build with build number added for Google Play
       - name: Build AppBundle
         run: |
           flutter build appbundle -v --build-name=$BUILD_NAME \
@@ -67,17 +73,98 @@ jobs:
         env:
           AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
           AD_ID_COMIC_WEB_PAGE_INTERSTITIAL: ${{ secrets.ANDROID_AD_ID_COMIC_WEB_PAGE_INTERSTITIAL }}
-
       # Run Fastlane upload if a tagged version
-      - name: Setup Fastlane (Ruby)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "2.7.2"
-          bundler-cache: true
-          working-directory: android
       - run: bundle exec fastlane internal
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           FASTLANE_SERVICE_ACCOUNT_KEY: ${{ secrets.FASTLANE_SERVICE_ACCOUNT_KEY }}
         working-directory: android
+
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Set build name conditionally
+      - name: Set Build name
+        run: |
+          case $GITHUB_REF in
+            "refs/tags/"*) echo "BUILD_NAME=${GITHUB_REF/refs\/tags\/v}" >> $GITHUB_ENV ;;
+            *) echo "BUILD_NAME=$GITHUB_REF" >> $GITHUB_ENV ;;
+          esac
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      # Write decoded secrets files
+      - name: Secret GoogleService-Info.plist to file
+        run: echo $GOOGLE_SERVICES_IOS | base64 --decode > ios/GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICES_IOS: ${{ secrets.GOOGLE_SERVICES_IOS }}
+      - name: App Store Connect API key P8
+        run: echo $KEY_BASE64 | base64 --decode > ios/AuthKey_API.p8
+        env:
+          KEY_BASE64: ${{ secrets.APPSTORE_CONNECT_API_P8 }}
+      # Setup required tools
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: "zulu"
+          java-version: "12"
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: 2.8.0
+      - uses: ./.github/actions/setup-flutter-build
+      - name: Pod install
+        run: cd ios && pod install
+      # Keys setup
+      - name: Setup SSH Keys and known_hosts for fastlane match
+        run: |
+          SSH_PATH="$HOME/.ssh"
+          mkdir -p "$SSH_PATH"
+          touch "$SSH_PATH/known_hosts"
+
+          echo "$PRIVATE_KEY" > "$SSH_PATH/id_rsa"
+
+          chmod 700 "$SSH_PATH"
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          chmod 600 "$SSH_PATH/known_hosts"
+          chmod 600 "$SSH_PATH/id_rsa"
+
+          eval $(ssh-agent)
+          ssh-add "$SSH_PATH/id_rsa"
+        env:
+          PRIVATE_KEY: ${{ secrets.MATCH_REPO_RSA_PRIVATE }}
+      - name: Setup Fastlane (Ruby)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.7.2"
+          bundler-cache: true
+          working-directory: ios
+      # This build is long and redundant (built again directly below) but is the only way I've found
+      # so far that I can set the build name and number
+      - name: Build ios to set build-name and build-number
+        run: |
+          flutter build ios --release --no-codesign -v --build-name=$BUILD_NAME \
+          --build-number=${{github.run_number}}
+        env:
+          AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
+      # Run Fastlane build and upload if a tagged version
+      - name: Fastlane build and upload to Testflight
+        run: bundle exec fastlane beta
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          ITC_TEAM_ID: ${{ secrets.IOS_ITC_TEAM_ID }}
+          FASTLANE_USER: ${{ secrets.IOS_FASTLANE_USER }}
+          FASTLANE_PASSWORD: ${{ secrets.IOS_FASTLANE_PASSWORD }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.IOS_FASTLANE_APP_SPECIFIC_PASSWORD }}
+          MATCH_PASSWORD: ${{ secrets.IOS_MATCH_PASSWORD }}
+          MATCH_KEYCHAIN_NAME: keychain
+          MATCH_KEYCHAIN_PASSWORD: password
+          APPSTORE_CONNECT_API_ID: ${{ secrets.APPSTORE_CONNECT_API_ID }}
+          APPSTORE_CONNECT_API_ISSUER: ${{ secrets.APPSTORE_CONNECT_API_ISSUER }}
+          #DELIVER_ITMSTRANSPORTER_ADDITIONAL_UPLOAD_PARAMETERS: -t Signiant
+          BUILD_NUMBER: ${{github.run_number}}
+          BUILD_NAME: $BUILD_NAME
+          #AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
+        working-directory: ios
