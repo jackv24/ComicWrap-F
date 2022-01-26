@@ -6,8 +6,9 @@ part 'user.g.dart';
 
 @freezed
 class UserModel with _$UserModel {
-  // Empty for now - just for type safety
-  factory UserModel() = _UserModel;
+  factory UserModel({
+    bool dummyData,
+  }) = _UserModel;
 
   factory UserModel.fromJson(Json json) => _$UserModelFromJson(json);
 }

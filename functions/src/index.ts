@@ -137,6 +137,20 @@ export const updateExistingComics = functions.pubsub
       console.info(result);
     });
 
+export const createUserData = functions.auth.user().onCreate(async (user) => {
+  const userDocRef = db.collection('users').doc(user.uid);
+  const userDoc = await userDocRef.get();
+  if (userDoc.exists) {
+    return;
+  }
+
+  // Create some dummy data so user doc actually exists for querying
+  // (can replace this with actual data later if need be)
+  await userDocRef.create({
+    dummyData: true,
+  });
+});
+
 export const deleteUserData = functions.auth.user().onDelete(async (user) => {
   const userDocRef = db.collection('users').doc(user.uid);
 
@@ -149,3 +163,56 @@ export const deleteUserData = functions.auth.user().onDelete(async (user) => {
   // Delete user doc last
   await userDocRef.delete();
 });
+
+type DocRef = admin.firestore.DocumentReference<admin.firestore.DocumentData>;
+
+type DudComic = {
+  ref: DocRef,
+  isUnused: boolean,
+}
+
+// Delete comics that have no pages and are not in any user's library
+export const deleteUnusedDudImports = functions.pubsub
+    .schedule('every monday 05:00').onRun(async () => {
+      const dudComicRefs: DudComic[] = [];
+
+      // Iterate over all comics
+      const comicDocs = (await db.collection('comics').get()).docs;
+      for (const comicDoc of comicDocs) {
+        const pages = (await comicDoc.ref.collection('pages').get()).docs;
+
+        // Do nothing if comic has pages
+        if (pages && pages.length > 0) continue;
+
+        // Add to array for deletion later
+        // (so we don't have to iterate over all users exponentially)
+        dudComicRefs.push({
+          ref: comicDoc.ref,
+          isUnused: true,
+        });
+      }
+
+      // Iterate over all users
+      const userDocs = (await db.collection('users').get()).docs;
+      for (const userDoc of userDocs) {
+        const userComicDocs =
+        (await userDoc.ref.collection('comics').get()).docs;
+
+        // If comic is in user's library, mark in dud array
+        for (const userComicDoc of userComicDocs) {
+          dudComicRefs.forEach((dudComic, index, array) => {
+            if (dudComic.ref.id === userComicDoc.id) {
+              dudComic.isUnused = false;
+              array[index] = dudComic;
+            }
+          });
+        }
+      }
+
+      // Delete all dud comics that aren't in any user library
+      for (const dudComic of dudComicRefs) {
+        if (dudComic.isUnused) {
+          await dudComic.ref.delete();
+        }
+      }
+    });
