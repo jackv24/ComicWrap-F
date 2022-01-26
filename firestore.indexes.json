@@ -1,4 +1,45 @@
 {
   "indexes": [],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "comics",
+      "fieldPath": "coverImageUrl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "comics",
+      "fieldPath": "currentPageId",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "comics",
+      "fieldPath": "importError",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "comics",
+      "fieldPath": "isImporting",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "comics",
+      "fieldPath": "name",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "comics",
+      "fieldPath": "newFromPageId",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "comics",
+      "fieldPath": "scrapeUrl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "pages",
+      "fieldPath": "text",
+      "indexes": []
+    }
+  ]
 }
