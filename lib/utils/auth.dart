@@ -84,6 +84,35 @@ Future<void> signOut(BuildContext context) async {
   EasyLoading.dismiss();
 }
 
+Future<String?> deleteAccount(BuildContext context, String password) async {
+  final user = await context.read(userChangesProvider.last);
+  if (user == null) {
+    showErrorDialog(context, 'User is null');
+    return 'User is null';
+  }
+
+  EasyLoading.show();
+
+  try {
+    // Re-auth first to verify password
+    await user.reauthenticateWithCredential(
+      EmailAuthProvider.credential(
+        // All our auth methods use email, so it can't be null
+        email: user.email!,
+        password: password,
+      ),
+    );
+    // Delete the user
+    await user.delete();
+  } on FirebaseAuthException catch (e) {
+    EasyLoading.dismiss();
+    return e.code;
+  }
+
+  EasyLoading.dismiss();
+  return null;
+}
+
 Future<void> _showGetAuthError(BuildContext context) {
   return showErrorDialog(context, 'Couldn\'t get FirebaseAuth!');
 }

@@ -1,5 +1,6 @@
 import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
+import 'package:comicwrap_f/pages/settings/delete_account_dialog.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/settings.dart';
 import 'package:comicwrap_f/widgets/github_link_button.dart';
@@ -58,6 +59,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                     });
                   },
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final didDeleteAccount = await showDialog(
+                    context: context,
+                    builder: (context) {
+                      return const DeleteAccountDialogue();
+                    },
+                  ) as bool?;
+                  if (didDeleteAccount ?? false) Navigator.of(context).pop();
+                },
+                child: Text(loc.settingsDeleteAccount),
+                style: TextButton.styleFrom(
+                  primary: Colors.red,
                 ),
               ),
               TextButton(
