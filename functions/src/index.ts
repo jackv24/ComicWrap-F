@@ -108,9 +108,14 @@ export const addUserComic = functions.https
         const newestPageDoc = newestPageDocs.length > 0 ?
             newestPageDocs[0] : null;
 
-        await userComicRef.create({
-          newFromPageId: newestPageDoc?.id,
-        });
+        if (newestPageDoc != null) {
+          await userComicRef.create({
+            newFromPageId: newestPageDoc.id,
+          });
+        } else {
+          // Comic exists but has no pages
+          await userComicRef.create({});
+        }
 
         // Doc already exists, do nothing more
         return hostName;
