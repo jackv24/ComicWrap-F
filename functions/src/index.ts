@@ -122,7 +122,8 @@ export const addUserComic = functions.https
       // Create basic document so it exists for client to subscribe to,
       // triggered event onCreate should handle filling out data
       await sharedComicRef.create({
-        scrapeUrl: inputUrl,
+        // Only save the root URL for later reconstruction from page doc names
+        scrapeUrl: `${parsedUrl.protocol}//${parsedUrl.hostname}/`,
       });
 
       const result = appRequest('/startImport/' + hostName);
