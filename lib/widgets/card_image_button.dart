@@ -30,14 +30,18 @@ class CardImageButton extends ConsumerWidget {
             );
           } else if (data is DownloadProgress) {
             // Image is still downloading, display progress
-            return Stack(
-              alignment: AlignmentDirectional.bottomCenter,
-              children: [
-                LinearProgressIndicator(
-                  value: data.progress,
-                  minHeight: 8.0,
-                ),
-              ],
+            return InkWell(
+              onTap: onTap,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Container(),
+                  LinearProgressIndicator(
+                    value: data.progress,
+                    minHeight: 8.0,
+                  ),
+                ],
+              ),
             );
           } else {
             return ErrorWidget('FileResponse is not of known type.');

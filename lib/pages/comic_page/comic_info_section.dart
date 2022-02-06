@@ -27,14 +27,12 @@ class ComicInfoSection extends StatelessWidget {
     final loc = AppLocalizations.of(context);
 
     final coverSection = Material(
-      color: Colors.white,
       elevation: 5.0,
       borderRadius: const BorderRadius.all(Radius.circular(12.0)),
       clipBehavior: Clip.antiAlias,
       child: AspectRatio(
         aspectRatio: 210.0 / 297.0,
         child: Material(
-          color: Colors.white,
           elevation: 5.0,
           borderRadius: const BorderRadius.all(Radius.circular(12.0)),
           clipBehavior: Clip.antiAlias,
