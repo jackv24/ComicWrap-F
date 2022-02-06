@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CardImageButton extends ConsumerWidget {
+class CardImageButton extends StatefulWidget {
   final String? coverImageUrl;
   final Function()? onTap;
   final Function(Offset?)? onLongPressed;
 
-  Offset? _lastTapPosition;
-
-  CardImageButton({
+  const CardImageButton({
     Key? key,
     this.coverImageUrl,
     this.onTap,
@@ -18,11 +16,18 @@ class CardImageButton extends ConsumerWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, ScopedReader watch) {
-    final url = coverImageUrl;
-    if (url == null) {
-      return _getInkWell();
-    } else {
+  _CardImageButtonState createState() => _CardImageButtonState();
+}
+
+class _CardImageButtonState extends State<CardImageButton> {
+  Offset? _lastTapPosition;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = widget.coverImageUrl;
+    if (url == null) return _getInkWell();
+
+    return Consumer(builder: (context, watch, child) {
       final progress = watch(downloadImageFamily(url));
       return progress.when(
         data: (data) {
@@ -53,23 +58,25 @@ class CardImageButton extends ConsumerWidget {
         loading: () => _getInkWell(),
         error: (error, stack) => ErrorWidget(error),
       );
-    }
+    });
   }
 
   Widget _getInkWell({Widget? child}) {
+    final onLongPressed = widget.onLongPressed;
+
     // Only set long press handlers if required
     final void Function(TapDownDetails)? onTapDown;
     final void Function()? onLongPress;
     if (onLongPressed != null) {
       onTapDown = (details) => _lastTapPosition = details.globalPosition;
-      onLongPress = () => onLongPressed!(_lastTapPosition);
+      onLongPress = () => onLongPressed(_lastTapPosition);
     } else {
       onTapDown = null;
       onLongPress = null;
     }
 
     return InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
       onTapDown: onTapDown,
       onLongPress: onLongPress,
       child: child,

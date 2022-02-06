@@ -85,7 +85,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
         return Scaffold(
           // Hide single while pixel around webview
-          backgroundColor: Theme.of(context).colorScheme.primaryVariant,
+          backgroundColor: Theme.of(context).colorScheme.background,
           appBar: AppBar(
             title: Text(pageTitle),
             backgroundColor: appBarColor,
@@ -408,11 +408,11 @@ class _ComicWebPageState extends State<ComicWebPage> {
     _navigateToPageId(page.id);
   }
 
-  Future<QuerySnapshot<SharedComicPageModel>?> _goToQueriedPage(
+  Future<void> _goToQueriedPage(
     Query<SharedComicPageModel> Function(Query<SharedComicPageModel>)
         getSubQuery,
   ) async {
-    if (_newPage == null) return null;
+    if (_newPage == null) return;
 
     final pagesQuery =
         context.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
@@ -420,12 +420,12 @@ class _ComicWebPageState extends State<ComicWebPage> {
       descending: true,
     )));
 
-    if (pagesQuery == null) return null;
+    if (pagesQuery == null) return;
 
     // Get pages below bottom
     final snapshot = await getSubQuery(pagesQuery).get();
 
-    if (snapshot.docs.isEmpty) return null;
+    if (snapshot.docs.isEmpty) return;
 
     _navigateToPageId(snapshot.docs[0].id);
   }

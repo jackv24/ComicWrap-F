@@ -42,7 +42,7 @@ class ComicInfoSection extends StatelessWidget {
               data: (data) => CardImageButton(
                 coverImageUrl: data?.coverImageUrl,
               ),
-              loading: () => CardImageButton(),
+              loading: () => const CardImageButton(),
               error: (error, stack) => ErrorWidget(error),
             );
           }),
