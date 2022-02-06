@@ -43,7 +43,6 @@ class ComicInfoSection extends StatelessWidget {
             return sharedComicAsync.when(
               data: (data) => CardImageButton(
                 coverImageUrl: data?.coverImageUrl,
-                isImporting: data?.isImporting ?? false,
               ),
               loading: () => const CardImageButton(),
               error: (error, stack) => ErrorWidget(error),

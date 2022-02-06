@@ -73,6 +73,7 @@
 
     "comicDeleteFail": "Failed to delete: couldn't get user comic.",
     "comicNoPages": "No pages...",
+    "comicImporting": "Importing...",
     "comicSetBookmark": "Set Bookmark",
     "comicSetBookmarkFail": "Failed to set page as current: couldn't get user comic ref.",
     "comicReportIssue": "Report Issue",

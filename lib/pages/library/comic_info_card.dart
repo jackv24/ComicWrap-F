@@ -25,6 +25,10 @@ class ComicInfoCard extends ConsumerWidget {
     final newFromPageAsync = watch(newFromPageFamily(comicId));
     final newestPageAsync = watch(newestPageFamily(comicId));
 
+    // If there is no newest page, we can assume there are no pages at all
+    final hasNewestPage = newestPageAsync.maybeWhen(
+        data: (data) => data != null, orElse: () => false);
+
     final newFromTime = newFromPageAsync.maybeWhen(
         data: (data) => data?.data()?.scrapeTime, orElse: () => null);
     final newestPageTime = newestPageAsync.maybeWhen(
@@ -45,6 +49,53 @@ class ComicInfoCard extends ConsumerWidget {
 
         final theme = Theme.of(context);
 
+        // Block opening comic page under certain conditions, with different displays
+        final Widget? blocker;
+        if (sharedComic.isImporting) {
+          blocker = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 8),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 8),
+              Text(
+                loc.comicImporting,
+                style: theme.textTheme.caption,
+              ),
+            ],
+          );
+        } else if (!hasNewestPage) {
+          blocker = Center(
+            child: Text(
+              loc.comicNoPages,
+              style: theme.textTheme.caption,
+            ),
+          );
+        } else {
+          blocker = null;
+        }
+
+        final card = Stack(
+          alignment: Alignment.center,
+          children: [
+            CardImageButton(
+              coverImageUrl: coverImageUrl,
+              // Don't allow tapping through while blocker is up
+              onTap: blocker != null
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => ComicPage(comicId: comicId)),
+                      ),
+            ),
+            if (blocker != null)
+              Container(
+                color: theme.colorScheme.surface.withAlpha(170),
+              ),
+            if (blocker != null) blocker,
+          ],
+        );
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -59,20 +110,12 @@ class ComicInfoCard extends ConsumerWidget {
               child: AspectRatio(
                 aspectRatio: 210.0 / 297.0,
                 child: Material(
-                  color: Colors.white,
                   elevation: 5.0,
                   borderRadius: const BorderRadius.all(Radius.circular(12.0)),
                   clipBehavior: Clip.antiAlias,
                   child: Tooltip(
                     message: sharedComic.name ?? comicId,
-                    child: CardImageButton(
-                      coverImageUrl: coverImageUrl,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => ComicPage(comicId: comicId)),
-                      ),
-                      isImporting: sharedComic.isImporting,
-                    ),
+                    child: card,
                   ),
                 ),
               ),
