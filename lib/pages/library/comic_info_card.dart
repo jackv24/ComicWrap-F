@@ -1,4 +1,5 @@
 import 'package:badges/badges.dart';
+import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
 import 'package:comicwrap_f/utils/database.dart';
@@ -8,6 +9,7 @@ import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ComicInfoCard extends ConsumerWidget {
   final String comicId;
@@ -87,12 +89,14 @@ class ComicInfoCard extends ConsumerWidget {
                         MaterialPageRoute(
                             builder: (context) => ComicPage(comicId: comicId)),
                       ),
+              onLongPressed: (offset) => _showPopupMenu(context, offset),
             ),
             if (blocker != null)
-              Container(
+              IgnorePointer(
+                  child: Container(
                 color: theme.colorScheme.surface.withAlpha(170),
-              ),
-            if (blocker != null) blocker,
+              )),
+            if (blocker != null) IgnorePointer(child: blocker),
           ],
         );
 
@@ -114,6 +118,8 @@ class ComicInfoCard extends ConsumerWidget {
                   borderRadius: const BorderRadius.all(Radius.circular(12.0)),
                   clipBehavior: Clip.antiAlias,
                   child: Tooltip(
+                    // Tooltip is just used for finding comic in integration tests
+                    triggerMode: TooltipTriggerMode.manual,
                     message: sharedComic.name ?? comicId,
                     child: card,
                   ),
@@ -140,5 +146,40 @@ class ComicInfoCard extends ConsumerWidget {
         );
       },
     );
+  }
+
+  void _showPopupMenu(BuildContext context, Offset? offset) async {
+    if (offset == null) return;
+
+    final screenSize = MediaQuery.of(context).size;
+    final loc = AppLocalizations.of(context);
+
+    final func = await showMenu<Future<void> Function(BuildContext)>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy,
+        screenSize.width - offset.dx,
+        screenSize.height - offset.dy,
+      ),
+      items: [
+        PopupMenuItem(
+          child: ListTile(
+            title: Text(loc.comicReportIssue),
+            trailing: const Icon(Icons.report),
+          ),
+          value: (context) => launch(githubNewIssueUrl),
+        ),
+        PopupMenuItem(
+          child: ListTile(
+            title: Text(loc.delete),
+            trailing: const Icon(Icons.delete),
+          ),
+          value: (context) => deleteComicFromLibrary(context, comicId),
+        ),
+      ],
+    );
+
+    if (func != null) await func(context);
   }
 }

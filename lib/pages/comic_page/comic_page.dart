@@ -144,8 +144,7 @@ class _ComicPageState extends State<ComicPage> {
                     title: Text(loc.comicReportIssue),
                     trailing: const Icon(Icons.report),
                   ),
-                  onSelected: (context) => launch(
-                      'https://github.com/jackv24/ComicWrap-F/issues/new/choose'),
+                  onSelected: (context) => launch(githubNewIssueUrl),
                 ),
                 FunctionListItem(
                   child: ListTile(
@@ -153,24 +152,11 @@ class _ComicPageState extends State<ComicPage> {
                     trailing: const Icon(Icons.delete),
                   ),
                   onSelected: (context) async {
-                    final userComicAsync =
-                        context.read(userComicFamily(widget.comicId));
-                    final userComicSnapshot = userComicAsync.when(
-                      data: (data) => data,
-                      loading: () => null,
-                      error: (error, stack) => null,
-                    );
+                    final didDelete =
+                        await deleteComicFromLibrary(context, widget.comicId);
 
-                    if (userComicSnapshot != null) {
-                      EasyLoading.show();
-                      await userComicSnapshot.reference.delete();
-                      EasyLoading.dismiss();
-
-                      // This comic has now been removed, so close it's page
-                      Navigator.of(context).pop();
-                    } else {
-                      await showErrorDialog(context, loc.comicDeleteFail);
-                    }
+                    // This comic has now been removed, so close it's page
+                    if (didDelete) Navigator.of(context).pop();
                   },
                 ),
               ]),
