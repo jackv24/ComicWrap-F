@@ -53,6 +53,7 @@ class ComicInfoCard extends ConsumerWidget {
 
         // Block opening comic page under certain conditions, with different displays
         final Widget? blocker;
+        final void Function()? onTap;
         if (sharedComic.isImporting) {
           blocker = Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -66,6 +67,7 @@ class ComicInfoCard extends ConsumerWidget {
               ),
             ],
           );
+          onTap = null;
         } else if (!hasNewestPage) {
           blocker = Center(
             child: Text(
@@ -73,8 +75,13 @@ class ComicInfoCard extends ConsumerWidget {
               style: theme.textTheme.caption,
             ),
           );
+          onTap = () => launch(githubImportWikiUrl);
         } else {
           blocker = null;
+          onTap = () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) => ComicPage(comicId: comicId)),
+              );
         }
 
         final card = Stack(
@@ -83,12 +90,7 @@ class ComicInfoCard extends ConsumerWidget {
             CardImageButton(
               coverImageUrl: coverImageUrl,
               // Don't allow tapping through while blocker is up
-              onTap: blocker != null
-                  ? null
-                  : () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => ComicPage(comicId: comicId)),
-                      ),
+              onTap: onTap,
               onLongPressed: (offset) => _showPopupMenu(context, offset),
             ),
             if (blocker != null)
