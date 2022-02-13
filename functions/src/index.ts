@@ -3,6 +3,8 @@ import * as admin from 'firebase-admin';
 import * as url from 'url';
 import * as helper from './helper';
 import {GoogleAuth} from 'google-auth-library';
+import {UserRecord} from 'firebase-admin/lib/auth/user-record';
+import {PromisePool} from '@supercharge/promise-pool';
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -10,7 +12,7 @@ const db = admin.firestore();
 const iapUrl = 'https://comicwrap.uc.r.appspot.com/';
 // eslint-disable-next-line max-len
 const targetAudience = '259253169335-0hfak0b08mibpkugruu3f9tquakrun2g.apps.googleusercontent.com';
-const auth = new GoogleAuth();
+const googleAuth = new GoogleAuth();
 
 // From: https://cloud.google.com/iap/docs/authentication-howto#iap_make_request-nodejs
 async function appRequest(route: string) {
@@ -21,7 +23,7 @@ async function appRequest(route: string) {
   }
 
   console.info(`request IAP ${url} with target audience ${targetAudience}`);
-  const client = await auth.getIdTokenClient(targetAudience);
+  const client = await googleAuth.getIdTokenClient(targetAudience);
 
   // Remove trailing slash (route will have leading slash)
   if (url.endsWith('/')) {
@@ -143,33 +145,6 @@ export const updateExistingComics = functions.pubsub
       console.info(result);
     });
 
-export const createUserData = functions.auth.user().onCreate(async (user) => {
-  const userDocRef = db.collection('users').doc(user.uid);
-  const userDoc = await userDocRef.get();
-  if (userDoc.exists) {
-    return;
-  }
-
-  // Create some dummy data so user doc actually exists for querying
-  // (can replace this with actual data later if need be)
-  await userDocRef.create({
-    dummyData: true,
-  });
-});
-
-export const deleteUserData = functions.auth.user().onDelete(async (user) => {
-  const userDocRef = db.collection('users').doc(user.uid);
-
-  // Delete sub collection data first
-  const userComicDocs = (await userDocRef.collection('comics').get()).docs;
-  for (const userComicDoc of userComicDocs) {
-    await userComicDoc.ref.delete();
-  }
-
-  // Delete user doc last
-  await userDocRef.delete();
-});
-
 type DocRef = admin.firestore.DocumentReference<admin.firestore.DocumentData>;
 
 type DudComic = {
@@ -222,3 +197,94 @@ export const deleteUnusedDudImports = functions.pubsub
         }
       }
     });
+
+export const createUserData = functions.auth.user().onCreate(async (user) => {
+  const userDocRef = db.collection('users').doc(user.uid);
+  const userDoc = await userDocRef.get();
+  if (userDoc.exists) {
+    return;
+  }
+
+  // Create some dummy data so user doc actually exists for querying
+  // (can replace this with actual data later if need be)
+  await userDocRef.create({
+    dummyData: true,
+  });
+});
+
+export const deleteUserData = functions.auth.user().onDelete(async (user) => {
+  const userDocRef = db.collection('users').doc(user.uid);
+
+  // Delete sub collection data first
+  const userComicDocs = (await userDocRef.collection('comics').get()).docs;
+  for (const userComicDoc of userComicDocs) {
+    await userComicDoc.ref.delete();
+  }
+
+  // Delete user doc last
+  await userDocRef.delete();
+});
+
+const auth = admin.auth();
+
+// From: https://github.com/firebase/functions-samples/blob/main/delete-unused-accounts-cron/functions/index.js
+export const deleteInactiveUsers = functions.pubsub
+    .schedule('every monday 03:00').onRun(async () => {
+      // Fetch all user details.
+      const inactiveUsers = await getInactiveUsers([], undefined);
+
+      // Use a pool so that we delete maximum 3 users in parallel.
+      await PromisePool
+          .withConcurrency(3)
+          .for(inactiveUsers)
+          .process(async (user, _index, _pool) => {
+            await deleteInactiveUser(user);
+          });
+
+      functions.logger.log('User cleanup finished');
+    });
+
+async function getInactiveUsers(
+    users: UserRecord[],
+    nextPageToken: string | undefined
+): Promise<UserRecord[]> {
+  // Fetch 1000 users at a time (max allowed by Firebase Auth)
+  const result = await auth.listUsers(1000, nextPageToken);
+
+  // Find users that have not signed in in the last 30 days.
+  const inactiveUsers = result.users.filter((user) => {
+    const lastActiveTimeString = user.metadata.lastRefreshTime ||
+          user.metadata.lastSignInTime;
+    const lastActiveTime = Date.parse(lastActiveTimeString);
+    return lastActiveTime < (Date.now() - 30 * 24 * 60 * 60 * 1000);
+  });
+
+  // Concat with list of previously found inactive users
+  users = users.concat(inactiveUsers);
+
+  // If there are more users to fetch we fetch them.
+  if (result.pageToken) {
+    return getInactiveUsers(users, result.pageToken);
+  }
+
+  return users;
+}
+
+async function deleteInactiveUser(userToDelete: UserRecord) {
+  // Delete the inactive user.
+  try {
+    await auth.deleteUser(userToDelete.uid);
+    functions.logger.log(
+        'Deleted user account',
+        userToDelete.uid,
+        'because of inactivity'
+    );
+  } catch (error) {
+    functions.logger.error(
+        'Deletion of inactive user account',
+        userToDelete.uid,
+        'failed:',
+        error
+    );
+  }
+}
