@@ -193,6 +193,11 @@ export const deleteUnusedDudImports = functions.pubsub
       // Delete all dud comics that aren't in any user library
       for (const dudComic of dudComicRefs) {
         if (dudComic.isUnused) {
+          functions.logger.log(
+              'Deleting dud comic:',
+              dudComic.ref.id,
+              '(not in any user\'s library)'
+          );
           await dudComic.ref.delete();
         }
       }
@@ -251,12 +256,12 @@ async function getInactiveUsers(
   // Fetch 1000 users at a time (max allowed by Firebase Auth)
   const result = await auth.listUsers(1000, nextPageToken);
 
-  // Find users that have not signed in in the last 30 days.
+  // Find users that have not signed in in the last 90 days.
   const inactiveUsers = result.users.filter((user) => {
     const lastActiveTimeString = user.metadata.lastRefreshTime ||
           user.metadata.lastSignInTime;
     const lastActiveTime = Date.parse(lastActiveTimeString);
-    return lastActiveTime < (Date.now() - 30 * 24 * 60 * 60 * 1000);
+    return lastActiveTime < (Date.now() - 90 * 24 * 60 * 60 * 1000);
   });
 
   // Concat with list of previously found inactive users
