@@ -22,7 +22,13 @@ async function appRequest(route: string) {
     url = 'http://localhost:8091';
   }
 
-  console.info(`request IAP ${url} with target audience ${targetAudience}`);
+  functions.logger.debug(
+      'request IAP',
+      url,
+      'with target audience',
+      targetAudience
+  );
+
   const client = await googleAuth.getIdTokenClient(targetAudience);
 
   // Remove trailing slash (route will have leading slash)
@@ -36,7 +42,7 @@ async function appRequest(route: string) {
   }
 
   const res = await client.request({url: url + route});
-  console.info(res.data);
+  functions.logger.debug(res.data);
   return res.data;
 }
 
