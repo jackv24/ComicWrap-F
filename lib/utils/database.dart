@@ -268,8 +268,8 @@ final newFromPageFamily = FutureProvider.autoDispose
 });
 
 Future<bool> deleteComicFromLibrary(
-    BuildContext context, String comicId) async {
-  final userComicAsync = context.read(userComicFamily(comicId));
+    BuildContext context, WidgetRef ref, String comicId) async {
+  final userComicAsync = ref.read(userComicFamily(comicId));
   final userComicSnapshot = userComicAsync.when(
     data: (data) => data,
     loading: () => null,

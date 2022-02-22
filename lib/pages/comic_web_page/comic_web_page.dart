@@ -18,7 +18,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class ComicWebPage extends StatefulWidget {
+class ComicWebPage extends ConsumerStatefulWidget {
   final String comicId;
   final String initialPageId;
 
@@ -30,7 +30,7 @@ class ComicWebPage extends StatefulWidget {
   _ComicWebPageState createState() => _ComicWebPageState();
 }
 
-class _ComicWebPageState extends State<ComicWebPage> {
+class _ComicWebPageState extends ConsumerState<ComicWebPage> {
   DocumentSnapshot<SharedComicPageModel>? _newPage;
   DocumentSnapshot<SharedComicPageModel>? _newValidPage;
   DocumentSnapshot<SharedComicPageModel>? _currentPage;
@@ -49,7 +49,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
 
     // Construct url from comic scrape URL and page ID
-    context.read(sharedComicFamily(widget.comicId).last).then((sharedComic) {
+    ref.read(sharedComicFamily(widget.comicId).future).then((sharedComic) {
       if (sharedComic == null) return;
 
       String scrapeUrl = sharedComic.scrapeUrl;
@@ -77,8 +77,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
     final pageTitle = pageData?.text ?? '';
 
     return Consumer(
-      builder: (context, watch, child) {
-        final appBarColor = watch(appBarColorProvider(AppBarColorParams(
+      builder: (context, ref, child) {
+        final appBarColor = ref.watch(appBarColorProvider(AppBarColorParams(
           comicId: widget.comicId,
           brightness: Theme.of(context).brightness,
         )));
@@ -122,19 +122,19 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     FunctionListItem(
                       child: ListTile(
                         title: Text(loc.webToggleNavBar),
-                        trailing: Consumer(builder: (context, watch, child) {
-                          final value =
-                              watch(comicNavBarToggleProvider(widget.comicId));
+                        trailing: Consumer(builder: (context, ref, child) {
+                          final value = ref
+                              .watch(comicNavBarToggleProvider(widget.comicId));
                           return Icon(value
                               ? Icons.toggle_on
                               : Icons.toggle_off_outlined);
                         }),
                       ),
                       onSelected: (context) async {
-                        final notifier = context.read(
+                        final notifier = ref.read(
                             comicNavBarToggleProvider(widget.comicId).notifier);
-                        final value = context
-                            .read(comicNavBarToggleProvider(widget.comicId));
+                        final value =
+                            ref.read(comicNavBarToggleProvider(widget.comicId));
                         notifier.setValue(!value);
                       },
                     ),
@@ -144,8 +144,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
             ],
           ),
           // Optionally show navigation bar
-          bottomNavigationBar: Consumer(builder: (context, watch, child) {
-            final value = watch(comicNavBarToggleProvider(widget.comicId));
+          bottomNavigationBar: Consumer(builder: (context, ref, child) {
+            final value = ref.watch(comicNavBarToggleProvider(widget.comicId));
 
             // Can't return null here, so return empty widget
             if (!value) return const SizedBox.shrink();
@@ -166,11 +166,11 @@ class _ComicWebPageState extends State<ComicWebPage> {
         children: [
           // WebView wrapper
           Consumer(
-            builder: (context, watch, child) {
+            builder: (context, ref, child) {
               return WillPopScope(
                 onWillPop: () async {
                   final userComicAsync =
-                      context.read(userComicFamily(widget.comicId));
+                      ref.read(userComicFamily(widget.comicId));
                   final userComicSnapshot = userComicAsync.when(
                     data: (data) => data,
                     loading: () => null,
@@ -189,12 +189,12 @@ class _ComicWebPageState extends State<ComicWebPage> {
                     var newFromPageId = userComicSnapshot.data()?.newFromPageId;
                     if (newFromPageId == null) {
                       // If there is no "new from page" just set it to the last page
-                      final lastPage = await context
-                          .read(newestPageFamily(widget.comicId).last);
+                      final lastPage = await ref
+                          .read(newestPageFamily(widget.comicId).future);
                       newFromPageId = lastPage?.id;
                     } else {
-                      final newFromPageRef = context.read(
-                          sharedComicPageRefFamily(SharedComicPageInfo(
+                      final newFromPageRef = ref.read(sharedComicPageRefFamily(
+                          SharedComicPageInfo(
                               comicId: widget.comicId, pageId: newFromPageId)));
 
                       // If reading into the new pages, then set them as not new
@@ -235,9 +235,9 @@ class _ComicWebPageState extends State<ComicWebPage> {
             },
             // Webview child doesn't need to rebuild with parent Consumer
             child: Consumer(
-              builder: (context, watch, child) {
+              builder: (context, ref, child) {
                 final userComicDocAsync =
-                    watch(userComicFamily(widget.comicId));
+                    ref.watch(userComicFamily(widget.comicId));
                 final userComicDoc = userComicDocAsync.when(
                   data: (data) => data,
                   loading: () => null,
@@ -285,7 +285,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
 
                     if (userComicDoc == null) return;
 
-                    final pageRef = context.read(sharedComicPageRefFamily(
+                    final pageRef = ref.read(sharedComicPageRefFamily(
                         SharedComicPageInfo(
                             comicId: widget.comicId, pageId: pageId)));
 
@@ -340,9 +340,8 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (_currentPage == null) {
       final currentPageId = userComic.data()!.currentPageId;
       if (currentPageId != null) {
-        final pageRef = context.read(sharedComicPageRefFamily(
-            SharedComicPageInfo(
-                comicId: widget.comicId, pageId: currentPageId)));
+        final pageRef = ref.read(sharedComicPageRefFamily(SharedComicPageInfo(
+            comicId: widget.comicId, pageId: currentPageId)));
 
         _currentPage = await pageRef?.get();
       }
@@ -387,7 +386,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
   }
 
   Future<void> _goToFirstPage(BuildContext context) async {
-    final page = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+    final page = await ref.read(endPageFamily(SharedComicPagesQueryInfo(
       comicId: widget.comicId,
       descending: false,
     )).future);
@@ -398,7 +397,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
   }
 
   Future<void> _goToLastPage(BuildContext context) async {
-    final page = await context.read(endPageFamily(SharedComicPagesQueryInfo(
+    final page = await ref.read(endPageFamily(SharedComicPagesQueryInfo(
       comicId: widget.comicId,
       descending: true,
     )).future);
@@ -415,7 +414,7 @@ class _ComicWebPageState extends State<ComicWebPage> {
     if (_newPage == null) return;
 
     final pagesQuery =
-        context.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
+        ref.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
       comicId: widget.comicId,
       descending: true,
     )));
@@ -459,8 +458,8 @@ class _NavigationBar extends ConsumerWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, ScopedReader watch) {
-    final appBarColor = watch(appBarColorProvider(AppBarColorParams(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appBarColor = ref.watch(appBarColorProvider(AppBarColorParams(
       comicId: comicId,
       brightness: Theme.of(context).brightness,
     )));

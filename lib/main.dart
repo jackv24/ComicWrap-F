@@ -36,8 +36,8 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Consumer(
-      builder: (context, watch, child) {
-        final themeMode = watch(themeModeProvider);
+      builder: (context, ref, child) {
+        final themeMode = ref.watch(themeModeProvider);
         return MaterialApp(
           onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
           localizationsDelegates: const [
@@ -64,9 +64,9 @@ class _MyAppState extends State<MyApp> {
         );
       },
       child: Consumer(
-        builder: (context, watch, child) {
+        builder: (context, ref, child) {
           final loc = AppLocalizations.of(context);
-          final asyncUser = watch(userChangesProvider);
+          final asyncUser = ref.watch(userChangesProvider);
           return asyncUser.when(
             loading: () => _loadingScreen(loc.signingIn),
             error: (err, stack) => _loadingScreen(loc.signInError),

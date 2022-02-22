@@ -27,8 +27,8 @@ class _CardImageButtonState extends State<CardImageButton> {
     final url = widget.coverImageUrl;
     if (url == null) return _getInkWell();
 
-    return Consumer(builder: (context, watch, child) {
-      final progress = watch(downloadImageFamily(url));
+    return Consumer(builder: (context, ref, child) {
+      final progress = ref.watch(downloadImageFamily(url));
       return progress.when(
         data: (data) {
           if (data is ImageResponse) {

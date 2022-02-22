@@ -127,8 +127,9 @@ class _SignInScreenState extends State<SignInScreen> {
                           _inProgress ? null : () => _onSignUpPressed(context),
                     ),
                     // Password reset button
-                    Consumer(builder: (context, watch, child) {
-                      final auth = watch(authProvider)
+                    Consumer(builder: (context, ref, child) {
+                      final auth = ref
+                          .watch(authProvider)
                           .maybeWhen(data: (auth) => auth, orElse: () => null);
                       return TextButton(
                         onPressed:

@@ -31,8 +31,9 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
               padding:
                   const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
               child: Consumer(
-                builder: (context, watch, child) {
-                  final user = watch(userChangesProvider)
+                builder: (context, ref, child) {
+                  final user = ref
+                      .watch(userChangesProvider)
                       .maybeWhen(data: (data) => data, orElse: () => null);
 
                   // Should never show screen when user is not signed in
@@ -60,10 +61,10 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: Consumer(
-                          builder: (context, watch, child) {
+                          builder: (context, ref, child) {
                             return ElevatedButton(
                               child: Text(loc.emailVerifyRefresh),
-                              onPressed: () => _reloadUser(context, user),
+                              onPressed: () => _reloadUser(ref, user),
                             );
                           },
                         ),
@@ -95,11 +96,11 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
     });
   }
 
-  Future<void> _reloadUser(BuildContext context, User user) async {
+  Future<void> _reloadUser(WidgetRef ref, User user) async {
     EasyLoading.show();
     await user.reload();
     EasyLoading.dismiss();
 
-    context.refresh(userChangesProvider);
+    ref.refresh(userChangesProvider);
   }
 }

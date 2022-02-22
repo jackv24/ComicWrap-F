@@ -20,12 +20,12 @@ class ComicInfoCard extends ConsumerWidget {
       : super(key: key);
 
   @override
-  Widget build(BuildContext context, ScopedReader watch) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
 
-    final sharedComicAsync = watch(sharedComicFamily(comicId));
-    final newFromPageAsync = watch(newFromPageFamily(comicId));
-    final newestPageAsync = watch(newestPageFamily(comicId));
+    final sharedComicAsync = ref.watch(sharedComicFamily(comicId));
+    final newFromPageAsync = ref.watch(newFromPageFamily(comicId));
+    final newestPageAsync = ref.watch(newestPageFamily(comicId));
 
     // If there is no newest page, we can assume there are no pages at all
     final hasNewestPage = newestPageAsync.maybeWhen(
@@ -91,7 +91,7 @@ class ComicInfoCard extends ConsumerWidget {
               coverImageUrl: coverImageUrl,
               // Don't allow tapping through while blocker is up
               onTap: onTap,
-              onLongPressed: (offset) => _showPopupMenu(context, offset),
+              onLongPressed: (offset) => _showPopupMenu(context, ref, offset),
             ),
             if (blocker != null)
               IgnorePointer(
@@ -150,7 +150,8 @@ class ComicInfoCard extends ConsumerWidget {
     );
   }
 
-  void _showPopupMenu(BuildContext context, Offset? offset) async {
+  void _showPopupMenu(
+      BuildContext context, WidgetRef ref, Offset? offset) async {
     if (offset == null) return;
 
     final screenSize = MediaQuery.of(context).size;
@@ -177,7 +178,7 @@ class ComicInfoCard extends ConsumerWidget {
             title: Text(loc.delete),
             trailing: const Icon(Icons.delete),
           ),
-          value: (context) => deleteComicFromLibrary(context, comicId),
+          value: (context) => deleteComicFromLibrary(context, ref, comicId),
         ),
       ],
     );

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_info_section.dart';
+import 'package:comicwrap_f/pages/comic_page/page_list.dart';
 import 'package:comicwrap_f/pages/comic_web_page/comic_web_page.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/download.dart';
@@ -18,14 +19,14 @@ import 'package:url_launcher/url_launcher.dart';
 
 const listItemHeight = 50.0;
 
-final pageListOverrideProvider = Provider.autoDispose
-    .family<List<DocumentSnapshot<SharedComicPageModel>>?, String>(
+final pageListOverrideProvider =
+    Provider.family<List<DocumentSnapshot<SharedComicPageModel>>?, String>(
         (ref, comicId) {
   // To be overridden for tests
   return null;
 });
 
-class ComicPage extends StatefulWidget {
+class ComicPage extends ConsumerStatefulWidget {
   final String comicId;
 
   const ComicPage({Key? key, required this.comicId}) : super(key: key);
@@ -40,7 +41,7 @@ enum _ScrollDirection {
   up,
 }
 
-class _ComicPageState extends State<ComicPage> {
+class _ComicPageState extends ConsumerState<ComicPage> {
   final int _initialDocLimit = 50;
   final int _moreDocLimit = 20;
 
@@ -52,14 +53,15 @@ class _ComicPageState extends State<ComicPage> {
   bool _isLoadingDown = false;
   bool _isLoadingUp = false;
 
+  PageListStartType _listStartType = PageListStartType.current;
+
   TapDownDetails? _listTapDownDetails;
 
   @override
   void initState() {
     super.initState();
 
-    final pageListOverride =
-        context.read(pageListOverrideProvider(widget.comicId));
+    final pageListOverride = ref.read(pageListOverrideProvider(widget.comicId));
     if (pageListOverride == null) {
       _pages = [];
       _isPagesOverridden = false;
@@ -89,47 +91,36 @@ class _ComicPageState extends State<ComicPage> {
         _getPages(_ScrollDirection.up);
       }
     });
-
-    // Get providers one time on start - these shouldn't fail but handle it gracefully if they do
-    context
-        .read(userComicFamily(widget.comicId).last)
-        .then((userComicDoc) async {
-      final currentPageId = userComicDoc?.data()?.currentPageId;
-
-      // Get ref to current page once for centering pages on start
-      final currentPageRef = currentPageId != null
-          ? context.read(sharedComicPageRefFamily(SharedComicPageInfo(
-              comicId: widget.comicId, pageId: currentPageId)))
-          : null;
-
-      if (currentPageRef != null) {
-        // Centre on current page
-        _centerPagesOnRef(currentPageRef);
-      } else {
-        final firstPage =
-            await context.read(endPageFamily(SharedComicPagesQueryInfo(
-          comicId: widget.comicId,
-          descending: false,
-        )).future);
-
-        // Start at first page if no current page
-        if (firstPage != null) {
-          _centerPagesOnDoc(firstPage);
-        } else {
-          _getPages(_ScrollDirection.none);
-        }
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
 
+    // Load page list from specific page on start
+    ref.listen(
+        pageListStartProvider(PageListStartParams(
+          comicId: widget.comicId,
+          startType: _listStartType,
+        )),
+        (prev, AsyncValue<DocumentSnapshot<SharedComicPageModel>?> current) {
+      current.when(
+        data: (data) {
+          if (data == null) {
+            _getPages(_ScrollDirection.none);
+          } else {
+            _centerPagesOnDoc(data);
+          }
+        },
+        error: (error, stack) => showErrorDialog(context, error.toString()),
+        loading: () {},
+      );
+    });
+
     return Consumer(
       // Page color scheme changes to match cover image
-      builder: (context, watch, child) {
-        final appBarColor = watch(appBarColorProvider(AppBarColorParams(
+      builder: (context, ref, child) {
+        final appBarColor = ref.watch(appBarColorProvider(AppBarColorParams(
           comicId: widget.comicId,
           brightness: Theme.of(context).brightness,
         )));
@@ -152,8 +143,8 @@ class _ComicPageState extends State<ComicPage> {
                     trailing: const Icon(Icons.delete),
                   ),
                   onSelected: (context) async {
-                    final didDelete =
-                        await deleteComicFromLibrary(context, widget.comicId);
+                    final didDelete = await deleteComicFromLibrary(
+                        context, ref, widget.comicId);
 
                     // This comic has now been removed, so close it's page
                     if (didDelete) Navigator.of(context).pop();
@@ -168,10 +159,14 @@ class _ComicPageState extends State<ComicPage> {
                 comicId: widget.comicId,
                 onCurrentPressed: _centerPagesOnDoc,
                 onFirstPressed: _pages.isNotEmpty
-                    ? () => _goToEndPage(context, false)
+                    ? () => setState(() {
+                          _listStartType = PageListStartType.first;
+                        })
                     : null,
                 onLastPressed: _pages.isNotEmpty
-                    ? () => _goToEndPage(context, true)
+                    ? () => setState(() {
+                          _listStartType = PageListStartType.last;
+                        })
                     : null,
               );
 
@@ -265,9 +260,9 @@ class _ComicPageState extends State<ComicPage> {
     }
 
     // Only text style changes
-    final titleText = Consumer(builder: (context, watch, child) {
-      final currentPageAsync = watch(currentPageFamily(widget.comicId));
-      final newFromPageAsync = watch(newFromPageFamily(widget.comicId));
+    final titleText = Consumer(builder: (context, ref, child) {
+      final currentPageAsync = ref.watch(currentPageFamily(widget.comicId));
+      final newFromPageAsync = ref.watch(newFromPageFamily(widget.comicId));
 
       // Derive isRead by comparing to current page
       final isRead = currentPageAsync.when(
@@ -345,21 +340,6 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  void _goToEndPage(BuildContext context, bool descending) async {
-    EasyLoading.show();
-
-    final doc = await context.read(endPageFamily(SharedComicPagesQueryInfo(
-      comicId: widget.comicId,
-      descending: descending,
-    )).future);
-
-    if (doc != null) {
-      await _centerPagesOnDoc(doc);
-    }
-
-    EasyLoading.dismiss();
-  }
-
   Future<void> _getPages(_ScrollDirection scrollDir,
       {DocumentSnapshot<SharedComicPageModel>? centredOnDoc}) async {
     if (_isLoadingUp || _isLoadingDown || _isPagesOverridden) {
@@ -386,7 +366,7 @@ class _ComicPageState extends State<ComicPage> {
     print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
     final pagesQuery =
-        context.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
+        ref.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
       comicId: widget.comicId,
       descending: true,
     )));
@@ -480,12 +460,6 @@ class _ComicPageState extends State<ComicPage> {
     });
   }
 
-  Future<void> _centerPagesOnRef(
-      DocumentReference<SharedComicPageModel> centreDocRef) async {
-    final centreDoc = await centreDocRef.get();
-    return _centerPagesOnDoc(centreDoc);
-  }
-
   Future<void> _centerPagesOnDoc(
       DocumentSnapshot<SharedComicPageModel> centreDoc) async {
     if (_isPagesOverridden) return;
@@ -517,7 +491,7 @@ class _ComicPageState extends State<ComicPage> {
   }
 
   void _setPageAsCurrent(String pageId) async {
-    final userComic = context.read(userComicRefFamily(widget.comicId));
+    final userComic = ref.read(userComicRefFamily(widget.comicId));
 
     if (userComic == null) {
       final loc = AppLocalizations.of(context);

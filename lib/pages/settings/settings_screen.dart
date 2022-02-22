@@ -32,8 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     InputDecoration(label: Text(loc.settingsThemeLabel)),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return Consumer(builder: (context, watch, child) {
-                      final currentTheme = watch(themeModeProvider);
+                    return Consumer(builder: (context, ref, child) {
+                      final currentTheme = ref.watch(themeModeProvider);
                       const borderWidth = 1.0;
                       return ToggleButtons(
                         borderWidth: borderWidth,
@@ -53,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         isSelected: ThemeMode.values
                             .map((val) => currentTheme == val)
                             .toList(),
-                        onPressed: (index) => context
+                        onPressed: (index) => ref
                             .read(themeModeProvider.notifier)
                             .setValue(ThemeMode.values[index]),
                       );

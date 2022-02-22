@@ -1,15 +1,16 @@
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DeleteAccountDialogue extends StatefulWidget {
+class DeleteAccountDialogue extends ConsumerStatefulWidget {
   const DeleteAccountDialogue({Key? key}) : super(key: key);
 
   @override
   _DeleteAccountDialogueState createState() => _DeleteAccountDialogueState();
 }
 
-class _DeleteAccountDialogueState extends State<DeleteAccountDialogue> {
+class _DeleteAccountDialogueState extends ConsumerState<DeleteAccountDialogue> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _canDelete = false;
@@ -70,8 +71,8 @@ class _DeleteAccountDialogueState extends State<DeleteAccountDialogue> {
           ),
           onPressed: _canDelete
               ? () async {
-                  final errorCode =
-                      await deleteAccount(context, _passwordController.text);
+                  final errorCode = await deleteAccount(
+                      context, ref, _passwordController.text);
                   if (errorCode == null) {
                     Navigator.of(context).pop(true);
                   } else {
