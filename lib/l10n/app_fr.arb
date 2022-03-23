@@ -1,1 +1,100 @@
-{}
+{
+    "appTitle": "ComicWrap",
+    "signingIn": "Connection...",
+    "signInError": "Erreur lors de la connection",
+    "githubLinkPrompt": "Un problème ? Besoin d'aide ? Suivez le lien ci-dessous !",
+    "githubLinkLabel": "ComicWrap GitHub",
+    "timeAgoNever": "jamais",
+    "signOut": "Déconnexion",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "loadingText": "Chargement...",
+    "refresh": "Rafraichir",
+    "ok": "OK",
+    "errorTitle": "Erreur",
+    "errorRequired": "Requis",
+    "errorNoUser": "L'email n'est pas enregistré",
+    "errorWrongPass": "Mauvais mot de passe",
+    "errorInvalidEmail": "Email invalide",
+    "errorPassMatch": "Les deux mots de passe ne sont pas identiques",
+    "emailVerifyUserNull": "{userEmail} est connecté mais l'email n'est pas vérifié.",
+    "@emailVerifyUserNull": {
+        "placeholders": {
+            "userEmail": {
+                "type": "String"
+            }
+        }
+    },
+    "emailVerifySend": "Envoyer la vérification de l'email",
+    "emailVerifyRefresh": "Déjà vérifié ? Rafraichir !",
+    "signInTitle": "Connexion",
+    "signInEmail": "Email",
+    "signInPassword": "Mot de passe",
+    "signInButton": "Connexion",
+    "signUpEmailButton": "S'inscrire avec l'email",
+    "resetPassword": "Réinitialisation du mot de passe",
+    "resetPassDialogTitle": "Réinitialiser le mot de passe ?",
+    "resetPassDialogText": "Êtes-vous sûr de vouloir réinitialiser le mot de passe pour {userEmail} ?",
+    "@resetPassDialogText": {
+        "placeholders": {
+            "userEmail": {
+                "type": "String"
+            }
+        }
+    },
+    "resetPassSent": "Email de réinitialisation du mot de passe envoyé",
+    "signUpTitle": "Inscription avec l'email",
+    "signUpPassConfirm": "Confirmez votre mot de passe",
+    "signUpButton": "Inscription",
+    "infoRead": "Lecture: {readTime}",
+    "@infoRead": {
+        "placeholders": {
+            "readTime": {
+                "type": "String"
+            }
+        }
+    },
+    "infoUpdated": "Mise à jour: {updateTime}",
+    "@infoUpdated": {
+        "placeholders": {
+            "updateTime": {
+                "type": "String"
+            }
+        }
+    },
+    "infoNoBookmark": "Pas de marqueur",
+    "buttonFirst": "Premier",
+    "buttonLast": "Dernier",
+    "comicDeleteFail": "Impossible de supprimer: Impossible de récupérer le comic.",
+    "comicNoPages": "Aucunes pages...",
+    "comicSetBookmark": "Définir un marqueur",
+    "comicSetBookmarkFail": "Impossible de définir la page en tant que page actuelle : Impossible d'obtenir la référence du Comic de l'utilisateur.",
+    "webOpenBrowser": "Ouvrir le navigateur",
+    "webErrorUrl": "Impossible d'ouvrir l'URL: {url}",
+    "@webErrorUrl": {
+        "placeholders": {
+            "url": {
+                "type": "String"
+            }
+        }
+    },
+    "addComicTitle": "Ajouter Comic",
+    "addComicUrl": "URL",
+    "addComicAddButton": "Ajouter",
+    "addComicCancelButton": "Annuler",
+    "libraryTitle": "Bibliothèque",
+    "libraryLoading": "Chargement des comics de l'utilisateur...",
+    "libraryError": "Erreur dans le chargement des comics de l'utilisateur.",
+    "libraryEmpty": "L'utilisateur n'a pas de comics.",
+    "settingsTitle": "Paramètres",
+    "settingsThemeLabel": "Thème",
+    "settingsThemeModeSystem": "Système",
+    "settingsThemeModeLight": "Light",
+    "settingsThemeModeDark": "Dark",
+    "comicReportIssue": "Signaler un problème",
+    "webToggleNavBar": "Barre de navigation",
+    "settingsDeleteAccount": "Supprimer le compte",
+    "deleteAccountConfirm": "Êtes-vous sûr ? Cette action est irréversible.",
+    "deleteAccountPasswordHelper": "Entrez votre mot de passe pour confirmer",
+    "comicImporting": "Importation..."
+}
