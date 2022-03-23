@@ -52,6 +52,7 @@ class _MyAppState extends State<MyApp> {
               ],
               supportedLocales: const [
                 Locale('en'),
+                Locale('fr'),
               ],
               theme: ThemeData(
                 colorScheme: lightDynamic ?? const ColorScheme.light(),
