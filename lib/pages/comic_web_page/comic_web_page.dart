@@ -407,16 +407,17 @@ class _ComicWebPageState extends ConsumerState<ComicWebPage> {
     _navigateToPageId(page.id);
   }
 
-  Future<void> _goToQueriedPage(
-    Query<SharedComicPageModel> Function(Query<SharedComicPageModel>)
+  Future<void> _goToQueriedPage({
+    required Query<SharedComicPageModel> Function(Query<SharedComicPageModel>)
         getSubQuery,
-  ) async {
+    required bool descending,
+  }) async {
     if (_newPage == null) return;
 
     final pagesQuery =
         ref.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
       comicId: widget.comicId,
-      descending: true,
+      descending: descending,
     )));
 
     if (pagesQuery == null) return;
@@ -431,13 +432,19 @@ class _ComicWebPageState extends ConsumerState<ComicWebPage> {
 
   Future<void> _goToNextPage(DocumentSnapshot<SharedComicPageModel> fromPage) {
     return _goToQueriedPage(
-        (rootQuery) => rootQuery.endBeforeDocument(fromPage).limitToLast(1));
+      getSubQuery: (rootQuery) =>
+          rootQuery.startAfterDocument(fromPage).limit(1),
+      descending: false,
+    );
   }
 
   Future<void> _goToPreviousPage(
       DocumentSnapshot<SharedComicPageModel> fromPage) {
     return _goToQueriedPage(
-        (rootQuery) => rootQuery.startAfterDocument(fromPage).limit(1));
+      getSubQuery: (rootQuery) =>
+          rootQuery.startAfterDocument(fromPage).limit(1),
+      descending: true,
+    );
   }
 }
 

@@ -365,12 +365,17 @@ class _ComicPageState extends ConsumerState<ComicPage> {
 
     print('Loading more pages.. Direction: ${scrollDir.toString()}');
 
-    final pagesQuery =
+    final pagesQueryDescending =
         ref.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
       comicId: widget.comicId,
       descending: true,
     )));
-    if (pagesQuery == null) return;
+    final pagesQueryAscending =
+        ref.read(sharedComicPagesQueryFamily(SharedComicPagesQueryInfo(
+      comicId: widget.comicId,
+      descending: false,
+    )));
+    if (pagesQueryDescending == null || pagesQueryAscending == null) return;
 
     switch (scrollDir) {
       case _ScrollDirection.none:
@@ -384,9 +389,9 @@ class _ComicPageState extends ConsumerState<ComicPage> {
           final halfDocLimit = (_initialDocLimit / 2).round();
 
           // Get page above top
-          final upQuerySnapshot = await pagesQuery
-              .endBeforeDocument(centredOnDoc)
-              .limitToLast(halfDocLimit)
+          final upQuerySnapshot = await pagesQueryAscending
+              .startAfterDocument(centredOnDoc)
+              .limit(halfDocLimit)
               .get();
 
           // If we didn't get all up pages, get more down pages instead
@@ -395,13 +400,14 @@ class _ComicPageState extends ConsumerState<ComicPage> {
           if (upDocsLeft > 0) downDocLimit += upDocsLeft;
 
           // Get pages below bottom
-          final downQuerySnapshot = await pagesQuery
+          final downQuerySnapshot = await pagesQueryDescending
               .startAfterDocument(centredOnDoc)
               .limit(downDocLimit)
               .get();
 
           // Insert into pages list
-          _addPagesToStart(upQuerySnapshot.docs, halfDocLimit);
+          _addPagesToStart(
+              upQuerySnapshot.docs.reversed.toList(), halfDocLimit);
           _pages.add(centredOnDoc);
           _addPagesToEnd(downQuerySnapshot.docs, downDocLimit);
 
@@ -412,7 +418,8 @@ class _ComicPageState extends ConsumerState<ComicPage> {
           });
         } else {
           // Start from top of list
-          final querySnapshot = await pagesQuery.limit(_initialDocLimit).get();
+          final querySnapshot =
+              await pagesQueryDescending.limit(_initialDocLimit).get();
           _addPagesToEnd(querySnapshot.docs, _initialDocLimit);
         }
         break;
@@ -424,7 +431,7 @@ class _ComicPageState extends ConsumerState<ComicPage> {
           });
 
           // Get more pages from last until limit
-          final querySnapshot = await pagesQuery
+          final querySnapshot = await pagesQueryDescending
               .startAfterDocument(_pages.last)
               .limit(_moreDocLimit)
               .get();
@@ -440,12 +447,12 @@ class _ComicPageState extends ConsumerState<ComicPage> {
           });
 
           // Get more pages from limit until first
-          final querySnapshot = await pagesQuery
-              .endBeforeDocument(_pages.first)
-              .limitToLast(_moreDocLimit)
+          final querySnapshot = await pagesQueryAscending
+              .startAfterDocument(_pages.first)
+              .limit(_moreDocLimit)
               .get();
 
-          _addPagesToStart(querySnapshot.docs, _moreDocLimit);
+          _addPagesToStart(querySnapshot.docs.reversed.toList(), _moreDocLimit);
 
           // Compensate scroll position since we're adding to the top
           _scrollController!.jumpTo(_scrollController!.position.pixels +
