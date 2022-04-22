@@ -108,7 +108,7 @@ jobs:
           flutter-version: 2.10.2
       - uses: ./.github/actions/setup-flutter-build
       - name: Pod install
-        run: cd ios && pod install
+        run: cd ios && pod install --repo-update
       # Keys setup
       - name: Setup SSH Keys and known_hosts for fastlane match
         run: |
