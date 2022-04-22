@@ -4,8 +4,12 @@ import 'package:comicwrap_f/models/firestore/shared_comic_page.dart';
 import 'package:comicwrap_f/models/firestore/user.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/utils/auth.dart';
+import 'package:comicwrap_f/utils/error.dart';
 import 'package:comicwrap_f/utils/firebase.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 final userDocChangesProvider =
     StreamProvider<DocumentSnapshot<UserModel>?>((ref) {
@@ -262,3 +266,25 @@ final newFromPageFamily = FutureProvider.autoDispose
     error: (error, stack) => Future.error(error, stack),
   );
 });
+
+Future<bool> deleteComicFromLibrary(
+    BuildContext context, WidgetRef ref, String comicId) async {
+  final userComicAsync = ref.read(userComicFamily(comicId));
+  final userComicSnapshot = userComicAsync.when(
+    data: (data) => data,
+    loading: () => null,
+    error: (error, stack) => null,
+  );
+
+  if (userComicSnapshot != null) {
+    EasyLoading.show();
+    await userComicSnapshot.reference.delete();
+    EasyLoading.dismiss();
+
+    return true;
+  } else {
+    final loc = AppLocalizations.of(context);
+    await showErrorDialog(context, loc.comicDeleteFail);
+    return false;
+  }
+}

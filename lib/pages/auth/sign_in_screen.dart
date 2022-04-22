@@ -33,7 +33,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     final brightness = Theme.of(context).brightness;
 
@@ -127,8 +127,9 @@ class _SignInScreenState extends State<SignInScreen> {
                           _inProgress ? null : () => _onSignUpPressed(context),
                     ),
                     // Password reset button
-                    Consumer(builder: (context, watch, child) {
-                      final auth = watch(authProvider)
+                    Consumer(builder: (context, ref, child) {
+                      final auth = ref
+                          .watch(authProvider)
                           .maybeWhen(data: (auth) => auth, orElse: () => null);
                       return TextButton(
                         onPressed:
@@ -168,7 +169,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _showErrorCode(BuildContext context, String? errorCode) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     switch (errorCode) {
       case 'empty-auth':
@@ -245,7 +246,7 @@ class _SignInScreenState extends State<SignInScreen> {
       return;
     }
 
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     final response = await showDialog(
         context: context,

@@ -7,7 +7,6 @@ import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:palette_generator/palette_generator.dart';
 
 class ComicInfoSection extends StatelessWidget {
   final String comicId;
@@ -25,26 +24,23 @@ class ComicInfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     final coverSection = Material(
-      color: Colors.white,
       elevation: 5.0,
       borderRadius: const BorderRadius.all(Radius.circular(12.0)),
       clipBehavior: Clip.antiAlias,
       child: AspectRatio(
         aspectRatio: 210.0 / 297.0,
         child: Material(
-          color: Colors.white,
           elevation: 5.0,
           borderRadius: const BorderRadius.all(Radius.circular(12.0)),
           clipBehavior: Clip.antiAlias,
-          child: Consumer(builder: (context, watch, child) {
-            final sharedComicAsync = watch(sharedComicFamily(comicId));
+          child: Consumer(builder: (context, ref, child) {
+            final sharedComicAsync = ref.watch(sharedComicFamily(comicId));
             return sharedComicAsync.when(
               data: (data) => CardImageButton(
                 coverImageUrl: data?.coverImageUrl,
-                isImporting: data?.isImporting ?? false,
               ),
               loading: () => const CardImageButton(),
               error: (error, stack) => ErrorWidget(error),
@@ -57,8 +53,8 @@ class ComicInfoSection extends StatelessWidget {
     final infoSection = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Consumer(builder: (context, watch, child) {
-          final sharedComicAsync = watch(sharedComicFamily(comicId));
+        Consumer(builder: (context, ref, child) {
+          final sharedComicAsync = ref.watch(sharedComicFamily(comicId));
           return sharedComicAsync.when(
             data: (data) => Text(
               data?.name ?? comicId,
@@ -70,8 +66,8 @@ class ComicInfoSection extends StatelessWidget {
           );
         }),
         const SizedBox(height: 2),
-        Consumer(builder: (context, watch, child) {
-          final userComicAsync = watch(userComicFamily(comicId));
+        Consumer(builder: (context, ref, child) {
+          final userComicAsync = ref.watch(userComicFamily(comicId));
           return userComicAsync.when(
             data: (data) => TimeAgoText(
                 time: data?.data()?.lastReadTime,
@@ -86,8 +82,8 @@ class ComicInfoSection extends StatelessWidget {
             error: (error, stack) => ErrorWidget(error),
           );
         }),
-        Consumer(builder: (context, watch, child) {
-          final newestPageAsync = watch(newestPageFamily(comicId));
+        Consumer(builder: (context, ref, child) {
+          final newestPageAsync = ref.watch(newestPageFamily(comicId));
           return newestPageAsync.when(
             data: (data) => TimeAgoText(
                 time: data?.data()?.scrapeTime,
@@ -109,8 +105,9 @@ class ComicInfoSection extends StatelessWidget {
       ],
     );
 
-    final buttonsSection = Consumer(builder: (context, watch, child) {
-      final paletteGenAsync = watch(downloadCoverImagePaletteFamily(comicId));
+    final buttonsSection = Consumer(builder: (context, ref, child) {
+      final paletteGenAsync =
+          ref.watch(downloadCoverImagePaletteFamily(comicId));
       final paletteGen = paletteGenAsync.when(
         data: (data) => data,
         loading: () => null,
@@ -144,8 +141,9 @@ class ComicInfoSection extends StatelessWidget {
             direction: Axis.horizontal,
             children: [
               Expanded(child: Consumer(
-                builder: (context, watch, child) {
-                  final currentPageAsync = watch(currentPageFamily(comicId));
+                builder: (context, ref, child) {
+                  final currentPageAsync =
+                      ref.watch(currentPageFamily(comicId));
                   return currentPageAsync.when(
                     data: (data) => ElevatedButton.icon(
                       onPressed: data == null || onCurrentPressed == null

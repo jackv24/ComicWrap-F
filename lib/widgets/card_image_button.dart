@@ -3,70 +3,83 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CardImageButton extends ConsumerWidget {
+class CardImageButton extends StatefulWidget {
   final String? coverImageUrl;
   final Function()? onTap;
-  final bool isImporting;
+  final Function(Offset?)? onLongPressed;
 
-  const CardImageButton(
-      {Key? key, this.coverImageUrl, this.onTap, this.isImporting = false})
-      : super(key: key);
+  const CardImageButton({
+    Key? key,
+    this.coverImageUrl,
+    this.onTap,
+    this.onLongPressed,
+  }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, ScopedReader watch) {
-    final url = coverImageUrl;
-    if (url == null) {
-      return _getEmptyImageButton();
-    }
+  _CardImageButtonState createState() => _CardImageButtonState();
+}
 
-    final progress = watch(downloadImageFamily(url));
-    final card = progress.when(
-      data: (data) {
-        if (data is ImageResponse) {
-          // Image downloaded, display image
-          return Ink.image(
-            image: data.image,
-            fit: BoxFit.cover,
-            child: InkWell(
-              onTap: onTap,
-            ),
-          );
-        } else if (data is DownloadProgress) {
-          // Image is still downloading, display progress
-          return Stack(
-            alignment: AlignmentDirectional.bottomCenter,
-            children: [
-              LinearProgressIndicator(
-                value: data.progress,
-                minHeight: 8.0,
-              ),
-            ],
-          );
-        } else {
-          return ErrorWidget('FileResponse is not of known type.');
-        }
-      },
-      loading: () => _getEmptyImageButton(),
-      error: (error, stack) => ErrorWidget(error),
-    );
+class _CardImageButtonState extends State<CardImageButton> {
+  Offset? _lastTapPosition;
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        if (isImporting)
-          Container(
-            color: Colors.white.withAlpha(170),
-          ),
-        if (isImporting) const CircularProgressIndicator(),
-        card,
-      ],
-    );
+  @override
+  Widget build(BuildContext context) {
+    final url = widget.coverImageUrl;
+    if (url == null) return _getInkWell();
+
+    return Consumer(builder: (context, ref, child) {
+      final progress = ref.watch(downloadImageFamily(url));
+      return progress.when(
+        data: (data) {
+          if (data is ImageResponse) {
+            // Image downloaded, display image
+            return Ink.image(
+              image: data.image,
+              fit: BoxFit.cover,
+              child: _getInkWell(),
+            );
+          } else if (data is DownloadProgress) {
+            // Image is still downloading, display progress
+            return _getInkWell(
+                child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                Container(),
+                LinearProgressIndicator(
+                  value: data.progress,
+                  minHeight: 8.0,
+                ),
+              ],
+            ));
+          } else {
+            return ErrorWidget('FileResponse is not of known type.');
+          }
+        },
+        loading: () => _getInkWell(),
+        error: (error, stack) => ErrorWidget(error),
+      );
+    });
   }
 
-  Widget _getEmptyImageButton() {
+  Widget _getInkWell({Widget? child}) {
+    final onLongPressed = widget.onLongPressed;
+
+    // Only set long press handlers if required
+    final void Function(TapDownDetails)? onTapDown;
+    final void Function()? onLongPress;
+    if (onLongPressed != null) {
+      onTapDown = (details) => _lastTapPosition = details.globalPosition;
+      onLongPress = () => onLongPressed(_lastTapPosition);
+    } else {
+      onTapDown = null;
+      onLongPress = null;
+    }
+
     return InkWell(
-      onTap: onTap,
-      child: const Icon(Icons.error, color: Colors.red),
+      onTap: widget.onTap,
+      onTapDown: onTapDown,
+      onLongPress: onLongPress,
+      child: child,
     );
   }
 }

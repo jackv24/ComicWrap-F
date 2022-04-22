@@ -39,7 +39,7 @@ final userChangesProvider = StreamProvider<User?>((ref) {
 
 Future<void> linkGoogleAuth(BuildContext context) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return;
@@ -73,7 +73,7 @@ Future<void> linkGoogleAuth(BuildContext context) async {
 
 Future<void> signOut(BuildContext context) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return;
@@ -84,6 +84,36 @@ Future<void> signOut(BuildContext context) async {
   EasyLoading.dismiss();
 }
 
+Future<String?> deleteAccount(
+    BuildContext context, WidgetRef ref, String password) async {
+  final user = await ref.read(userChangesProvider.future);
+  if (user == null) {
+    showErrorDialog(context, 'User is null');
+    return 'User is null';
+  }
+
+  EasyLoading.show();
+
+  try {
+    // Re-auth first to verify password
+    await user.reauthenticateWithCredential(
+      EmailAuthProvider.credential(
+        // All our auth methods use email, so it can't be null
+        email: user.email!,
+        password: password,
+      ),
+    );
+    // Delete the user
+    await user.delete();
+  } on FirebaseAuthException catch (e) {
+    EasyLoading.dismiss();
+    return e.code;
+  }
+
+  EasyLoading.dismiss();
+  return null;
+}
+
 Future<void> _showGetAuthError(BuildContext context) {
   return showErrorDialog(context, 'Couldn\'t get FirebaseAuth!');
 }
@@ -91,7 +121,7 @@ Future<void> _showGetAuthError(BuildContext context) {
 Future<String?> submitSignIn(
     BuildContext context, EmailSignInDetails authDetails) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return 'no-auth-provider';
@@ -123,7 +153,7 @@ Future<String?> submitSignIn(
 Future<String?> submitSignUp(
     BuildContext context, EmailSignUpDetails authDetails) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return 'no-auth-provider';
@@ -162,7 +192,7 @@ Future<String?> submitSignUp(
 // Created with help from https://firebase.flutter.dev/docs/auth/social/#apple
 Future<void> linkAppleAuth(BuildContext context) async {
   final asyncAuth = ProviderScope.containerOf(context).read(authProvider);
-  final auth = asyncAuth.data?.value;
+  final auth = asyncAuth.value;
   if (auth == null) {
     await _showGetAuthError(context);
     return;

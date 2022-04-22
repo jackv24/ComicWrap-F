@@ -1,5 +1,6 @@
 import 'package:comicwrap_f/pages/main_page_inner.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
+import 'package:comicwrap_f/pages/settings/delete_account_dialog.dart';
 import 'package:comicwrap_f/utils/auth.dart';
 import 'package:comicwrap_f/utils/settings.dart';
 import 'package:comicwrap_f/widgets/github_link_button.dart';
@@ -17,7 +18,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return MainPageScaffold(
       title: loc.settingsTitle,
@@ -31,8 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     InputDecoration(label: Text(loc.settingsThemeLabel)),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return Consumer(builder: (context, watch, child) {
-                      final currentTheme = watch(themeModeProvider);
+                    return Consumer(builder: (context, ref, child) {
+                      final currentTheme = ref.watch(themeModeProvider);
                       const borderWidth = 1.0;
                       return ToggleButtons(
                         borderWidth: borderWidth,
@@ -52,12 +53,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         isSelected: ThemeMode.values
                             .map((val) => currentTheme == val)
                             .toList(),
-                        onPressed: (index) => context
+                        onPressed: (index) => ref
                             .read(themeModeProvider.notifier)
                             .setValue(ThemeMode.values[index]),
                       );
                     });
                   },
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final didDeleteAccount = await showDialog(
+                    context: context,
+                    builder: (context) {
+                      return const DeleteAccountDialogue();
+                    },
+                  ) as bool?;
+                  if (didDeleteAccount ?? false) Navigator.of(context).pop();
+                },
+                child: Text(loc.settingsDeleteAccount),
+                style: TextButton.styleFrom(
+                  primary: Colors.red,
                 ),
               ),
               TextButton(

@@ -48,7 +48,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return Center(
       child: Column(
@@ -74,8 +74,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 padding: const EdgeInsets.symmetric(
                     vertical: 15.0, horizontal: 15.0),
                 sliver: Consumer(
-                  builder: (context, watch, child) {
-                    final asyncComicsList = watch(userComicsListProvider);
+                  builder: (context, ref, child) {
+                    final asyncComicsList = ref.watch(userComicsListProvider);
                     return asyncComicsList.when(
                       loading: () => SliverToBoxAdapter(
                         child: Text(loc.loadingText),
@@ -153,7 +153,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Widget _getBodySliver(BuildContext context,
       List<DocumentSnapshot<UserComicModel>>? userComics) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     if (userComics == null || userComics.isEmpty) {
       return SliverToBoxAdapter(

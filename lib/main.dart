@@ -9,6 +9,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() async {
@@ -38,54 +39,60 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, watch, child) {
-        final themeMode = watch(themeModeProvider);
-        return MaterialApp(
-          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            AppLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en'),
-          ],
-          theme: ThemeData(
-            colorScheme: const ColorScheme.light(),
-            visualDensity: VisualDensity.adaptivePlatformDensity,
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final themeMode = ref.watch(themeModeProvider);
+            return MaterialApp(
+              onGenerateTitle: (context) =>
+                  AppLocalizations.of(context).appTitle,
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                AppLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('en'),
+                Locale('fr'),
+              ],
+              theme: ThemeData(
+                colorScheme: lightDynamic ?? const ColorScheme.light(),
+                visualDensity: VisualDensity.adaptivePlatformDensity,
+              ),
+              darkTheme: ThemeData(
+                colorScheme: darkDynamic ?? const ColorScheme.dark(),
+                visualDensity: VisualDensity.adaptivePlatformDensity,
+              ),
+              themeMode: themeMode,
+              // Firebase init
+              home: child,
+              builder: EasyLoading.init(),
+            );
+          },
+          child: Consumer(
+            builder: (context, ref, child) {
+              final loc = AppLocalizations.of(context);
+              final asyncUser = ref.watch(userChangesProvider);
+              return asyncUser.when(
+                loading: () => _loadingScreen(loc.signingIn),
+                error: (err, stack) => _loadingScreen(loc.signInError),
+                data: (user) {
+                  if (user == null) return const SignInScreen();
+
+                  // Can only verify email if not running firebase emulators
+                  if (!user.emailVerified && !useEmulators) {
+                    return const EmailVerifyScreen();
+                  }
+
+                  return const LibraryScreen();
+                },
+              );
+            },
           ),
-          darkTheme: ThemeData(
-            colorScheme: const ColorScheme.dark(),
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-          ),
-          themeMode: themeMode,
-          // Firebase init
-          home: child,
-          builder: EasyLoading.init(),
         );
       },
-      child: Consumer(
-        builder: (context, watch, child) {
-          final loc = AppLocalizations.of(context)!;
-          final asyncUser = watch(userChangesProvider);
-          return asyncUser.when(
-            loading: () => _loadingScreen(loc.signingIn),
-            error: (err, stack) => _loadingScreen(loc.signInError),
-            data: (user) {
-              if (user == null) return const SignInScreen();
-
-              // Can only verify email if not running firebase emulators
-              if (!user.emailVerified && !useEmulators) {
-                return const EmailVerifyScreen();
-              }
-
-              return const LibraryScreen();
-            },
-          );
-        },
-      ),
     );
   }
 

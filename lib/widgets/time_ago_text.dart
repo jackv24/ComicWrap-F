@@ -47,7 +47,7 @@ class _TimeAgoTextState extends State<TimeAgoText> {
 
   @override
   Widget build(BuildContext context) {
-    final text = _text ?? AppLocalizations.of(context)!.timeAgoNever;
+    final text = _text ?? AppLocalizations.of(context).timeAgoNever;
     return widget.builder(text);
   }
 }

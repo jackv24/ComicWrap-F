@@ -12,14 +12,13 @@ final _settingsBoxProvider = FutureProvider<Box>((ref) async {
 final themeModeProvider =
     StateNotifierProvider<HiveSettingNotifier<ThemeMode>, ThemeMode>((ref) {
   final box = ref.watch(_settingsBoxProvider);
-  return HiveSettingNotifier(box.data?.value, 'themeMode', ThemeMode.system);
+  return HiveSettingNotifier(box.value, 'themeMode', ThemeMode.system);
 });
 
 final comicNavBarToggleProvider = StateNotifierProvider.autoDispose
     .family<HiveSettingNotifier<bool>, bool, String>((ref, comicId) {
   final box = ref.watch(_settingsBoxProvider);
-  return HiveSettingNotifier(
-      box.data?.value, 'comicNavBarToggle_$comicId', false);
+  return HiveSettingNotifier(box.value, 'comicNavBarToggle_$comicId', false);
 });
 
 class HiveSettingNotifier<T> extends StateNotifier<T> {

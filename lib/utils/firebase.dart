@@ -14,7 +14,7 @@ final firebaseProvider = FutureProvider<FirebaseApp>((ref) async {
 });
 
 final firestoreProvider = Provider<FirebaseFirestore?>((ref) {
-  final app = ref.watch(firebaseProvider).data?.value;
+  final app = ref.watch(firebaseProvider).value;
   if (app == null) return null;
 
   final firestore = FirebaseFirestore.instance;
@@ -25,7 +25,7 @@ final firestoreProvider = Provider<FirebaseFirestore?>((ref) {
 });
 
 final functionsProvider = Provider<FirebaseFunctions?>((ref) {
-  final app = ref.watch(firebaseProvider).data?.value;
+  final app = ref.watch(firebaseProvider).value;
   if (app == null) return null;
 
   final functions = FirebaseFunctions.instance;
@@ -36,7 +36,7 @@ final functionsProvider = Provider<FirebaseFunctions?>((ref) {
 });
 
 final authProvider = FutureProvider<FirebaseAuth?>((ref) async {
-  final app = ref.watch(firebaseProvider).data?.value;
+  final app = ref.watch(firebaseProvider).value;
   if (app == null) return null;
 
   final auth = FirebaseAuth.instance;

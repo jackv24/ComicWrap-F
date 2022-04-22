@@ -11,14 +11,12 @@
     "loadingText": "Loading...",
     "refresh": "Refresh",
     "ok": "OK",
-
     "errorTitle": "Error",
     "errorRequired": "Required",
     "errorNoUser": "Email is not registered",
     "errorWrongPass": "Wrong password",
     "errorInvalidEmail": "Email is invalid",
     "errorPassMatch": "Does not match",
-
     "emailVerifyUserNull": "{userEmail} is signed in but not verified.",
     "@emailVerifyUserNull": {
         "placeholders": {
@@ -29,7 +27,6 @@
     },
     "emailVerifySend": "Send verification email",
     "emailVerifyRefresh": "Already verified? Refresh!",
-
     "signInTitle": "Sign In",
     "signInEmail": "Email",
     "signInPassword": "Password",
@@ -46,11 +43,9 @@
         }
     },
     "resetPassSent": "Password reset email sent",
-
     "signUpTitle": "Email Sign Up",
     "signUpPassConfirm": "Confirm Password",
     "signUpButton": "Sign Up",
-
     "infoRead": "Read: {readTime}",
     "@infoRead": {
         "placeholders": {
@@ -70,15 +65,11 @@
     "infoNoBookmark": "No bookmark",
     "buttonFirst": "First",
     "buttonLast": "Last",
-
     "comicDeleteFail": "Failed to delete: couldn't get user comic.",
     "comicNoPages": "No pages...",
     "comicSetBookmark": "Set Bookmark",
     "comicSetBookmarkFail": "Failed to set page as current: couldn't get user comic ref.",
-    "comicReportIssue": "Report Issue",
-
     "webOpenBrowser": "Open Browser",
-    "webToggleNavBar": "Navigation Bar",
     "webErrorUrl": "Could not open URL: {url}",
     "@webErrorUrl": {
         "placeholders": {
@@ -87,20 +78,23 @@
             }
         }
     },
-
     "addComicTitle": "Add Comic",
     "addComicUrl": "URL",
     "addComicAddButton": "Add",
     "addComicCancelButton": "Cancel",
-
     "libraryTitle": "Library",
     "libraryLoading": "Loading user comics...",
     "libraryError": "Error loading user comics.",
     "libraryEmpty": "User has no comics.",
-
     "settingsTitle": "Settings",
     "settingsThemeLabel": "Theme",
     "settingsThemeModeSystem": "System",
     "settingsThemeModeLight": "Light",
-    "settingsThemeModeDark": "Dark"
+    "settingsThemeModeDark": "Dark",
+    "comicReportIssue": "Report Issue",
+    "webToggleNavBar": "Navigation Bar",
+    "settingsDeleteAccount": "Delete Account",
+    "deleteAccountConfirm": "Are you sure? This action cannot be undone.",
+    "deleteAccountPasswordHelper": "Enter your password to confirm",
+    "comicImporting": "Importing..."
 }

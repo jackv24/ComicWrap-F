@@ -52,7 +52,7 @@ android {
         multiDexEnabled true
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        manifestPlaceholders = [adMobAppId: adMobAppId]
+        manifestPlaceholders += [adMobAppId: adMobAppId]
     }
 
     signingConfigs {

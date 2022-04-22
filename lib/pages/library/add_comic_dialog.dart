@@ -28,6 +28,10 @@ class _AddComicDialogState extends State<AddComicDialog> {
     Clipboard.getData('text/plain').then((data) {
       final text = data?.text;
       if (text == null || text.isEmpty) return;
+
+      // Only auto-fill if clipboard text is a URL
+      if (!text.startsWith('http://') && !text.startsWith('https://')) return;
+
       _url.text = text;
       _url.selection = TextSelection.collapsed(offset: text.length);
     });
@@ -36,7 +40,7 @@ class _AddComicDialogState extends State<AddComicDialog> {
   @override
   Widget build(BuildContext context) {
     final node = FocusScope.of(context);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
 
     return WillPopScope(
       onWillPop: () async => !_preventPop,

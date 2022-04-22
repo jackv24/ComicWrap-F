@@ -82,4 +82,4 @@ Feel free to [create an Issue](https://github.com/jackv24/ComicWrap-F/issues/new
 
 ## Localisation
 
-All in-app text strings are link to a [POEditor project](https://poeditor.com/join/project?hash=ZXq5B7LDqL).
+All in-app text strings are linked to a [POEditor project](https://poeditor.com/join/project?hash=ZXq5B7LDqL).
