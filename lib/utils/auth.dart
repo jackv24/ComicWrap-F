@@ -205,14 +205,21 @@ Future<void> linkAppleAuth(BuildContext context) async {
   final rawNonce = generateNonce();
   final nonce = sha256ofString(rawNonce);
 
-  // Request credential for the currently signed in Apple account.
-  final appleCredential = await SignInWithApple.getAppleIDCredential(
-    scopes: [
-      AppleIDAuthorizationScopes.email,
-      AppleIDAuthorizationScopes.fullName,
-    ],
-    nonce: nonce,
-  );
+  final AuthorizationCredentialAppleID appleCredential;
+
+  try {
+    // Request credential for the currently signed in Apple account.
+    appleCredential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: nonce,
+    );
+  } on SignInWithAppleAuthorizationException catch (e) {
+    print('Apple sign in failed with error code: ${e.code}');
+    return;
+  }
 
   // Create an `OAuthCredential` from the credential returned by Apple.
   final oauthCredential = OAuthProvider('apple.com').credential(
