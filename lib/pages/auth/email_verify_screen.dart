@@ -51,11 +51,10 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          child: Text(loc.emailVerifySend),
-                          // Only send verification once
                           onPressed: _sentVerification
                               ? null
                               : () => _sendVerification(user),
+                          child: Text(loc.emailVerifySend),
                         ),
                       ),
                       SizedBox(

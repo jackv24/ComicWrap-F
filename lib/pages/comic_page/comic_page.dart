@@ -412,7 +412,7 @@ class _ComicPageState extends ConsumerState<ComicPage> {
           _addPagesToEnd(downQuerySnapshot.docs, downDocLimit);
 
           // Jump to position centred
-          WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
             _scrollController!.jumpTo(
                 max(upQuerySnapshot.docs.length - 1, 0) * listItemHeight);
           });

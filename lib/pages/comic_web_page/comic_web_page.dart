@@ -274,10 +274,10 @@ class _ComicWebPageState extends ConsumerState<ComicWebPage> {
                     final pageId = currentPage.split('/').skip(3).join(' ');
                     if (_newPage != null && pageId == _newPage!.id) {
                       // Don't trigger rebuild if we haven't changed page
-                      print('Already on page: ' + pageId);
+                      print('Already on page: $pageId');
                       return;
                     } else {
-                      print('Navigating to page: ' + pageId);
+                      print('Navigating to page: $pageId');
                       setState(() {
                         _newPage = null;
                       });
@@ -292,7 +292,7 @@ class _ComicWebPageState extends ConsumerState<ComicWebPage> {
                     // Get data for the new page (don't wait)
                     pageRef?.get().then((value) {
                       if (!value.exists) {
-                        print('Page does not exist: ' + pageId);
+                        print('Page does not exist: $pageId');
                         return;
                       }
 
@@ -300,7 +300,7 @@ class _ComicWebPageState extends ConsumerState<ComicWebPage> {
                       setState(() {
                         _newPage = value;
                         _newValidPage = value;
-                        print('Got data for page: ' + pageId);
+                        print('Got data for page: $pageId');
                       });
 
                       // Don't need to wait for this, just let it happen whenever
@@ -360,7 +360,7 @@ class _ComicWebPageState extends ConsumerState<ComicWebPage> {
         if (currentPageScrapeTime != null &&
             currentPageScrapeTime.compareTo(docScrapeTime) < 0) {
           _currentPage = sharedComicPage;
-          print('_currentPage is now ' + _currentPage!.id);
+          print('_currentPage is now ${_currentPage!.id}');
         }
       }
     }

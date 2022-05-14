@@ -90,8 +90,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    child: Text(loc.signUpButton),
                     onPressed: _inProgress ? null : () => _submit(context),
+                    child: Text(loc.signUpButton),
                   ),
                 ),
               ),

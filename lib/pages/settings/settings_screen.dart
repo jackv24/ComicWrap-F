@@ -43,6 +43,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               borderWidth * 2,
                           height: 48.0,
                         ),
+                        isSelected: ThemeMode.values
+                            .map((val) => currentTheme == val)
+                            .toList(),
+                        onPressed: (index) => ref
+                            .read(themeModeProvider.notifier)
+                            .setValue(ThemeMode.values[index]),
                         children: ThemeMode.values
                             .map((val) => TextButton.icon(
                                   onPressed: null,
@@ -50,12 +56,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   label: Text(_getThemeModeName(val, loc)),
                                 ))
                             .toList(),
-                        isSelected: ThemeMode.values
-                            .map((val) => currentTheme == val)
-                            .toList(),
-                        onPressed: (index) => ref
-                            .read(themeModeProvider.notifier)
-                            .setValue(ThemeMode.values[index]),
                       );
                     });
                   },
@@ -71,10 +71,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ) as bool?;
                   if (didDeleteAccount ?? false) Navigator.of(context).pop();
                 },
-                child: Text(loc.settingsDeleteAccount),
                 style: TextButton.styleFrom(
                   primary: Colors.red,
                 ),
+                child: Text(loc.settingsDeleteAccount),
               ),
               TextButton(
                 onPressed: () async {
