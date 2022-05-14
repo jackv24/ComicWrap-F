@@ -84,8 +84,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        child: Text(loc.signInButton),
                         onPressed: _inProgress ? null : () => _submit(context),
+                        child: Text(loc.signInButton),
                       ),
                     ),
                     SizedBox(
@@ -122,9 +122,9 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
                     TextButton(
-                      child: Text(loc.signUpEmailButton),
                       onPressed:
                           _inProgress ? null : () => _onSignUpPressed(context),
+                      child: Text(loc.signUpEmailButton),
                     ),
                     // Password reset button
                     Consumer(builder: (context, ref, child) {

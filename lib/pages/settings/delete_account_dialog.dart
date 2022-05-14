@@ -65,7 +65,6 @@ class _DeleteAccountDialogueState extends ConsumerState<DeleteAccountDialogue> {
           },
         ),
         TextButton(
-          child: Text(loc.settingsDeleteAccount),
           style: TextButton.styleFrom(
             primary: Colors.red,
           ),
@@ -82,6 +81,7 @@ class _DeleteAccountDialogueState extends ConsumerState<DeleteAccountDialogue> {
                   }
                 }
               : null,
+          child: Text(loc.settingsDeleteAccount),
         ),
       ],
     );

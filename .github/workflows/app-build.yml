@@ -55,7 +55,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
         with:
-          flutter-version: 2.10.2
+          flutter-version: 3.0.0
       - uses: ./.github/actions/setup-flutter-build
       - name: Setup Fastlane (Ruby)
         uses: ruby/setup-ruby@v1
@@ -112,7 +112,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
         with:
-          flutter-version: 2.10.2
+          flutter-version: 3.0.0
       - uses: ./.github/actions/setup-flutter-build
       - name: Pod install
         run: cd ios && pod install --repo-update

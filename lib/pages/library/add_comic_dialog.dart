@@ -63,13 +63,13 @@ class _AddComicDialogState extends State<AddComicDialog> {
         ),
         actions: <Widget>[
           TextButton(
-            child: Text(loc.addComicCancelButton),
             onPressed:
                 _preventPop ? null : () => Navigator.of(context).pop(null),
+            child: Text(loc.addComicCancelButton),
           ),
           TextButton(
-            child: Text(loc.addComicAddButton),
             onPressed: _preventPop ? null : () => _submit(context),
+            child: Text(loc.addComicAddButton),
           ),
         ],
       ),
@@ -99,7 +99,7 @@ class _AddComicDialogState extends State<AddComicDialog> {
       final HttpsCallableResult<dynamic> result = await callable(_url.text);
       print('Returned result: ' + result.data);
     } on FirebaseFunctionsException catch (e) {
-      print('Caught error: ' + e.code);
+      print('Caught error: ${e.code}');
       setState(() {
         _urlErrorText = e.message;
         _preventPop = false;
