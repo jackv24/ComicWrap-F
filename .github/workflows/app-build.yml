@@ -145,7 +145,9 @@ jobs:
       - name: Build ios to set build-name and build-number
         run: |
           flutter build ios --release --no-codesign -v --build-name=$BUILD_NAME \
-          --build-number=${{github.run_number}}
+          --build-number=${{github.run_number}} \
+          --dart-define AD_ID_LIBRARY_BANNER_BOT=$AD_ID_LIBRARY_BANNER_BOT \
+          --dart-define AD_ID_COMIC_WEB_PAGE_INTERSTITIAL=$AD_ID_COMIC_WEB_PAGE_INTERSTITIAL
         env:
           FLUTTER_XCODE_IOS_ADMOB_APPID: ${{ secrets.IOS_ADMOB_APPID }}
           AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.IOS_AD_ID_LIBRARY_BANNER_BOT }}
