@@ -170,7 +170,7 @@ jobs:
           #DELIVER_ITMSTRANSPORTER_ADDITIONAL_UPLOAD_PARAMETERS: -t Signiant
           BUILD_NUMBER: ${{github.run_number}}
           BUILD_NAME: $BUILD_NAME
-          FLUTTER_XCODE_IOS_ADMOB_APPID: ${{ secrets.IOS_ADMOB_APPID }}
+          IOS_ADMOB_APPID: ${{ secrets.IOS_ADMOB_APPID }}
           AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.IOS_AD_ID_LIBRARY_BANNER_BOT }}
           AD_ID_COMIC_WEB_PAGE_INTERSTITIAL: ${{ secrets.IOS_AD_ID_COMIC_WEB_PAGE_INTERSTITIAL }}
         working-directory: ios
