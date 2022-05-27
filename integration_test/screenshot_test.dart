@@ -23,8 +23,7 @@ import 'screenshot_test.mocks.dart';
 
 @GenerateMocks([User, DocumentSnapshot])
 Future<void> main() async {
-  final binding = IntegrationTestWidgetsFlutterBinding();
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('promo', () {
     testWidgets('0_libraryScreen', (tester) async {
