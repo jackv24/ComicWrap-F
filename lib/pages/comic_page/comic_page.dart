@@ -98,24 +98,26 @@ class _ComicPageState extends ConsumerState<ComicPage> {
     final loc = AppLocalizations.of(context);
 
     // Load page list from specific page on start
-    ref.listen(
-        pageListStartProvider(PageListStartParams(
-          comicId: widget.comicId,
-          startType: _listStartType,
-        )),
-        (prev, AsyncValue<DocumentSnapshot<SharedComicPageModel>?> current) {
-      current.when(
-        data: (data) {
-          if (data == null) {
-            _getPages(_ScrollDirection.none);
-          } else {
-            _centerPagesOnDoc(data);
-          }
-        },
-        error: (error, stack) => showErrorDialog(context, error.toString()),
-        loading: () {},
-      );
-    });
+    if (!_isPagesOverridden) {
+      ref.listen(
+          pageListStartProvider(PageListStartParams(
+            comicId: widget.comicId,
+            startType: _listStartType,
+          )),
+          (prev, AsyncValue<DocumentSnapshot<SharedComicPageModel>?> current) {
+        current.when(
+          data: (data) {
+            if (data == null) {
+              _getPages(_ScrollDirection.none);
+            } else {
+              _centerPagesOnDoc(data);
+            }
+          },
+          error: (error, stack) => showErrorDialog(context, error.toString()),
+          loading: () {},
+        );
+      });
+    }
 
     return Consumer(
       // Page color scheme changes to match cover image
