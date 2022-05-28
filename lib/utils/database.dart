@@ -55,19 +55,7 @@ final userComicsListProvider =
             .snapshots()
             .map((comicsCollectionSnap) {
           // Manually sort documents
-          final docs = comicsCollectionSnap.docs;
-          docs.sort((a, b) {
-            // Never read sort first
-            final aData = a.data();
-            if (aData.lastReadTime == null) return -1;
-
-            final bData = b.data();
-            if (bData.lastReadTime == null) return 1;
-
-            // Reverse order by read time
-            return aData.lastReadTime!.compareTo(bData.lastReadTime!) * -1;
-          });
-          return docs;
+          return comicsCollectionSnap.docs;
         });
       });
 });

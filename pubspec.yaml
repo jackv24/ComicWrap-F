@@ -66,9 +66,6 @@ dev_dependencies:
     sdk: flutter
   mockito: ^5.0.16
 
-dependency_overrides:
-  material_color_utilities: ^0.1.4
-
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

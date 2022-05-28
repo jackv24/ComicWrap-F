@@ -24,64 +24,66 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
 
     return MainPageScaffold(
       title: 'Verify Email',
-      bodySliver: MainPageInner(
-        sliver: SliverList(
-          delegate: SliverChildListDelegate.fixed([
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-              child: Consumer(
-                builder: (context, ref, child) {
-                  final user = ref
-                      .watch(userChangesProvider)
-                      .maybeWhen(data: (data) => data, orElse: () => null);
+      bodySlivers: [
+        MainPageInner(
+          sliver: SliverList(
+            delegate: SliverChildListDelegate.fixed([
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20.0, horizontal: 20.0),
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final user = ref
+                        .watch(userChangesProvider)
+                        .maybeWhen(data: (data) => data, orElse: () => null);
 
-                  // Should never show screen when user is not signed in
-                  if (user == null) return ErrorWidget('User is null');
+                    // Should never show screen when user is not signed in
+                    if (user == null) return ErrorWidget('User is null');
 
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20.0),
-                        child: Text(
-                          loc.emailVerifyUserNull(user.email!),
-                          style: Theme.of(context).textTheme.subtitle1,
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 20.0),
+                          child: Text(
+                            loc.emailVerifyUserNull(user.email!),
+                            style: Theme.of(context).textTheme.subtitle1,
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _sentVerification
-                              ? null
-                              : () => _sendVerification(user),
-                          child: Text(loc.emailVerifySend),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _sentVerification
+                                ? null
+                                : () => _sendVerification(user),
+                            child: Text(loc.emailVerifySend),
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Consumer(
-                          builder: (context, ref, child) {
-                            return ElevatedButton(
-                              child: Text(loc.emailVerifyRefresh),
-                              onPressed: () => _reloadUser(ref, user),
-                            );
-                          },
+                        SizedBox(
+                          width: double.infinity,
+                          child: Consumer(
+                            builder: (context, ref, child) {
+                              return ElevatedButton(
+                                child: Text(loc.emailVerifyRefresh),
+                                onPressed: () => _reloadUser(ref, user),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      TextButton(
-                        child: Text(loc.signOut),
-                        onPressed: () => signOut(context),
-                      )
-                    ],
-                  );
-                },
+                        TextButton(
+                          child: Text(loc.signOut),
+                          onPressed: () => signOut(context),
+                        )
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
-            const Divider(),
-            const GitHubLinkButton(),
-          ]),
-        ),
-      ),
+              const Divider(),
+              const GitHubLinkButton(),
+            ]),
+          ),
+        )
+      ],
     );
   }
 

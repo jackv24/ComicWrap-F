@@ -41,64 +41,67 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     return MainPageScaffold(
       title: loc.signUpTitle,
-      bodySliver: MainPageInner(
-        sliver: SliverPadding(
-          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate.fixed([
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.email),
-                  labelText: loc.signInEmail,
-                  hintText: 'you@example.com',
-                  errorText: _emailErrorText,
+      bodySlivers: [
+        MainPageInner(
+          sliver: SliverPadding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate.fixed([
+                TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.email),
+                    labelText: loc.signInEmail,
+                    hintText: 'you@example.com',
+                    errorText: _emailErrorText,
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  onEditingComplete: () => node.nextFocus(),
+                  controller: _email,
+                  enabled: !_inProgress,
                 ),
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                onEditingComplete: () => node.nextFocus(),
-                controller: _email,
-                enabled: !_inProgress,
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.security),
-                  labelText: loc.signInPassword,
-                  errorText: _passAErrorText,
+                TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.security),
+                    labelText: loc.signInPassword,
+                    errorText: _passAErrorText,
+                  ),
+                  obscureText: true,
+                  onEditingComplete: () => node.nextFocus(),
+                  controller: _passA,
+                  enabled: !_inProgress,
                 ),
-                obscureText: true,
-                onEditingComplete: () => node.nextFocus(),
-                controller: _passA,
-                enabled: !_inProgress,
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.security),
-                  labelText: loc.signUpPassConfirm,
-                  errorText: _passBErrorText,
+                TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.security),
+                    labelText: loc.signUpPassConfirm,
+                    errorText: _passBErrorText,
+                  ),
+                  obscureText: true,
+                  onSubmitted: (_) {
+                    node.unfocus();
+                    _submit(context);
+                  },
+                  controller: _passB,
+                  enabled: !_inProgress,
                 ),
-                obscureText: true,
-                onSubmitted: (_) {
-                  node.unfocus();
-                  _submit(context);
-                },
-                controller: _passB,
-                enabled: !_inProgress,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 20.0, horizontal: 20.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _inProgress ? null : () => _submit(context),
-                    child: Text(loc.signUpButton),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 20.0, horizontal: 20.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _inProgress ? null : () => _submit(context),
+                      child: Text(loc.signUpButton),
+                    ),
                   ),
                 ),
-              ),
-            ]),
+              ]),
+            ),
           ),
-        ),
-      ),
+        )
+      ],
     );
   }
 

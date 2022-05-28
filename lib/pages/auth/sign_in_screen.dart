@@ -44,110 +44,115 @@ class _SignInScreenState extends State<SignInScreen> {
 
     return MainPageScaffold(
       title: loc.signInTitle,
-      bodySliver: MainPageInner(
-        sliver: SliverPadding(
-          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate.fixed([
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.email),
-                  labelText: loc.signInEmail,
-                  hintText: 'you@example.com',
-                  errorText: _emailErrorText,
+      bodySlivers: [
+        MainPageInner(
+          sliver: SliverPadding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate.fixed([
+                TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.email),
+                    labelText: loc.signInEmail,
+                    hintText: 'you@example.com',
+                    errorText: _emailErrorText,
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  onEditingComplete: () => node.nextFocus(),
+                  controller: _email,
+                  enabled: !_inProgress,
                 ),
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                onEditingComplete: () => node.nextFocus(),
-                controller: _email,
-                enabled: !_inProgress,
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.security),
-                  labelText: loc.signInPassword,
-                  errorText: _passErrorText,
+                TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.security),
+                    labelText: loc.signInPassword,
+                    errorText: _passErrorText,
+                  ),
+                  obscureText: true,
+                  onSubmitted: (_) {
+                    node.unfocus();
+                    _submit(context);
+                  },
+                  controller: _pass,
+                  enabled: !_inProgress,
                 ),
-                obscureText: true,
-                onSubmitted: (_) {
-                  node.unfocus();
-                  _submit(context);
-                },
-                controller: _pass,
-                enabled: !_inProgress,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 20.0, horizontal: 20.0),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _inProgress ? null : () => _submit(context),
-                        child: Text(loc.signInButton),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 20.0, horizontal: 20.0),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed:
+                              _inProgress ? null : () => _submit(context),
+                          child: Text(loc.signInButton),
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: AbsorbPointer(
-                        absorbing: _inProgress,
-                        child:
-                            SignInButton(googleButtonType, onPressed: () async {
-                          setState(() {
-                            _inProgress = true;
-                          });
-                          await linkGoogleAuth(context);
-                          setState(() {
-                            _inProgress = false;
-                          });
-                        }),
-                      ),
-                    ),
-                    if (Platform.isIOS)
                       SizedBox(
                         width: double.infinity,
                         child: AbsorbPointer(
                           absorbing: _inProgress,
-                          child: SignInButton(appleButtonType,
+                          child: SignInButton(googleButtonType,
                               onPressed: () async {
                             setState(() {
                               _inProgress = true;
                             });
-                            await linkAppleAuth(context);
+                            await linkGoogleAuth(context);
                             setState(() {
                               _inProgress = false;
                             });
                           }),
                         ),
                       ),
-                    TextButton(
-                      onPressed:
-                          _inProgress ? null : () => _onSignUpPressed(context),
-                      child: Text(loc.signUpEmailButton),
-                    ),
-                    // Password reset button
-                    Consumer(builder: (context, ref, child) {
-                      final auth = ref
-                          .watch(authProvider)
-                          .maybeWhen(data: (auth) => auth, orElse: () => null);
-                      return TextButton(
-                        onPressed:
-                            _inProgress || auth == null || _hasSentPassReset
-                                ? null
-                                : () => _onResetPasswordPressed(context, auth),
-                        child: Text(loc.resetPassword),
-                      );
-                    })
-                  ],
+                      if (Platform.isIOS)
+                        SizedBox(
+                          width: double.infinity,
+                          child: AbsorbPointer(
+                            absorbing: _inProgress,
+                            child: SignInButton(appleButtonType,
+                                onPressed: () async {
+                              setState(() {
+                                _inProgress = true;
+                              });
+                              await linkAppleAuth(context);
+                              setState(() {
+                                _inProgress = false;
+                              });
+                            }),
+                          ),
+                        ),
+                      TextButton(
+                        onPressed: _inProgress
+                            ? null
+                            : () => _onSignUpPressed(context),
+                        child: Text(loc.signUpEmailButton),
+                      ),
+                      // Password reset button
+                      Consumer(builder: (context, ref, child) {
+                        final auth = ref.watch(authProvider).maybeWhen(
+                            data: (auth) => auth, orElse: () => null);
+                        return TextButton(
+                          onPressed: _inProgress ||
+                                  auth == null ||
+                                  _hasSentPassReset
+                              ? null
+                              : () => _onResetPasswordPressed(context, auth),
+                          child: Text(loc.resetPassword),
+                        );
+                      })
+                    ],
+                  ),
                 ),
-              ),
-              const Divider(),
-              const GitHubLinkButton(),
-            ]),
+                const Divider(),
+                const GitHubLinkButton(),
+              ]),
+            ),
           ),
-        ),
-      ),
+        )
+      ],
     );
   }
 
