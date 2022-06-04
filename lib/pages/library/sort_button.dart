@@ -1,15 +1,10 @@
+import 'package:comicwrap_f/utils/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-enum SortOption {
-  lastUpdated,
-  lastRead,
-  title,
-}
-
 enum SortChangeOption {
-  lastUpdated,
   lastRead,
+  lastUpdated,
   title,
   reverse,
 }
@@ -32,11 +27,11 @@ class SortButton extends StatelessWidget {
 
     final String text;
     switch (sortOption) {
-      case SortOption.lastUpdated:
-        text = loc.sortLastUpdated;
-        break;
       case SortOption.lastRead:
         text = loc.sortLastRead;
+        break;
+      case SortOption.lastUpdated:
+        text = loc.sortLastUpdated;
         break;
       case SortOption.title:
         text = loc.sortTitle;
@@ -86,14 +81,14 @@ class SortButton extends StatelessWidget {
       position: position,
       items: [
         CheckedPopupMenuItem(
-          value: SortChangeOption.lastUpdated,
-          child: Text(loc.sortLastUpdated),
-          checked: sortOption == SortOption.lastUpdated,
-        ),
-        CheckedPopupMenuItem(
           value: SortChangeOption.lastRead,
           child: Text(loc.sortLastRead),
           checked: sortOption == SortOption.lastRead,
+        ),
+        CheckedPopupMenuItem(
+          value: SortChangeOption.lastUpdated,
+          child: Text(loc.sortLastUpdated),
+          checked: sortOption == SortOption.lastUpdated,
         ),
         CheckedPopupMenuItem(
           value: SortChangeOption.title,

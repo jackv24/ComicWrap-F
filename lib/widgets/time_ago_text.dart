@@ -21,6 +21,36 @@ class _TimeAgoTextState extends State<TimeAgoText> {
 
   @override
   void initState() {
+    _createTimeUpdateTimer();
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(TimeAgoText oldWidget) {
+    if (oldWidget.time != widget.time) {
+      _timer?.cancel();
+      _timer = null;
+      _createTimeUpdateTimer();
+    }
+
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = _text ?? AppLocalizations.of(context).timeAgoNever;
+    return widget.builder(text);
+  }
+
+  void _createTimeUpdateTimer() {
     if (widget.time == null) {
       // No need to update periodically if it'll never change
       _text = null;
@@ -34,20 +64,5 @@ class _TimeAgoTextState extends State<TimeAgoText> {
         });
       });
     }
-
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final text = _text ?? AppLocalizations.of(context).timeAgoNever;
-    return widget.builder(text);
   }
 }

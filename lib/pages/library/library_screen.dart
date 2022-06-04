@@ -5,6 +5,7 @@ import 'package:comicwrap_f/pages/library/sort_button.dart';
 import 'package:comicwrap_f/pages/main_page_scaffold.dart';
 import 'package:comicwrap_f/pages/settings/settings_screen.dart';
 import 'package:comicwrap_f/utils/database.dart';
+import 'package:comicwrap_f/utils/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,16 +14,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'add_comic_dialog.dart';
 
-class LibraryScreen extends StatefulWidget {
+class LibraryScreen extends StatelessWidget {
   const LibraryScreen({Key? key}) : super(key: key);
-
-  @override
-  State<LibraryScreen> createState() => _LibraryScreenState();
-}
-
-class _LibraryScreenState extends State<LibraryScreen> {
-  SortOption _sortOption = SortOption.lastUpdated;
-  bool _sortReverse = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,28 +30,39 @@ class _LibraryScreenState extends State<LibraryScreen> {
             child: MainPageScaffold(
               title: loc.libraryTitle,
               appBarActions: [
-                SortButton(
-                  sortOption: _sortOption,
-                  reverse: _sortReverse,
-                  onSortChange: (option) {
-                    setState(() {
+                Consumer(builder: (context, ref, child) {
+                  var sortOptionSetting = ref.watch(sortOptionProvider);
+
+                  return SortButton(
+                    sortOption: sortOptionSetting.sortOption,
+                    reverse: sortOptionSetting.reverse,
+                    onSortChange: (option) {
                       switch (option) {
-                        case SortChangeOption.lastUpdated:
-                          _sortOption = SortOption.lastUpdated;
-                          break;
                         case SortChangeOption.lastRead:
-                          _sortOption = SortOption.lastRead;
+                          sortOptionSetting = sortOptionSetting.copyWith(
+                              sortOption: SortOption.lastRead);
+                          break;
+                        case SortChangeOption.lastUpdated:
+                          sortOptionSetting = sortOptionSetting.copyWith(
+                              sortOption: SortOption.lastUpdated);
                           break;
                         case SortChangeOption.title:
-                          _sortOption = SortOption.title;
+                          sortOptionSetting = sortOptionSetting.copyWith(
+                              sortOption: SortOption.title);
                           break;
                         case SortChangeOption.reverse:
-                          _sortReverse = !_sortReverse;
+                          sortOptionSetting = sortOptionSetting.copyWith(
+                              reverse: !sortOptionSetting.reverse);
                           break;
                       }
-                    });
-                  },
-                ),
+
+                      // Save sort options back to settings
+                      ref
+                          .read(sortOptionProvider.notifier)
+                          .setValue(sortOptionSetting);
+                    },
+                  );
+                }),
                 IconButton(
                     icon: const Icon(
                       Icons.settings_rounded,
@@ -75,18 +79,30 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       vertical: 15.0, horizontal: 15.0),
                   sliver: Consumer(
                     builder: (context, ref, child) {
-                      final asyncComicsList = ref.watch(userComicsListProvider);
-                      return asyncComicsList.when(
-                        loading: () => SliverToBoxAdapter(
-                          child: Text(loc.loadingText),
-                        ),
-                        error: (err, stack) => SliverToBoxAdapter(
-                          child: Text(loc.libraryError),
-                        ),
-                        data: (comicsList) {
-                          return _getBodySliver(context, comicsList);
-                        },
-                      );
+                      final sortOptionSetting = ref.watch(sortOptionProvider);
+
+                      final List<QueryDocumentSnapshot<UserComicModel>>
+                          asyncComicsList;
+
+                      switch (sortOptionSetting.sortOption) {
+                        case SortOption.lastUpdated:
+                          asyncComicsList =
+                              ref.watch(userComicsListLastUpdatedProvider);
+                          break;
+
+                        case SortOption.lastRead:
+                          asyncComicsList =
+                              ref.watch(userComicsListLastReadProvider);
+                          break;
+
+                        case SortOption.title:
+                          asyncComicsList =
+                              ref.watch(userComicsListTitleProvider);
+                          break;
+                      }
+
+                      return _getBodySliver(
+                          context, asyncComicsList, sortOptionSetting);
                     },
                   ),
                 )
@@ -115,8 +131,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     ));
   }
 
-  Widget _getBodySliver(BuildContext context,
-      List<DocumentSnapshot<UserComicModel>>? userComics) {
+  Widget _getBodySliver(
+      BuildContext context,
+      List<DocumentSnapshot<UserComicModel>>? userComics,
+      SortOptionSetting sortOptionSetting) {
     final loc = AppLocalizations.of(context);
 
     if (userComics == null || userComics.isEmpty) {
@@ -125,29 +143,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       );
     }
 
-    switch (_sortOption) {
-      case SortOption.title:
-      // TODO: Implement
-
-      case SortOption.lastUpdated:
-      // TODO: Implement
-
-      case SortOption.lastRead:
-        userComics.sort((a, b) {
-          // Never read sort first
-          final aData = a.data();
-          if (aData == null || aData.lastReadTime == null) return -1;
-
-          final bData = b.data();
-          if (bData == null || bData.lastReadTime == null) return 1;
-
-          // Reverse order by read time
-          return aData.lastReadTime!.compareTo(bData.lastReadTime!) * -1;
-        });
-        break;
-    }
-
-    if (_sortReverse) {
+    if (sortOptionSetting.reverse) {
       userComics = userComics.reversed.toList();
     }
 
@@ -173,6 +169,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   comicId: userComicSnapshot.id,
                   // Snapshot data should never be null since we got it from a collection query
                   userComic: userComicSnapshot.data()!,
+                  sortOptionDisplay: sortOptionSetting.sortOption,
                 ),
               ),
             ),
