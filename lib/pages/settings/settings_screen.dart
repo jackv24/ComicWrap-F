@@ -22,73 +22,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return MainPageScaffold(
       title: loc.settingsTitle,
-      bodySliver: MainPageInner(
-        sliver: SliverPadding(
-          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate.fixed([
-              InputDecorator(
-                decoration:
-                    InputDecoration(label: Text(loc.settingsThemeLabel)),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Consumer(builder: (context, ref, child) {
-                      final currentTheme = ref.watch(themeModeProvider);
-                      const borderWidth = 1.0;
-                      return ToggleButtons(
-                        borderWidth: borderWidth,
-                        constraints: BoxConstraints.expand(
-                          width: (constraints.maxWidth - borderWidth * 2) /
-                                  ThemeMode.values.length -
-                              borderWidth * 2,
-                          height: 48.0,
-                        ),
-                        isSelected: ThemeMode.values
-                            .map((val) => currentTheme == val)
-                            .toList(),
-                        onPressed: (index) => ref
-                            .read(themeModeProvider.notifier)
-                            .setValue(ThemeMode.values[index]),
-                        children: ThemeMode.values
-                            .map((val) => TextButton.icon(
-                                  onPressed: null,
-                                  icon: Icon(_getThemeModeIcon(val)),
-                                  label: Text(_getThemeModeName(val, loc)),
-                                ))
-                            .toList(),
-                      );
-                    });
-                  },
-                ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  final didDeleteAccount = await showDialog(
-                    context: context,
-                    builder: (context) {
-                      return const DeleteAccountDialogue();
+      bodySlivers: [
+        MainPageInner(
+          sliver: SliverPadding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate.fixed([
+                InputDecorator(
+                  decoration:
+                      InputDecoration(label: Text(loc.settingsThemeLabel)),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Consumer(builder: (context, ref, child) {
+                        final currentTheme = ref.watch(themeModeProvider);
+                        const borderWidth = 1.0;
+                        return ToggleButtons(
+                          borderWidth: borderWidth,
+                          constraints: BoxConstraints.expand(
+                            width: (constraints.maxWidth - borderWidth * 2) /
+                                    ThemeMode.values.length -
+                                borderWidth * 2,
+                            height: 48.0,
+                          ),
+                          isSelected: ThemeMode.values
+                              .map((val) => currentTheme == val)
+                              .toList(),
+                          onPressed: (index) => ref
+                              .read(themeModeProvider.notifier)
+                              .setValue(ThemeMode.values[index]),
+                          children: ThemeMode.values
+                              .map((val) => TextButton.icon(
+                                    onPressed: null,
+                                    icon: Icon(_getThemeModeIcon(val)),
+                                    label: Text(_getThemeModeName(val, loc)),
+                                  ))
+                              .toList(),
+                        );
+                      });
                     },
-                  ) as bool?;
-                  if (didDeleteAccount ?? false) Navigator.of(context).pop();
-                },
-                style: TextButton.styleFrom(
-                  primary: Colors.red,
+                  ),
                 ),
-                child: Text(loc.settingsDeleteAccount),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await signOut(context);
-                  Navigator.of(context).pop();
-                },
-                child: Text(loc.signOut),
-              ),
-              const Divider(),
-              const GitHubLinkButton(),
-            ]),
+                TextButton(
+                  onPressed: () async {
+                    final didDeleteAccount = await showDialog(
+                      context: context,
+                      builder: (context) {
+                        return const DeleteAccountDialogue();
+                      },
+                    ) as bool?;
+                    if (didDeleteAccount ?? false) Navigator.of(context).pop();
+                  },
+                  style: TextButton.styleFrom(
+                    primary: Colors.red,
+                  ),
+                  child: Text(loc.settingsDeleteAccount),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await signOut(context);
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(loc.signOut),
+                ),
+                const Divider(),
+                const GitHubLinkButton(),
+              ]),
+            ),
           ),
-        ),
-      ),
+        )
+      ],
     );
   }
 

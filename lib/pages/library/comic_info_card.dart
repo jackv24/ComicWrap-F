@@ -2,8 +2,10 @@ import 'package:badges/badges.dart';
 import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
+import 'package:comicwrap_f/pages/library/sort_button.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/download.dart';
+import 'package:comicwrap_f/utils/settings.dart';
 import 'package:comicwrap_f/widgets/card_image_button.dart';
 import 'package:comicwrap_f/widgets/time_ago_text.dart';
 import 'package:flutter/material.dart';
@@ -14,9 +16,13 @@ import 'package:url_launcher/url_launcher.dart';
 class ComicInfoCard extends ConsumerWidget {
   final String comicId;
   final UserComicModel userComic;
+  final SortOption sortOptionDisplay;
 
   const ComicInfoCard(
-      {Key? key, required this.comicId, required this.userComic})
+      {Key? key,
+      required this.comicId,
+      required this.userComic,
+      required this.sortOptionDisplay})
       : super(key: key);
 
   @override
@@ -102,6 +108,23 @@ class ComicInfoCard extends ConsumerWidget {
           ],
         );
 
+        final DateTime? infoTimeAgo;
+        final bool hasInfoTime;
+        switch (sortOptionDisplay) {
+          case SortOption.lastRead:
+            hasInfoTime = true;
+            infoTimeAgo = userComic.lastReadTime;
+            break;
+          case SortOption.lastUpdated:
+            hasInfoTime = true;
+            infoTimeAgo = newestPageTime;
+            break;
+          case SortOption.title:
+            hasInfoTime = false;
+            infoTimeAgo = null;
+            break;
+        }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -135,15 +158,16 @@ class ComicInfoCard extends ConsumerWidget {
               style: Theme.of(context).textTheme.subtitle1,
             ),
             const SizedBox(height: 2.0),
-            TimeAgoText(
-                time: userComic.lastReadTime,
-                builder: (text) {
-                  return Text(
-                    text,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.subtitle2,
-                  );
-                }),
+            if (hasInfoTime)
+              TimeAgoText(
+                  time: infoTimeAgo,
+                  builder: (text) {
+                    return Text(
+                      text,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.subtitle2,
+                    );
+                  }),
           ],
         );
       },

@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 
 class MainPageScaffold extends StatelessWidget {
   final String title;
-  final Widget bodySliver;
+  final List<Widget> bodySlivers;
   final List<Widget>? appBarActions;
+  final Widget? floatingActionButton;
 
   const MainPageScaffold(
       {Key? key,
       required this.title,
-      required this.bodySliver,
-      this.appBarActions})
+      required this.bodySlivers,
+      this.appBarActions,
+      this.floatingActionButton})
       : super(key: key);
 
   @override
@@ -18,6 +20,7 @@ class MainPageScaffold extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      floatingActionButton: floatingActionButton,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -35,7 +38,7 @@ class MainPageScaffold extends StatelessWidget {
             backgroundColor: colorScheme.background,
             foregroundColor: colorScheme.onBackground,
           ),
-          bodySliver
+          ...bodySlivers
         ],
       ),
     );

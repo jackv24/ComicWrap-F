@@ -36,14 +36,13 @@ final userDocChangesProvider =
   );
 });
 
-final userComicsListProvider =
-    StreamProvider<List<DocumentSnapshot<UserComicModel>>?>((ref) {
+final userComicsProvider = StreamProvider<QuerySnapshot<UserComicModel>>((ref) {
   final asyncUserDoc = ref.watch(userDocChangesProvider);
   return asyncUserDoc.when(
       loading: () => const Stream.empty(),
       error: (err, stack) => Stream.error(err, stack),
       data: (userDoc) {
-        if (userDoc == null) return Stream.value(null);
+        if (userDoc == null) return const Stream.empty();
 
         return userDoc.reference
             .collection('comics')
@@ -52,24 +51,101 @@ final userComicsListProvider =
                   UserComicModel.fromJson(snapshot.data()!),
               toFirestore: (comic, _) => comic.toJson(),
             )
-            .snapshots()
-            .map((comicsCollectionSnap) {
-          // Manually sort documents
-          final docs = comicsCollectionSnap.docs;
-          docs.sort((a, b) {
-            // Never read sort first
-            final aData = a.data();
-            if (aData.lastReadTime == null) return -1;
-
-            final bData = b.data();
-            if (bData.lastReadTime == null) return 1;
-
-            // Reverse order by read time
-            return aData.lastReadTime!.compareTo(bData.lastReadTime!) * -1;
-          });
-          return docs;
-        });
+            .snapshots();
       });
+});
+
+final userComicsListLastReadProvider =
+    Provider.autoDispose<List<QueryDocumentSnapshot<UserComicModel>>>((ref) {
+  final asyncUserComics = ref.watch(userComicsProvider);
+  return asyncUserComics.when(
+    loading: () => List.empty(),
+    error: (err, stack) => List.empty(),
+    data: (userComics) {
+      final docs = userComics.docs;
+      docs.sort((a, b) {
+        // Never read sort first
+        final aData = a.data();
+        if (aData.lastReadTime == null) return -1;
+
+        final bData = b.data();
+        if (bData.lastReadTime == null) return 1;
+
+        // Reverse order by read time
+        return aData.lastReadTime!.compareTo(bData.lastReadTime!) * -1;
+      });
+      return docs;
+    },
+  );
+});
+
+class _ComicPair<T> {
+  final String comicId;
+  final QueryDocumentSnapshot<UserComicModel> userComicSnapshot;
+  final T other;
+
+  _ComicPair(this.comicId, this.userComicSnapshot, this.other);
+}
+
+final userComicsListLastUpdatedProvider =
+    Provider.autoDispose<List<QueryDocumentSnapshot<UserComicModel>>>((ref) {
+  final asyncUserComics = ref.watch(userComicsProvider);
+  final userComics =
+      asyncUserComics.when<List<QueryDocumentSnapshot<UserComicModel>>>(
+    loading: () => List.empty(),
+    error: (err, stack) => List.empty(),
+    data: (userComics) {
+      return userComics.docs;
+    },
+  );
+
+  final comicPairs = userComics.map((userComicSnapshot) {
+    final sharedComicPageAsync =
+        ref.watch(newestPageFamily(userComicSnapshot.id));
+    final sharedComicPage = sharedComicPageAsync.value;
+    return _ComicPair(userComicSnapshot.id, userComicSnapshot, sharedComicPage);
+  }).toList();
+
+  comicPairs.sort((a, b) {
+    final aPageData = a.other?.data();
+    final aUpdateTime = aPageData?.scrapeTime;
+    if (aUpdateTime == null) return -1;
+
+    final bPageData = b.other?.data();
+    final bUpdateTime = bPageData?.scrapeTime;
+    if (bUpdateTime == null) return 1;
+
+    return aUpdateTime.compareTo(bUpdateTime) * -1;
+  });
+
+  return comicPairs.map((pair) => pair.userComicSnapshot).toList();
+});
+
+final userComicsListTitleProvider =
+    Provider.autoDispose<List<QueryDocumentSnapshot<UserComicModel>>>((ref) {
+  final asyncUserComics = ref.watch(userComicsProvider);
+  final userComics =
+      asyncUserComics.when<List<QueryDocumentSnapshot<UserComicModel>>>(
+    loading: () => List.empty(),
+    error: (err, stack) => List.empty(),
+    data: (userComics) {
+      return userComics.docs;
+    },
+  );
+
+  final comicPairs = userComics.map((userComicSnapshot) {
+    final sharedComicAsync = ref.watch(sharedComicFamily(userComicSnapshot.id));
+    final sharedComic = sharedComicAsync.value;
+    return _ComicPair(userComicSnapshot.id, userComicSnapshot, sharedComic);
+  }).toList();
+
+  comicPairs.sort((a, b) {
+    final aName = a.other?.name ?? a.comicId;
+    final bName = b.other?.name ?? b.comicId;
+    return aName.compareTo(bName);
+  });
+
+  return comicPairs.map((pair) => pair.userComicSnapshot).toList();
 });
 
 final userComicRefFamily = Provider.autoDispose

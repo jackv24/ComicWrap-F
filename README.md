@@ -14,9 +14,8 @@ This app is not intended to scrape comic websites. Instead, comics are read dire
 
 <img src='.github/promo/readme_cover.png'/>
 
-<a href='https://play.google.com/store/apps/details?id=com.jackvine.comicwrapf&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='200px'/></a>
-
-iOS / iPadOS [TestFlight](https://testflight.apple.com/join/eHMvo9OT)
+<a href='https://play.google.com/store/apps/details?id=com.jackvine.comicwrapf&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width="200px" /></a>
+<a href="https://apps.apple.com/us/app/comicwrap/id1605742431?itsct=apps_box_badge&amp;itscg=30200" style="display: inline-block; overflow: hidden; border-radius: 13px;" ><img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&amp;releaseDate=1654041600&h=0bff6c911a60af197c8d0827ed549df3" alt="Download on the App Store" style="border-radius: 13px;" width="200px"></a>
 
 # Building and Running
 

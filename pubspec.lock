@@ -280,14 +280,14 @@ packages:
       name: firebase_core_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "4.2.5"
+    version: "4.4.0"
   firebase_core_web:
     dependency: transitive
     description:
       name: firebase_core_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.6.2"
+    version: "1.6.4"
   fixnum:
     dependency: transitive
     description:
@@ -479,6 +479,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.0"
+  hive_generator:
+    dependency: "direct main"
+    description:
+      name: hive_generator
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.3"
   http:
     dependency: transitive
     description:
@@ -569,7 +576,7 @@ packages:
     source: hosted
     version: "0.12.11"
   material_color_utilities:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: material_color_utilities
       url: "https://pub.dartlang.org"
