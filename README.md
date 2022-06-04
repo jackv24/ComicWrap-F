@@ -61,6 +61,16 @@ To run the comic scraping service, cd into the `service_scrape-comic` directory.
 - (from project root) run `flutter pub get` to get dependencies
 - run `flutter pub run build_runner build` to generate code (will sometimes need to run this again after editing certain files)
 
+#### Google Ads
+The package `google_mobile_ads` is used for ads in production builds (to try and cover server costs, Apple dev program, etc.)
+
+The app needs some dummy data for the ads SDK in order to build:
+
+- Android
+  - Append `adMob.appId=ca-app-pub-0000000000000000~0000000000` to the end of `android/local.properties`. If this file does not exist, try running a build to generate the file.
+- iOS
+  - TODO
+
 You should now be ready for development! There are a few run configurations for Android Studio in `.run/`, and run configurations for VS Code in `.vscode/launch.json`.
 
 # Contributing

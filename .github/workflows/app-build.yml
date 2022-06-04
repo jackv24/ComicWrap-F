@@ -42,6 +42,10 @@ jobs:
         run: echo $ANDROID_KEY_PROPERTIES | base64 --decode > android/key.properties
         env:
           ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+      - name: Append AdMob App ID to local.properties
+        run: printf $ANDROID_ADMOB_APPID >> android/local.properties
+        env:
+          ANDROID_ADMOB_APPID: ${{ secrets.ANDROID_ADMOB_APPID }}
       # Setup required tools
       - name: Setup Java
         uses: actions/setup-java@v2
@@ -63,9 +67,12 @@ jobs:
       - name: Build AppBundle
         run: |
           flutter build appbundle -v --build-name=$BUILD_NAME \
-          --build-number=${{github.run_number}}
+          --build-number=${{github.run_number}} \
+          --dart-define AD_ID_LIBRARY_BANNER_BOT=$AD_ID_LIBRARY_BANNER_BOT \
+          --dart-define AD_ID_COMIC_WEB_PAGE_INTERSTITIAL=$AD_ID_COMIC_WEB_PAGE_INTERSTITIAL
         env:
           AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
+          AD_ID_COMIC_WEB_PAGE_INTERSTITIAL: ${{ secrets.ANDROID_AD_ID_COMIC_WEB_PAGE_INTERSTITIAL }}
       # Run Fastlane upload if a tagged version
       - run: bundle exec fastlane internal
         if: startsWith(github.ref, 'refs/tags/v')
@@ -138,9 +145,13 @@ jobs:
       - name: Build ios to set build-name and build-number
         run: |
           flutter build ios --release --no-codesign -v --build-name=$BUILD_NAME \
-          --build-number=${{github.run_number}}
+          --build-number=${{github.run_number}} \
+          --dart-define AD_ID_LIBRARY_BANNER_BOT=$AD_ID_LIBRARY_BANNER_BOT \
+          --dart-define AD_ID_COMIC_WEB_PAGE_INTERSTITIAL=$AD_ID_COMIC_WEB_PAGE_INTERSTITIAL
         env:
-          AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
+          FLUTTER_XCODE_IOS_ADMOB_APPID: ${{ secrets.IOS_ADMOB_APPID }}
+          AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.IOS_AD_ID_LIBRARY_BANNER_BOT }}
+          AD_ID_COMIC_WEB_PAGE_INTERSTITIAL: ${{ secrets.IOS_AD_ID_COMIC_WEB_PAGE_INTERSTITIAL }}
       # Run Fastlane build and upload if a tagged version
       - name: Fastlane build and upload to Testflight
         run: bundle exec fastlane beta
@@ -159,5 +170,7 @@ jobs:
           #DELIVER_ITMSTRANSPORTER_ADDITIONAL_UPLOAD_PARAMETERS: -t Signiant
           BUILD_NUMBER: ${{github.run_number}}
           BUILD_NAME: $BUILD_NAME
-          #AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.ANDROID_AD_ID_LIBRARY_BANNER_BOT }}
+          IOS_ADMOB_APPID: ${{ secrets.IOS_ADMOB_APPID }}
+          AD_ID_LIBRARY_BANNER_BOT: ${{ secrets.IOS_AD_ID_LIBRARY_BANNER_BOT }}
+          AD_ID_COMIC_WEB_PAGE_INTERSTITIAL: ${{ secrets.IOS_AD_ID_COMIC_WEB_PAGE_INTERSTITIAL }}
         working-directory: ios

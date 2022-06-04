@@ -67,5 +67,7 @@
 	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>GADApplicationIdentifier</key>
+	<string>$(IOS_ADMOB_APPID)</string>
 </dict>
 </plist>
