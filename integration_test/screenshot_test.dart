@@ -112,7 +112,7 @@ void _runAppearanceTests(
         themeMode: themeMode,
         extraOverrides: [
           userChangesProvider.overrideWithValue(AsyncValue.data(user)),
-          userComicsListProvider.overrideWithValue(const AsyncValue.data(null)),
+          userComicsListLastReadProvider.overrideWithValue(List.empty()),
         ],
       ));
 
@@ -128,7 +128,7 @@ void _runAppearanceTests(
         themeMode: themeMode,
         extraOverrides: [
           userChangesProvider.overrideWithValue(AsyncValue.data(user)),
-          userComicsListProvider.overrideWithValue(const AsyncValue.data(null)),
+          userComicsListLastReadProvider.overrideWithValue(List.empty()),
         ],
       ));
 
@@ -243,8 +243,8 @@ Future<String> _pumpPromoMock(WidgetTester tester, ThemeMode themeMode) async {
     themeMode: themeMode,
     extraOverrides: [
       userChangesProvider.overrideWithValue(AsyncValue.data(user)),
-      userComicsListProvider.overrideWithValue(
-          AsyncValue.data(comics.map((e) => e.userDoc).toList())),
+      userComicsListLastReadProvider
+          .overrideWithValue(comics.map((e) => e.userDoc).toList()),
       ...comicOverrides,
     ],
   ));

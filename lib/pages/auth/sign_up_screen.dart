@@ -12,7 +12,7 @@ class SignUpScreen extends StatefulWidget {
       : super(key: key);
 
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
@@ -114,14 +114,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _inProgress = true;
     });
 
+    final loc = AppLocalizations.of(context);
+    final navigator = Navigator.of(context);
+
     final errorCode = await submitSignUp(
         context, EmailSignUpDetails(_email.text, _passA.text, _passB.text));
 
     setState(() {
       _inProgress = false;
     });
-
-    final loc = AppLocalizations.of(context);
 
     switch (errorCode) {
       case 'empty-auth':
@@ -151,7 +152,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       case null:
         // No errors, account create succeeded!
-        Navigator.of(context).pop();
+        navigator.pop();
         break;
 
       default:

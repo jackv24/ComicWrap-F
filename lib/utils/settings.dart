@@ -6,13 +6,29 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'settings.g.dart';
 part 'settings.freezed.dart';
 
+const themeModeAdapterTypeId = 0;
+const sortOptionSettingAdapterTypeId = 1;
+const sortOptionAdapterTypeId = 2;
+
 final _settingsBoxProvider = FutureProvider<Box>((ref) async {
   await Hive.initFlutter();
+  if (!Hive.isAdapterRegistered(themeModeAdapterTypeId)) {
+    Hive.registerAdapter(_ThemeModeAdapter());
+  }
+  if (!Hive.isAdapterRegistered(sortOptionSettingAdapterTypeId)) {
+    Hive.registerAdapter(SortOptionSettingAdapter());
+  }
+  if (!Hive.isAdapterRegistered(sortOptionAdapterTypeId)) {
+    Hive.registerAdapter(SortOptionAdapter());
+  }
 
-  Hive.registerAdapter(_ThemeModeAdapter());
-  Hive.registerAdapter(SortOptionAdapter());
-  Hive.registerAdapter(SortOptionSettingAdapter());
-  return await Hive.openBox('settings');
+  final box = await Hive.openBox('settings');
+
+  ref.onDispose(() {
+    box.close();
+  });
+
+  return box;
 });
 
 final themeModeProvider =
@@ -21,7 +37,7 @@ final themeModeProvider =
   return HiveSettingNotifier(box.value, 'themeMode', ThemeMode.system);
 });
 
-@HiveType(typeId: 2)
+@HiveType(typeId: sortOptionAdapterTypeId)
 enum SortOption {
   @HiveField(0)
   lastRead,
@@ -35,7 +51,7 @@ enum SortOption {
 
 @freezed
 abstract class SortOptionSetting with _$SortOptionSetting {
-  @HiveType(typeId: 1)
+  @HiveType(typeId: sortOptionSettingAdapterTypeId)
   const factory SortOptionSetting({
     @HiveField(0) required SortOption sortOption,
     @HiveField(1) required bool reverse,
@@ -76,7 +92,7 @@ class HiveSettingNotifier<T> extends StateNotifier<T> {
 
 class _ThemeModeAdapter extends TypeAdapter<ThemeMode> {
   @override
-  final typeId = 0;
+  final typeId = themeModeAdapterTypeId;
 
   @override
   ThemeMode read(BinaryReader reader) {

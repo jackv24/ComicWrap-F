@@ -25,7 +25,7 @@ class LibraryScreen extends StatefulWidget {
   const LibraryScreen({Key? key}) : super(key: key);
 
   @override
-  _LibraryScreenState createState() => _LibraryScreenState();
+  State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
@@ -112,7 +112,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     builder: (context, ref, child) {
                       final sortOptionSetting = ref.watch(sortOptionProvider);
 
-                      final List<QueryDocumentSnapshot<UserComicModel>>
+                      final List<DocumentSnapshot<UserComicModel>>
                           asyncComicsList;
 
                       switch (sortOptionSetting.sortOption) {
@@ -143,9 +143,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
           if (bannerAd != null && isBannerAdLoaded)
             Container(
               alignment: Alignment.center,
-              child: AdWidget(ad: bannerAd!),
               width: bannerAd!.size.width.toDouble(),
               height: bannerAd!.size.height.toDouble(),
+              child: AdWidget(ad: bannerAd!),
             )
         ],
       ),

@@ -17,7 +17,7 @@ class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
 
   @override
-  _SignInScreenState createState() => _SignInScreenState();
+  State<SignInScreen> createState() => _SignInScreenState();
 }
 
 class _SignInScreenState extends State<SignInScreen> {
@@ -164,18 +164,17 @@ class _SignInScreenState extends State<SignInScreen> {
       _inProgress = true;
     });
 
+    final loc = AppLocalizations.of(context);
     final errorCode = await submitSignIn(
         context, EmailSignInDetails(_email.text, _pass.text));
-    _showErrorCode(context, errorCode);
+    _showErrorCode(loc, errorCode);
 
     setState(() {
       _inProgress = false;
     });
   }
 
-  void _showErrorCode(BuildContext context, String? errorCode) {
-    final loc = AppLocalizations.of(context);
-
+  void _showErrorCode(AppLocalizations loc, String? errorCode) {
     switch (errorCode) {
       case 'empty-auth':
         setState(() {
@@ -246,12 +245,14 @@ class _SignInScreenState extends State<SignInScreen> {
       _passErrorText = null;
     });
 
+    final loc = AppLocalizations.of(context);
+
     if (_email.text.isEmpty) {
-      _showErrorCode(context, 'empty-email');
+      _showErrorCode(loc, 'empty-email');
       return;
     }
 
-    final loc = AppLocalizations.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     final response = await showDialog(
         context: context,
@@ -282,11 +283,11 @@ class _SignInScreenState extends State<SignInScreen> {
 
     try {
       await auth.sendPasswordResetEmail(email: _email.text);
-    } on FirebaseAuthException catch (exception, _) {
+    } on FirebaseAuthException catch (exception) {
       setState(() {
         _inProgress = false;
       });
-      _showErrorCode(context, exception.code);
+      _showErrorCode(loc, exception.code);
       return;
     }
 
@@ -295,7 +296,6 @@ class _SignInScreenState extends State<SignInScreen> {
       _hasSentPassReset = true;
     });
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(loc.resetPassSent)));
+    scaffoldMessenger.showSnackBar(SnackBar(content: Text(loc.resetPassSent)));
   }
 }

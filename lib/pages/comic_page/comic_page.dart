@@ -32,7 +32,7 @@ class ComicPage extends ConsumerStatefulWidget {
   const ComicPage({Key? key, required this.comicId}) : super(key: key);
 
   @override
-  _ComicPageState createState() => _ComicPageState();
+  ConsumerState<ComicPage> createState() => _ComicPageState();
 }
 
 enum _ScrollDirection {
@@ -145,11 +145,12 @@ class _ComicPageState extends ConsumerState<ComicPage> {
                     trailing: const Icon(Icons.delete),
                   ),
                   onSelected: (context) async {
+                    final navigator = Navigator.of(context);
                     final didDelete = await deleteComicFromLibrary(
                         context, ref, widget.comicId);
 
                     // This comic has now been removed, so close it's page
-                    if (didDelete) Navigator.of(context).pop();
+                    if (didDelete) navigator.pop();
                   },
                 ),
               ]),

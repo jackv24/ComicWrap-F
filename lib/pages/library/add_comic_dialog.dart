@@ -11,7 +11,7 @@ class AddComicDialog extends StatefulWidget {
   const AddComicDialog({Key? key}) : super(key: key);
 
   @override
-  _AddComicDialogState createState() => _AddComicDialogState();
+  State<AddComicDialog> createState() => _AddComicDialogState();
 }
 
 class _AddComicDialogState extends State<AddComicDialog> {
@@ -93,11 +93,12 @@ class _AddComicDialogState extends State<AddComicDialog> {
       return;
     }
 
+    final navigator = Navigator.of(context);
     final callable = functions.httpsCallable('addUserComic');
 
     try {
       final HttpsCallableResult<dynamic> result = await callable(_url.text);
-      print('Returned result: ' + result.data);
+      print('Returned result: ${result.data}');
     } on FirebaseFunctionsException catch (e) {
       print('Caught error: ${e.code}');
       setState(() {
@@ -113,6 +114,6 @@ class _AddComicDialogState extends State<AddComicDialog> {
     });
 
     // Close dialog if there were no errors
-    Navigator.of(context).pop();
+    navigator.pop();
   }
 }

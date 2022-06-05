@@ -2,7 +2,6 @@ import 'package:badges/badges.dart';
 import 'package:comicwrap_f/constants.dart';
 import 'package:comicwrap_f/models/firestore/user_comic.dart';
 import 'package:comicwrap_f/pages/comic_page/comic_page.dart';
-import 'package:comicwrap_f/pages/library/sort_button.dart';
 import 'package:comicwrap_f/utils/database.dart';
 import 'package:comicwrap_f/utils/download.dart';
 import 'package:comicwrap_f/utils/settings.dart';
@@ -207,6 +206,7 @@ class ComicInfoCard extends ConsumerWidget {
       ],
     );
 
+    // ignore: use_build_context_synchronously
     if (func != null) await func(context);
   }
 }

@@ -12,7 +12,7 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
   @override
-  _SettingsScreenState createState() => _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
@@ -65,13 +65,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
+                    final navigator = Navigator.of(context);
                     final didDeleteAccount = await showDialog(
                       context: context,
                       builder: (context) {
                         return const DeleteAccountDialogue();
                       },
                     ) as bool?;
-                    if (didDeleteAccount ?? false) Navigator.of(context).pop();
+                    if (didDeleteAccount ?? false) navigator.pop();
                   },
                   style: TextButton.styleFrom(
                     primary: Colors.red,
@@ -80,8 +81,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
+                    final navigator = Navigator.of(context);
                     await signOut(context);
-                    Navigator.of(context).pop();
+                    navigator.pop();
                   },
                   child: Text(loc.signOut),
                 ),

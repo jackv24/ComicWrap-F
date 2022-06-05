@@ -7,7 +7,8 @@ class DeleteAccountDialogue extends ConsumerStatefulWidget {
   const DeleteAccountDialogue({Key? key}) : super(key: key);
 
   @override
-  _DeleteAccountDialogueState createState() => _DeleteAccountDialogueState();
+  ConsumerState<DeleteAccountDialogue> createState() =>
+      _DeleteAccountDialogueState();
 }
 
 class _DeleteAccountDialogueState extends ConsumerState<DeleteAccountDialogue> {
@@ -70,10 +71,11 @@ class _DeleteAccountDialogueState extends ConsumerState<DeleteAccountDialogue> {
           ),
           onPressed: _canDelete
               ? () async {
+                  final navigator = Navigator.of(context);
                   final errorCode = await deleteAccount(
                       context, ref, _passwordController.text);
                   if (errorCode == null) {
-                    Navigator.of(context).pop(true);
+                    navigator.pop(true);
                   } else {
                     setState(() {
                       _errorText = _getErrorText(errorCode, loc);

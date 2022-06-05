@@ -16,7 +16,7 @@ class CardImageButton extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _CardImageButtonState createState() => _CardImageButtonState();
+  State<CardImageButton> createState() => _CardImageButtonState();
 }
 
 class _CardImageButtonState extends State<CardImageButton> {

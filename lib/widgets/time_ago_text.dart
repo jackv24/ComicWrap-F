@@ -12,7 +12,7 @@ class TimeAgoText extends StatefulWidget {
       : super(key: key);
 
   @override
-  _TimeAgoTextState createState() => _TimeAgoTextState();
+  State<TimeAgoText> createState() => _TimeAgoTextState();
 }
 
 class _TimeAgoTextState extends State<TimeAgoText> {

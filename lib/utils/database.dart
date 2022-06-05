@@ -56,7 +56,7 @@ final userComicsProvider = StreamProvider<QuerySnapshot<UserComicModel>>((ref) {
 });
 
 final userComicsListLastReadProvider =
-    Provider.autoDispose<List<QueryDocumentSnapshot<UserComicModel>>>((ref) {
+    Provider.autoDispose<List<DocumentSnapshot<UserComicModel>>>((ref) {
   final asyncUserComics = ref.watch(userComicsProvider);
   return asyncUserComics.when(
     loading: () => List.empty(),
@@ -81,17 +81,17 @@ final userComicsListLastReadProvider =
 
 class _ComicPair<T> {
   final String comicId;
-  final QueryDocumentSnapshot<UserComicModel> userComicSnapshot;
+  final DocumentSnapshot<UserComicModel> userComicSnapshot;
   final T other;
 
   _ComicPair(this.comicId, this.userComicSnapshot, this.other);
 }
 
 final userComicsListLastUpdatedProvider =
-    Provider.autoDispose<List<QueryDocumentSnapshot<UserComicModel>>>((ref) {
+    Provider.autoDispose<List<DocumentSnapshot<UserComicModel>>>((ref) {
   final asyncUserComics = ref.watch(userComicsProvider);
   final userComics =
-      asyncUserComics.when<List<QueryDocumentSnapshot<UserComicModel>>>(
+      asyncUserComics.when<List<DocumentSnapshot<UserComicModel>>>(
     loading: () => List.empty(),
     error: (err, stack) => List.empty(),
     data: (userComics) {
@@ -122,10 +122,10 @@ final userComicsListLastUpdatedProvider =
 });
 
 final userComicsListTitleProvider =
-    Provider.autoDispose<List<QueryDocumentSnapshot<UserComicModel>>>((ref) {
+    Provider.autoDispose<List<DocumentSnapshot<UserComicModel>>>((ref) {
   final asyncUserComics = ref.watch(userComicsProvider);
   final userComics =
-      asyncUserComics.when<List<QueryDocumentSnapshot<UserComicModel>>>(
+      asyncUserComics.when<List<DocumentSnapshot<UserComicModel>>>(
     loading: () => List.empty(),
     error: (err, stack) => List.empty(),
     data: (userComics) {

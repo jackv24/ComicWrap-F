@@ -34,7 +34,7 @@ class ComicWebPage extends ConsumerStatefulWidget {
       : super(key: key);
 
   @override
-  _ComicWebPageState createState() => _ComicWebPageState();
+  ConsumerState<ComicWebPage> createState() => _ComicWebPageState();
 }
 
 class _ComicWebPageState extends ConsumerState<ComicWebPage> {
@@ -206,11 +206,13 @@ class _ComicWebPageState extends ConsumerState<ComicWebPage> {
                   // Update read status when exiting, to avoid many doc updates while binge-reading
                   futures.add(_updateReadStatus(userComicSnapshot));
 
+                  final navigator = Navigator.of(context);
+
                   await Future.wait(futures);
                   EasyLoading.dismiss();
 
                   // Pop with value of current page
-                  Navigator.of(context).pop(_newValidPage);
+                  navigator.pop(_newValidPage);
 
                   // We manually handle popping above
                   return false;

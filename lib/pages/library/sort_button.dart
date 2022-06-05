@@ -82,24 +82,24 @@ class SortButton extends StatelessWidget {
       items: [
         CheckedPopupMenuItem(
           value: SortChangeOption.lastRead,
-          child: Text(loc.sortLastRead),
           checked: sortOption == SortOption.lastRead,
+          child: Text(loc.sortLastRead),
         ),
         CheckedPopupMenuItem(
           value: SortChangeOption.lastUpdated,
-          child: Text(loc.sortLastUpdated),
           checked: sortOption == SortOption.lastUpdated,
+          child: Text(loc.sortLastUpdated),
         ),
         CheckedPopupMenuItem(
           value: SortChangeOption.title,
-          child: Text(loc.sortTitle),
           checked: sortOption == SortOption.title,
+          child: Text(loc.sortTitle),
         ),
         const PopupMenuDivider(),
         CheckedPopupMenuItem(
           value: SortChangeOption.reverse,
-          child: Text(loc.sortReverse),
           checked: reverse,
+          child: Text(loc.sortReverse),
         ),
       ],
     );
@@ -107,9 +107,5 @@ class SortButton extends StatelessWidget {
     if (result != null) {
       onSortChange(result);
     }
-  }
-
-  void _popMenu(BuildContext context) {
-    Navigator.of(context).pop();
   }
 }

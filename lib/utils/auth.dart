@@ -88,6 +88,7 @@ Future<String?> deleteAccount(
     BuildContext context, WidgetRef ref, String password) async {
   final user = await ref.read(userChangesProvider.future);
   if (user == null) {
+    // ignore: use_build_context_synchronously
     showErrorDialog(context, 'User is null');
     return 'User is null';
   }
