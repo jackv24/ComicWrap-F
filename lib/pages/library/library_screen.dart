@@ -15,6 +15,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'add_comic_dialog.dart';
 
+const bool disableAds = bool.fromEnvironment('DISABLE_ADS');
+
 const String bannerAdId = String.fromEnvironment(
   'AD_ID_LIBRARY_BANNER_BOT',
   // Default is the Admob Banner Ad test ID
@@ -37,7 +39,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     super.didChangeDependencies();
 
     // Only load ad once (this method is called when modal dialogs pop up also)
-    if (bannerAd == null) {
+    if (!disableAds && bannerAd == null) {
       _loadAd();
     }
   }

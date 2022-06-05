@@ -19,6 +19,8 @@ import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+const bool disableAds = bool.fromEnvironment('DISABLE_ADS');
+
 const String interstitialAdId = String.fromEnvironment(
   'AD_ID_COMIC_WEB_PAGE_INTERSTITIAL',
   // Default is the Admob Interstitial Video Ad test ID
@@ -70,10 +72,12 @@ class _ComicWebPageState extends ConsumerState<ComicWebPage> {
 
     _progressSubject = BehaviorSubject.seeded(0);
 
-    // Load ad immediately so it's ready when we need it
-    _loadInterstitialAd().then((value) {
-      _queuedInterstitialAd = value;
-    });
+    if (!disableAds) {
+      // Load ad immediately so it's ready when we need it
+      _loadInterstitialAd().then((value) {
+        _queuedInterstitialAd = value;
+      });
+    }
   }
 
   @override

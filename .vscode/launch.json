@@ -15,6 +15,16 @@
             ]
         },
         {
+            "name": "Production (no ads, debug mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--dart-define",
+                "DISABLE_ADS=true",
+            ]
+        },
+        {
             "name": "Production (debug mode)",
             "request": "launch",
             "type": "dart",
