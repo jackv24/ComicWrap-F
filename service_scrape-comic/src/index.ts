@@ -174,7 +174,7 @@ async function importComic(snapshot: FirebaseFirestore.DocumentSnapshot<Firebase
 
   // If name wasn't found, load a page and get name from there
   if (!foundComicName) {
-    const page = await scraper.scrapePage(scrapeUrl);
+    const page = await scraper.scrapePage(scrapeUrl, '');
     if (page.title) {
       const splitTitle = separatePageTitle(page.title);
       await snapshot.ref.set(

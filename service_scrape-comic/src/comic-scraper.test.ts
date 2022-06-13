@@ -258,6 +258,45 @@ describe('comic-scraper', () => {
           expect(imageUrl).to.equal('https://croakingbound.com/wp-content/uploads/2021/05/web-CBH03PG22.png');
         });
       });
+
+      describe('rain.thecomicseries.com', () => {
+        it('finds pages', async () => {
+          // Execute
+          let comicInfo: scraper.ComicInfo = {
+            id: 'rain.thecomicseries.com',
+            scrapeUrl: 'https://rain.thecomicseries.com/',
+          };
+
+          const pages: scraper.ReturnPage[] = [];
+          await scraper.scrapeComicPages(comicInfo, null, async (page) => {
+            pages.push(page);
+            return scraper.FoundPageResult.Success;
+          });
+  
+          // Test: compare arrays with deep equality
+          expect(pages).to.eql([
+            {
+              // eslint-disable-next-line max-len
+              text: 'Rain - RAIN',
+              docName: 'comics first',
+              wasCrawled: true,
+              link: 'https://rain.thecomicseries.com/comics/first/'
+            },
+            {
+              text: 'Rain - Prologue 1',
+              docName: 'comics 2',
+              wasCrawled: true,
+              link: 'https://rain.thecomicseries.com/comics/2'
+            },
+          ]);
+        });
+  
+        it('find image url for page', async () => {
+          const imageUrl = await scraper.findImageUrlForPage('https://rain.thecomicseries.com/');
+  
+          expect(imageUrl).to.equal('https://img.comicfury.com/comics/231/4278a1653827058b5422f1039152477.png');
+        });
+      });
     });
   });
 });

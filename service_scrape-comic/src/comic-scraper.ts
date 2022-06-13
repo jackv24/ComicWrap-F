@@ -89,12 +89,17 @@ async function tryScrapeComicPages(
   }
 
   // Quick method failed, try crawling (slow & expensive)
+  let startUrl: string;
   if (lastPageId) {
-    const pageUrl = helper.constructPageUrl(comicDoc.id, lastPageId);
-    await scrapeFromViaCrawling(pageUrl, onPageFound);
+    startUrl = helper.constructPageUrl(comicDoc.id, lastPageId);
   } else {
-    await scrapeNewViaCrawling(comicDoc.scrapeUrl, onPageFound);
+    startUrl = comicDoc.scrapeUrl;
   }
+
+  const parsedStartUrl = url.parse(startUrl);
+  const rootUrl = parsedStartUrl.protocol + '//' + parsedStartUrl.host;
+  await scrapeNewViaCrawling(rootUrl, startUrl, onPageFound);
+
   return;
 }
 
@@ -150,6 +155,7 @@ async function getArchivePageUrl(currentPageHtml: string) {
 }
 
 async function scrapeNewViaCrawling(
+  rootUrl: string,
   startPageUrl: string,
   onPageFound: (page: FoundPage) => Promise<FoundPageResult>
 ) {
@@ -161,15 +167,16 @@ async function scrapeNewViaCrawling(
   // Cancel if we couldn't find a link to the first page
   if (!firstNav) return null;
 
-  await scrapeFromViaCrawling(firstNav, onPageFound);
+  await scrapeFromViaCrawling(rootUrl, firstNav, onPageFound);
 }
 
 async function scrapeFromViaCrawling(
+    rootUrl: string,
     startPageUrl: string,
     onPageFound: (page: FoundPage) => Promise<FoundPageResult>
 ) {
   // Loop until there is no "next" page
-  let currentPage = await scrapePage(startPageUrl);
+  let currentPage = await scrapePage(rootUrl, startPageUrl);
   while (currentPage) {
     // We only need to keep some of the data
     const foundPage = {
@@ -188,13 +195,18 @@ async function scrapeFromViaCrawling(
     if (!currentPage.next || currentPage.next === currentPage.current) break;
 
     // Move onto next page
-    currentPage = await scrapePage(currentPage.next);
+    currentPage = await scrapePage(rootUrl, currentPage.next);
   }
 
   return;
 }
 
-export async function scrapePage(pageUrl: string) {
+export async function scrapePage(rootUrl: string, pageUrl: string) {
+  // If pageUrl is relative, add rootUrl at the start
+  if (!pageUrl.startsWith('http') && !pageUrl.startsWith('https')) {
+    pageUrl = rootUrl + pageUrl;
+  }
+
   console.log('Scraping page: ' + pageUrl);
 
   const webPage = await axios.get(pageUrl);
