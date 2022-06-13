@@ -98,7 +98,12 @@ async function tryScrapeComicPages(
 
   const parsedStartUrl = url.parse(startUrl);
   const rootUrl = parsedStartUrl.protocol + '//' + parsedStartUrl.host;
-  await scrapeNewViaCrawling(rootUrl, startUrl, onPageFound);
+  
+  if (lastPageId) {
+    await scrapeFromViaCrawling(rootUrl, startUrl, onPageFound);
+  } else {
+    await scrapeNewViaCrawling(rootUrl, startUrl, onPageFound);
+  }
 
   return;
 }
