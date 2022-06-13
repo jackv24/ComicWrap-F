@@ -5,13 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Emulators (debug mode)",
+            "name": "Emulators (no ads, debug mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "debug",
             "args": [
                 "--dart-define",
                 "USE_EMULATORS=true",
+                "--dart-define",
+                "DISABLE_ADS=true",
             ]
         },
         {

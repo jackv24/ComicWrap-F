@@ -156,7 +156,7 @@ async function scrapeNewViaCrawling(
   // Start from the first page so we can just go until we reach the end
   const startHtml = (await axios.get(startPageUrl)).data;
   const start$ = cheerio.load(startHtml);
-  const firstNav = getLinkFromElements(start$, '[class*="first"]');
+  const firstNav = getLinkFromElements(start$, '[class*="first"], [class*="start"], [rel*="first"], [rel*="start"]');
 
   // Cancel if we couldn't find a link to the first page
   if (!firstNav) return null;
@@ -203,8 +203,8 @@ export async function scrapePage(pageUrl: string) {
   const html = webPage.data;
   const $ = cheerio.load(html);
 
-  const prevLink = getLinkFromElements($, '[class*="prev"]');
-  const nextLink = getLinkFromElements($, '[class*="next"]');
+  const prevLink = getLinkFromElements($, '[class*="prev"], [rel*="prev"]');
+  const nextLink = getLinkFromElements($, '[class*="next"], [rel*="next"]');
   const titles = $('title').toArray().map((element, index) => {
     return $(element).text();
   });
